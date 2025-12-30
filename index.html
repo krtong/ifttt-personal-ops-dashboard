@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Personal Ops Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b1020;
+        --panel: rgba(15, 23, 42, 0.92);
+        --panel-strong: rgba(17, 25, 44, 0.98);
+        --card: rgba(12, 18, 34, 0.75);
+        --text: #f8fafc;
+        --muted: #94a3b8;
+        --accent: #38bdf8;
+        --accent-strong: #0ea5e9;
+        --warn: #f97316;
+        --danger: #f43f5e;
+        --success: #22c55e;
+        --border: rgba(59, 78, 119, 0.5);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        background: radial-gradient(circle at top, #111827 0%, #0b1020 50%, #070b16 100%);
+        color: var(--text);
+        min-height: 100vh;
+      }
+      header {
+        padding: 28px clamp(20px, 6vw, 60px) 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .title {
+        font-size: clamp(28px, 5vw, 44px);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 0 clamp(20px, 6vw, 60px) 20px;
+      }
+      .tab {
+        border: 1px solid var(--border);
+        background: rgba(15, 23, 42, 0.6);
+        color: var(--muted);
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+      .tab.active {
+        border-color: rgba(56, 189, 248, 0.7);
+        color: var(--text);
+        background: rgba(14, 165, 233, 0.2);
+      }
+      main {
+        padding: 0 clamp(20px, 6vw, 60px) 60px;
+        display: grid;
+        gap: 24px;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 24px;
+        display: grid;
+        gap: 16px;
+      }
+      .panel.hidden {
+        display: none;
+      }
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+      .panel-title {
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .panel-meta {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+      .grid.cols-2 {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid rgba(59, 78, 119, 0.4);
+        border-radius: 16px;
+        padding: 16px;
+        display: grid;
+        gap: 8px;
+      }
+      .card-title {
+        font-size: 13px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .card-value {
+        font-size: 24px;
+        font-weight: 600;
+      }
+      .pill {
+        display: inline-flex;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        border: 1px solid rgba(56, 189, 248, 0.4);
+        color: var(--accent);
+      }
+      .pill.warn {
+        border-color: rgba(249, 115, 22, 0.6);
+        color: #fca5a5;
+      }
+      .pill.good {
+        border-color: rgba(34, 197, 94, 0.5);
+        color: #86efac;
+      }
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+      .list-item {
+        border-radius: 12px;
+        border: 1px solid rgba(42, 51, 82, 0.6);
+        padding: 12px;
+        background: rgba(9, 13, 26, 0.6);
+        display: grid;
+        gap: 6px;
+      }
+      .list-title {
+        font-weight: 600;
+      }
+      .list-meta {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .auth {
+        max-width: 420px;
+        margin: 30px auto;
+        display: grid;
+        gap: 12px;
+        padding: 24px;
+        background: var(--panel-strong);
+        border-radius: 20px;
+        border: 1px solid var(--border);
+      }
+      .auth input {
+        background: rgba(12, 18, 34, 0.9);
+        border: 1px solid rgba(59, 78, 119, 0.6);
+        border-radius: 10px;
+        padding: 10px 12px;
+        color: var(--text);
+      }
+      .btn {
+        padding: 10px 16px;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--accent-strong);
+        color: #041018;
+      }
+      .btn.secondary {
+        background: rgba(30, 41, 59, 0.8);
+        color: var(--text);
+        border: 1px solid rgba(59, 78, 119, 0.6);
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .highlight {
+        color: var(--accent);
+      }
+      .section-divider {
+        border-top: 1px solid rgba(51, 65, 85, 0.5);
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="title">Personal Ops</div>
+      <div class="subtitle">Triathlon readiness, posture repair, and strength balance.</div>
+    </header>
+
+    <div class="tabs" id="view-tabs"></div>
+
+    <div id="auth" class="auth">
+      <div class="panel-title">Sign in</div>
+      <input id="email" type="email" placeholder="Email" />
+      <input id="password" type="password" placeholder="Password" />
+      <button id="login" class="btn">Sign in</button>
+      <div id="auth-status" class="muted"></div>
+    </div>
+
+    <main id="content" class="hidden">
+      <section id="overview-view" class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Overview</div>
+          <div class="panel-meta" id="overview-updated">—</div>
+        </div>
+        <div class="grid cols-2" id="overview-metrics"></div>
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-title">Readiness</div>
+            <div id="overview-readiness" class="card-value">—</div>
+            <div id="overview-readiness-note" class="muted">—</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Next session</div>
+            <div id="overview-next" class="card-value">—</div>
+            <div id="overview-next-note" class="muted">—</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Plan summary</div>
+          <div id="overview-plan" class="list"></div>
+        </div>
+        <div id="overview-status" class="muted"></div>
+      </section>
+
+      <section id="training-view" class="panel hidden">
+        <div class="panel-header">
+          <div class="panel-title">Training plan</div>
+          <div class="panel-meta" id="training-range">—</div>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-title">Weekly focus</div>
+            <div id="training-template" class="list"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Recent sessions</div>
+            <div id="training-recent" class="list"></div>
+          </div>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-title">Run development</div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-title">Form + durability</div>
+                <div class="list-meta">Short easy runs, drills, and tibialis work are priority.</div>
+              </div>
+              <div class="list-item">
+                <div class="list-title">Stride economy</div>
+                <div class="list-meta">Add 4–6 strides after easy runs (fast, relaxed).</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Bike & swim strengths</div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-title">Swim consistency</div>
+                <div class="list-meta">Maintain 1,000 yd/day base with technique focus.</div>
+              </div>
+              <div class="list-item">
+                <div class="list-title">Bike endurance</div>
+                <div class="list-meta">Long aerobic ride + posture reset after riding.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="strength-view" class="panel hidden">
+        <div class="panel-header">
+          <div class="panel-title">Strength & posture</div>
+          <div class="panel-meta" id="strength-note">—</div>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-title">Strength baselines</div>
+            <div id="strength-baselines" class="list"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Last session breakdown</div>
+            <div id="strength-last" class="list"></div>
+          </div>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-title">Posture reset (daily 10–15m)</div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-title">Forward head + rounded shoulders</div>
+                <div class="list-meta">Chin tucks · Scap retraction · Thoracic extension · Pec stretch</div>
+              </div>
+              <div class="list-item">
+                <div class="list-title">Anterior pelvic tilt</div>
+                <div class="list-meta">Glute bridges · Dead bug · Hip flexor stretch · Hamstring hinge</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Run durability (tibias + feet)</div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-title">Tibialis raises</div>
+                <div class="list-meta">2–3 sets, controlled tempo.</div>
+              </div>
+              <div class="list-item">
+                <div class="list-title">Calf + foot intrinsics</div>
+                <div class="list-meta">Standing calf raises + short-foot drills.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Face & neck routine (5–8m)</div>
+          <div class="list">
+            <div class="list-item">
+              <div class="list-title">Neck isometrics</div>
+              <div class="list-meta">Front/side/back holds · 10–15s each.</div>
+            </div>
+            <div class="list-item">
+              <div class="list-title">Jawline & neckline</div>
+              <div class="list-meta">Light resistance + posture awareness, avoid jaw tension.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="nutrition-view" class="panel hidden">
+        <div class="panel-header">
+          <div class="panel-title">Nutrition</div>
+          <div class="panel-meta" id="nutrition-note">—</div>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-title">Targets vs actual</div>
+            <div id="nutrition-targets" class="list"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Guidance</div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-title">Protein anchor</div>
+                <div class="list-meta">Hit target daily to support recovery + posture work.</div>
+              </div>
+              <div class="list-item">
+                <div class="list-title">Carb timing</div>
+                <div class="list-meta">Prioritize carbs before/after run sessions.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="recovery-view" class="panel hidden">
+        <div class="panel-header">
+          <div class="panel-title">Recovery</div>
+          <div class="panel-meta" id="recovery-note">—</div>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-title">Sleep</div>
+            <div id="recovery-sleep" class="card-value">—</div>
+            <div id="recovery-sleep-note" class="muted">—</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Weight</div>
+            <div id="recovery-weight" class="card-value">—</div>
+            <div id="recovery-weight-note" class="muted">—</div>
+          </div>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-title">Readiness + form</div>
+            <div id="recovery-readiness" class="list"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Recovery targets</div>
+            <div id="recovery-targets" class="list"></div>
+          </div>
+        </div>
+      </section>
+
+      <button id="logout" class="btn secondary">Sign out</button>
+    </main>
+
+    <script type="module">
+      import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+      const SUPABASE_URL = "https://tbrnarytcojngpbzzwcn.supabase.co";
+      const SUPABASE_ANON_KEY = "sb_publishable_E8-dvNNh5V3VQLAcK-xqiQ_dLEu1Bsh";
+      const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const viewTabsEl = document.getElementById("view-tabs");
+      const authEl = document.getElementById("auth");
+      const authStatusEl = document.getElementById("auth-status");
+      const contentEl = document.getElementById("content");
+      const emailEl = document.getElementById("email");
+      const passwordEl = document.getElementById("password");
+
+      const VIEW_DEFS = {
+        overview: { label: "Overview" },
+        training: { label: "Training" },
+        strength: { label: "Strength/PT" },
+        nutrition: { label: "Nutrition" },
+        recovery: { label: "Recovery" },
+      };
+      let currentView = "overview";
+
+      const overviewMetricsEl = document.getElementById("overview-metrics");
+      const overviewUpdatedEl = document.getElementById("overview-updated");
+      const overviewReadinessEl = document.getElementById("overview-readiness");
+      const overviewReadinessNoteEl = document.getElementById("overview-readiness-note");
+      const overviewNextEl = document.getElementById("overview-next");
+      const overviewNextNoteEl = document.getElementById("overview-next-note");
+      const overviewPlanEl = document.getElementById("overview-plan");
+      const overviewStatusEl = document.getElementById("overview-status");
+
+      const trainingTemplateEl = document.getElementById("training-template");
+      const trainingRecentEl = document.getElementById("training-recent");
+      const trainingRangeEl = document.getElementById("training-range");
+
+      const strengthNoteEl = document.getElementById("strength-note");
+      const strengthBaselinesEl = document.getElementById("strength-baselines");
+      const strengthLastEl = document.getElementById("strength-last");
+
+      const nutritionNoteEl = document.getElementById("nutrition-note");
+      const nutritionTargetsEl = document.getElementById("nutrition-targets");
+
+      const recoveryNoteEl = document.getElementById("recovery-note");
+      const recoverySleepEl = document.getElementById("recovery-sleep");
+      const recoverySleepNoteEl = document.getElementById("recovery-sleep-note");
+      const recoveryWeightEl = document.getElementById("recovery-weight");
+      const recoveryWeightNoteEl = document.getElementById("recovery-weight-note");
+      const recoveryReadinessEl = document.getElementById("recovery-readiness");
+      const recoveryTargetsEl = document.getElementById("recovery-targets");
+
+      const WEEK_TEMPLATE = [
+        { day: "Sunday", focus: "Rest + mobility", note: "Light movement, posture reset." },
+        { day: "Monday", focus: "Swim technique", note: "1,000–1,600 yd + posture." },
+        { day: "Tuesday", focus: "Strength + tibias", note: "Speediance strength + tibialis work." },
+        { day: "Wednesday", focus: "Easy run + drills", note: "Short run + strides, KB optional." },
+        { day: "Thursday", focus: "Bike endurance", note: "Long ride + posture reset." },
+        { day: "Friday", focus: "Strength + short run", note: "Single-leg + trunk + easy run." },
+        { day: "Saturday", focus: "Long run / brick", note: "Long run or bike→run brick." },
+      ];
+
+      function renderTabs() {
+        viewTabsEl.innerHTML = "";
+        Object.entries(VIEW_DEFS).forEach(([id, view]) => {
+          const btn = document.createElement("button");
+          btn.className = "tab" + (currentView === id ? " active" : "");
+          btn.textContent = view.label;
+          btn.addEventListener("click", () => {
+            currentView = id;
+            setActiveView();
+            loadView();
+          });
+          viewTabsEl.appendChild(btn);
+        });
+      }
+
+      function setActiveView() {
+        document.querySelectorAll("main > section").forEach((section) => {
+          section.classList.toggle("hidden", !section.id.startsWith(currentView));
+        });
+        renderTabs();
+      }
+
+      function formatNumber(value, decimals = 0) {
+        if (value === null || value === undefined || Number.isNaN(value)) return "—";
+        return Number(value).toFixed(decimals);
+      }
+
+      function formatMinutes(seconds) {
+        if (!seconds) return "—";
+        return `${Math.round(seconds / 60)} min`;
+      }
+
+      function formatDistance(meters) {
+        if (!meters) return "—";
+        return `${(meters / 1609.34).toFixed(1)} mi`;
+      }
+
+      function formatTimestamp(value) {
+        if (!value) return "—";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "—";
+        return date.toLocaleString();
+      }
+
+      function formatSleep(seconds) {
+        if (!seconds) return "—";
+        return `${(seconds / 3600).toFixed(1)} h`;
+      }
+
+      function renderListItem(title, meta) {
+        const item = document.createElement("div");
+        item.className = "list-item";
+        item.innerHTML = `<div class="list-title">${title}</div><div class="list-meta">${meta}</div>`;
+        return item;
+      }
+
+      async function loadOverview() {
+        overviewMetricsEl.innerHTML = "";
+        overviewPlanEl.innerHTML = "";
+        overviewStatusEl.textContent = "";
+
+        const [trainingResp, readinessResp, metricsResp, planResp] = await Promise.all([
+          supabase.from("training_state").select("*").eq("id", "global").maybeSingle(),
+          supabase.from("readiness_state").select("*").eq("id", "global").maybeSingle(),
+          supabase.from("pos_day_metrics").select("*").order("date", { ascending: false }).limit(1),
+          supabase.from("coach_plan_daily").select("date,summary_text,plan_json").order("date", { ascending: false }).limit(1),
+        ]);
+
+        const training = trainingResp.data || {};
+        const readiness = readinessResp.data || {};
+        const metrics = metricsResp.data?.[0] || {};
+        const plan = planResp.data?.[0];
+
+        const metricsList = [
+          { label: "Workouts (7d)", value: metrics.workout_count_7d ?? training.workout_count_7d ?? 0 },
+          { label: "Endurance (7d)", value: metrics.endurance_sessions_7d ?? training.endurance_sessions_7d ?? 0 },
+          { label: "Strength (7d)", value: metrics.strength_sessions_7d ?? training.strength_sessions_7d ?? 0 },
+          { label: "Distance (7d)", value: formatDistance(metrics.total_distance_m_7d ?? training.total_distance_m_7d ?? 0) },
+        ];
+
+        metricsList.forEach((metric) => {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `<div class="card-title">${metric.label}</div><div class="card-value">${metric.value}</div>`;
+          overviewMetricsEl.appendChild(card);
+        });
+
+        overviewUpdatedEl.textContent = metrics.updated_at ? `Updated ${formatTimestamp(metrics.updated_at)}` : "—";
+        overviewReadinessEl.textContent = readiness.readiness_score != null ? `${readiness.readiness_score}/100` : "—";
+        const sleepNote = metrics.sleep_updated_at ? `Sleep updated ${formatTimestamp(metrics.sleep_updated_at)}` : "Sleep missing";
+        const weightNote = metrics.weight_updated_at ? `Weight updated ${formatTimestamp(metrics.weight_updated_at)}` : "Weight missing";
+        overviewReadinessNoteEl.textContent = `${sleepNote} · ${weightNote}`;
+
+        overviewNextEl.textContent = metrics.next_workout_start ? new Date(metrics.next_workout_start).toLocaleDateString() : "—";
+        overviewNextNoteEl.textContent = metrics.next_workout_start ? formatTimestamp(metrics.next_workout_start) : "No upcoming workout";
+
+        if (plan) {
+          overviewPlanEl.appendChild(renderListItem("Summary", plan.summary_text || "—"));
+          const rec = plan.plan_json?.recommendation;
+          if (rec) {
+            overviewPlanEl.appendChild(renderListItem("Focus", `${rec.type ?? "—"} · ${rec.duration_min ?? "—"} min · ${rec.intensity ?? "—"}`));
+          }
+        } else {
+          overviewPlanEl.appendChild(renderListItem("Summary", "No plan yet."));
+        }
+
+        overviewStatusEl.textContent = readiness.readiness_score ? "Ready to progress with caution." : "Waiting on readiness data.";
+      }
+
+      async function loadTraining() {
+        trainingTemplateEl.innerHTML = "";
+        trainingRecentEl.innerHTML = "";
+
+        const [calendarResp, stravaResp, strengthResp] = await Promise.all([
+          supabase.from("calendar_state").select("next_workout_start,next_workout_end,meeting_load_24h").eq("id", "global").maybeSingle(),
+          supabase.from("pos_events").select("event_timestamp,payload").eq("source", "strava").eq("event_type", "activity").order("event_timestamp", { ascending: false }).limit(50),
+          supabase.from("speediance_training_session_scores").select("session_date,quality_score").order("session_date", { ascending: false }).limit(1),
+        ]);
+
+        const now = new Date();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        trainingRangeEl.textContent = `Week of ${weekStart.toLocaleDateString()}`;
+
+        WEEK_TEMPLATE.forEach((entry, idx) => {
+          const isToday = idx === now.getDay();
+          const title = `${entry.day} · ${entry.focus}`;
+          const meta = `${entry.note}${isToday ? " · Today" : ""}`;
+          trainingTemplateEl.appendChild(renderListItem(title, meta));
+        });
+
+        const lastByType = { swim: null, ride: null, run: null };
+        (stravaResp.data || []).forEach((row) => {
+          const payload = row.payload || {};
+          const type = String(payload.type ?? payload.sport_type ?? "").toLowerCase();
+          if (!lastByType.swim && type.includes("swim")) lastByType.swim = row.event_timestamp;
+          if (!lastByType.ride && (type.includes("ride") || type.includes("bike") || type.includes("cycle"))) lastByType.ride = row.event_timestamp;
+          if (!lastByType.run && type.includes("run")) lastByType.run = row.event_timestamp;
+        });
+
+        trainingRecentEl.appendChild(renderListItem("Swim", lastByType.swim ? formatTimestamp(lastByType.swim) : "No recent swim"));
+        trainingRecentEl.appendChild(renderListItem("Bike", lastByType.ride ? formatTimestamp(lastByType.ride) : "No recent ride"));
+        trainingRecentEl.appendChild(renderListItem("Run", lastByType.run ? formatTimestamp(lastByType.run) : "No recent run"));
+        const strengthRow = strengthResp.data?.[0];
+        trainingRecentEl.appendChild(renderListItem("Strength", strengthRow?.session_date ? strengthRow.session_date : "No recent strength"));
+
+        const calendar = calendarResp.data || {};
+        if (calendar.next_workout_start) {
+          trainingRecentEl.appendChild(renderListItem("Next workout", formatTimestamp(calendar.next_workout_start)));
+        }
+      }
+
+      async function loadStrength() {
+        strengthBaselinesEl.innerHTML = "";
+        strengthLastEl.innerHTML = "";
+        strengthNoteEl.textContent = "";
+
+        const [baselineResp, sessionResp, metricsResp] = await Promise.all([
+          supabase.from("speediance_exercise_baselines").select("action_library_name,max_watts,one_rm,total_reps,last_seen_at").order("max_watts", { ascending: false }).limit(6),
+          supabase.from("speediance_training_session_scores").select("training_id,session_date,quality_score").order("session_date", { ascending: false }).limit(1),
+          supabase.from("speediance_exercise_session_metrics").select("action_library_name,quality_score,rep_time_cv,completion_ratio,avg_watts,total_reps").order("session_date", { ascending: false }).limit(6),
+        ]);
+
+        if (baselineResp.data?.length) {
+          baselineResp.data.forEach((row) => {
+            const meta = `Peak ${formatNumber(row.max_watts, 0)} W · 1RM ${formatNumber(row.one_rm, 1)} · ${row.total_reps ?? 0} reps`;
+            strengthBaselinesEl.appendChild(renderListItem(row.action_library_name || "Exercise", meta));
+          });
+        } else {
+          strengthBaselinesEl.appendChild(renderListItem("No baselines", "Run a strength session to populate."));
+        }
+
+        if (sessionResp.data?.length) {
+          const session = sessionResp.data[0];
+          strengthNoteEl.textContent = session.session_date ? `Last session: ${session.session_date}` : "";
+        }
+
+        if (metricsResp.data?.length) {
+          metricsResp.data.forEach((row) => {
+            const meta = `Quality ${formatNumber(row.quality_score, 1)} · Comp ${formatNumber((row.completion_ratio ?? 0) * 100, 0)}% · CV ${formatNumber(row.rep_time_cv, 2)}`;
+            strengthLastEl.appendChild(renderListItem(row.action_library_name || "Exercise", meta));
+          });
+        } else {
+          strengthLastEl.appendChild(renderListItem("No session details", "Run a session to populate."));
+        }
+      }
+
+      async function loadNutrition() {
+        nutritionTargetsEl.innerHTML = "";
+        nutritionNoteEl.textContent = "";
+
+        const dateKey = new Date().toISOString().slice(0, 10);
+        const [metricsResp, planResp] = await Promise.all([
+          supabase.from("pos_day_metrics").select("nutrition_entries_7d,calories_avg_day,protein_avg_day,carbs_avg_day,fat_avg_day").order("date", { ascending: false }).limit(1),
+          supabase.from("coach_plan_daily").select("plan_json").lte("date", dateKey).order("date", { ascending: false }).limit(1),
+        ]);
+
+        const metrics = metricsResp.data?.[0] || {};
+        const targets = planResp.data?.[0]?.plan_json?.nutrition_targets || {};
+        nutritionNoteEl.textContent = metrics.nutrition_entries_7d ? `${metrics.nutrition_entries_7d} logs in last 7d` : "No logs yet";
+
+        const rows = [
+          { label: "Calories", actual: metrics.calories_avg_day, target: targets.calories_target, unit: "kcal" },
+          { label: "Protein", actual: metrics.protein_avg_day, target: targets.protein_target_g, unit: "g" },
+          { label: "Carbs", actual: metrics.carbs_avg_day, target: targets.carbs_target_g, unit: "g" },
+          { label: "Fat", actual: metrics.fat_avg_day, target: targets.fat_target_g, unit: "g" },
+        ];
+
+        rows.forEach((row) => {
+          const actualLabel = row.actual != null ? `${formatNumber(row.actual, 1)} ${row.unit}/day` : "—";
+          const targetLabel = row.target != null ? `${formatNumber(row.target, 0)} ${row.unit}` : "—";
+          nutritionTargetsEl.appendChild(renderListItem(row.label, `Actual ${actualLabel} · Target ${targetLabel}`));
+        });
+      }
+
+      async function loadRecovery() {
+        recoveryReadinessEl.innerHTML = "";
+        recoveryTargetsEl.innerHTML = "";
+        recoveryNoteEl.textContent = "";
+
+        const [metricsResp, readinessResp, planResp] = await Promise.all([
+          supabase.from("pos_day_metrics").select("sleep_seconds,sleep_baseline_7d,weight_kg,weight_baseline_7d,readiness_score,form_score,fatigue_score,updated_at").order("date", { ascending: false }).limit(1),
+          supabase.from("readiness_state").select("sleep_updated_at,weight_updated_at,readiness_score").eq("id", "global").maybeSingle(),
+          supabase.from("coach_plan_daily").select("plan_json").order("date", { ascending: false }).limit(1),
+        ]);
+
+        const metrics = metricsResp.data?.[0] || {};
+        const readiness = readinessResp.data || {};
+        const plan = planResp.data?.[0];
+
+        recoverySleepEl.textContent = formatSleep(metrics.sleep_seconds);
+        recoverySleepNoteEl.textContent = metrics.sleep_baseline_7d ? `Baseline ${(metrics.sleep_baseline_7d / 3600).toFixed(1)} h` : "Baseline missing";
+        recoveryWeightEl.textContent = metrics.weight_kg ? `${metrics.weight_kg.toFixed(1)} kg` : "—";
+        recoveryWeightNoteEl.textContent = metrics.weight_baseline_7d ? `Baseline ${metrics.weight_baseline_7d.toFixed(1)} kg` : "Baseline missing";
+
+        recoveryReadinessEl.appendChild(renderListItem("Readiness score", readiness.readiness_score != null ? `${readiness.readiness_score}/100` : "—"));
+        recoveryReadinessEl.appendChild(renderListItem("Form score", metrics.form_score != null ? formatNumber(metrics.form_score, 1) : "—"));
+        recoveryReadinessEl.appendChild(renderListItem("Fatigue score", metrics.fatigue_score != null ? formatNumber(metrics.fatigue_score, 1) : "—"));
+
+        const sleepTarget = plan?.plan_json?.recovery_targets?.sleep_target_hours;
+        recoveryTargetsEl.appendChild(renderListItem("Sleep target", sleepTarget ? `${sleepTarget} h` : "—"));
+        recoveryNoteEl.textContent = metrics.updated_at ? `Updated ${formatTimestamp(metrics.updated_at)}` : "—";
+      }
+
+      async function loadView() {
+        if (currentView === "overview") await loadOverview();
+        if (currentView === "training") await loadTraining();
+        if (currentView === "strength") await loadStrength();
+        if (currentView === "nutrition") await loadNutrition();
+        if (currentView === "recovery") await loadRecovery();
+      }
+
+      async function refreshSession() {
+        const { data } = await supabase.auth.getSession();
+        const session = data?.session;
+        if (session) {
+          authEl.classList.add("hidden");
+          contentEl.classList.remove("hidden");
+          renderTabs();
+          setActiveView();
+          await loadView();
+        } else {
+          authEl.classList.remove("hidden");
+          contentEl.classList.add("hidden");
+          if (authStatusEl) authStatusEl.textContent = "Please sign in";
+        }
+      }
+
+      document.getElementById("login").addEventListener("click", async () => {
+        const email = emailEl.value.trim();
+        const password = passwordEl.value;
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          if (authStatusEl) authStatusEl.textContent = `Sign in failed: ${error.message}`;
+          return;
+        }
+        await refreshSession();
+      });
+
+      document.getElementById("logout").addEventListener("click", async () => {
+        await supabase.auth.signOut();
+        await refreshSession();
+      });
+
+      refreshSession();
+    </script>
+  </body>
+</html>

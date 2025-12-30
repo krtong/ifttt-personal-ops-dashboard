@@ -241,6 +241,16 @@
             <div id="overview-next-note" class="muted">—</div>
           </div>
         </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-title">Today’s actions</div>
+            <div id="overview-actions" class="list"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Risks & blockers</div>
+            <div id="overview-risks" class="list"></div>
+          </div>
+        </div>
         <div class="card">
           <div class="card-title">Plan summary</div>
           <div id="overview-plan" class="list"></div>
@@ -264,6 +274,10 @@
           </div>
         </div>
         <div class="grid cols-2">
+          <div class="card">
+            <div class="card-title">Run priority</div>
+            <div id="training-run" class="list"></div>
+          </div>
           <div class="card">
             <div class="card-title">Run development</div>
             <div class="list">
@@ -439,11 +453,14 @@
       const overviewNextEl = document.getElementById("overview-next");
       const overviewNextNoteEl = document.getElementById("overview-next-note");
       const overviewPlanEl = document.getElementById("overview-plan");
+      const overviewActionsEl = document.getElementById("overview-actions");
+      const overviewRisksEl = document.getElementById("overview-risks");
       const overviewStatusEl = document.getElementById("overview-status");
 
       const trainingTemplateEl = document.getElementById("training-template");
       const trainingRecentEl = document.getElementById("training-recent");
       const trainingRangeEl = document.getElementById("training-range");
+      const trainingRunEl = document.getElementById("training-run");
 
       const strengthNoteEl = document.getElementById("strength-note");
       const strengthBaselinesEl = document.getElementById("strength-baselines");
@@ -526,16 +543,54 @@
         return item;
       }
 
+      async function fetchStravaStats(days = 7) {
+        const since = new Date();
+        since.setDate(since.getDate() - days);
+        const resp = await supabase
+          .from("pos_events")
+          .select("event_timestamp,payload")
+          .eq("source", "strava")
+          .eq("event_type", "activity")
+          .gte("event_timestamp", since.toISOString());
+        const stats = {
+          runCount: 0,
+          swimCount: 0,
+          rideCount: 0,
+          lastRun: null,
+          lastSwim: null,
+          lastRide: null,
+        };
+        if (!resp.data) return stats;
+        resp.data.forEach((row) => {
+          const payload = row.payload || {};
+          const type = String(payload.type ?? payload.sport_type ?? "").toLowerCase();
+          if (type.includes("run")) {
+            stats.runCount += 1;
+            if (!stats.lastRun) stats.lastRun = row.event_timestamp;
+          } else if (type.includes("swim")) {
+            stats.swimCount += 1;
+            if (!stats.lastSwim) stats.lastSwim = row.event_timestamp;
+          } else if (type.includes("ride") || type.includes("bike") || type.includes("cycle")) {
+            stats.rideCount += 1;
+            if (!stats.lastRide) stats.lastRide = row.event_timestamp;
+          }
+        });
+        return stats;
+      }
+
       async function loadOverview() {
         overviewMetricsEl.innerHTML = "";
         overviewPlanEl.innerHTML = "";
         overviewStatusEl.textContent = "";
+        overviewActionsEl.innerHTML = "";
+        overviewRisksEl.innerHTML = "";
 
-        const [trainingResp, readinessResp, metricsResp, planResp] = await Promise.all([
+        const [trainingResp, readinessResp, metricsResp, planResp, stravaStats] = await Promise.all([
           supabase.from("training_state").select("*").eq("id", "global").maybeSingle(),
           supabase.from("readiness_state").select("*").eq("id", "global").maybeSingle(),
           supabase.from("pos_day_metrics").select("*").order("date", { ascending: false }).limit(1),
           supabase.from("coach_plan_daily").select("date,summary_text,plan_json").order("date", { ascending: false }).limit(1),
+          fetchStravaStats(7),
         ]);
 
         const training = trainingResp.data || {};
@@ -544,10 +599,10 @@
         const plan = planResp.data?.[0];
 
         const metricsList = [
-          { label: "Workouts (7d)", value: metrics.workout_count_7d ?? training.workout_count_7d ?? 0 },
-          { label: "Endurance (7d)", value: metrics.endurance_sessions_7d ?? training.endurance_sessions_7d ?? 0 },
-          { label: "Strength (7d)", value: metrics.strength_sessions_7d ?? training.strength_sessions_7d ?? 0 },
-          { label: "Distance (7d)", value: formatDistance(metrics.total_distance_m_7d ?? training.total_distance_m_7d ?? 0) },
+          { label: "Run sessions (7d)", value: stravaStats.runCount },
+          { label: "Swim sessions (7d)", value: stravaStats.swimCount },
+          { label: "Bike sessions (7d)", value: stravaStats.rideCount },
+          { label: "Strength sessions (7d)", value: metrics.strength_sessions_7d ?? training.strength_sessions_7d ?? 0 },
         ];
 
         metricsList.forEach((metric) => {
@@ -577,11 +632,44 @@
         }
 
         overviewStatusEl.textContent = readiness.readiness_score ? "Ready to progress with caution." : "Waiting on readiness data.";
+
+        const rec = plan?.plan_json?.recommendation || {};
+        if (rec?.type) {
+          overviewActionsEl.appendChild(
+            renderListItem("Primary session", `${rec.type} · ${rec.duration_min ?? "—"} min · ${rec.intensity ?? "—"}`),
+          );
+        }
+        const nutritionCodes = plan?.plan_json?.nutrition_targets?.reason_codes || [];
+        if (nutritionCodes.includes("LOW_PROTEIN")) {
+          overviewActionsEl.appendChild(renderListItem("Protein focus", "Add 30–40g protein today."));
+        }
+        if (nutritionCodes.includes("LOW_CALORIES")) {
+          overviewActionsEl.appendChild(renderListItem("Fuel up", "Calories low — add carbs pre/post run."));
+        }
+        if (!overviewActionsEl.children.length) {
+          overviewActionsEl.appendChild(renderListItem("Consistency", "Stay on plan and keep intensity controlled."));
+        }
+
+        if (!stravaStats.runCount) {
+          overviewRisksEl.appendChild(renderListItem("Run durability", "No recent run — schedule 20–30 min easy run."));
+        } else if (stravaStats.runCount < 2) {
+          overviewRisksEl.appendChild(renderListItem("Run frequency", "Only 1 run in 7d — add one short run."));
+        }
+        if (readiness.readiness_score != null && readiness.readiness_score < 50) {
+          overviewRisksEl.appendChild(renderListItem("Recovery", "Readiness low — keep intensity easy."));
+        }
+        if (metrics.sleep_updated_at && metrics.sleep_seconds && metrics.sleep_seconds < 5 * 3600) {
+          overviewRisksEl.appendChild(renderListItem("Sleep debt", "Sleep under 5h — prioritize early bedtime."));
+        }
+        if (!overviewRisksEl.children.length) {
+          overviewRisksEl.appendChild(renderListItem("All clear", "No major blockers today."));
+        }
       }
 
       async function loadTraining() {
         trainingTemplateEl.innerHTML = "";
         trainingRecentEl.innerHTML = "";
+        trainingRunEl.innerHTML = "";
 
         const [calendarResp, stravaResp, strengthResp] = await Promise.all([
           supabase.from("calendar_state").select("next_workout_start,next_workout_end,meeting_load_24h").eq("id", "global").maybeSingle(),
@@ -620,6 +708,13 @@
         if (calendar.next_workout_start) {
           trainingRecentEl.appendChild(renderListItem("Next workout", formatTimestamp(calendar.next_workout_start)));
         }
+
+        const runPriority = lastByType.run
+          ? `Last run ${formatTimestamp(lastByType.run)}. Keep volume easy + add strides.`
+          : "No recent run. Add a 20–30 min easy run + drills.";
+        trainingRunEl.appendChild(renderListItem("Run durability", runPriority));
+        trainingRunEl.appendChild(renderListItem("Tibia resilience", "Tibialis raises + calf work 2–3 sets."));
+        trainingRunEl.appendChild(renderListItem("Form cue", "Shorter stride, faster cadence, posture tall."));
       }
 
       async function loadStrength() {

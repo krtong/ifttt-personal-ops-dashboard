@@ -305,6 +305,16 @@
             </div>
           </div>
         </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-title">Action pack (today)</div>
+            <div id="training-actions" class="list"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Weakest link</div>
+            <div id="training-weakest" class="list"></div>
+          </div>
+        </div>
       </section>
 
       <section id="strength-view" class="panel hidden">
@@ -461,6 +471,8 @@
       const trainingRecentEl = document.getElementById("training-recent");
       const trainingRangeEl = document.getElementById("training-range");
       const trainingRunEl = document.getElementById("training-run");
+      const trainingActionsEl = document.getElementById("training-actions");
+      const trainingWeakestEl = document.getElementById("training-weakest");
 
       const strengthNoteEl = document.getElementById("strength-note");
       const strengthBaselinesEl = document.getElementById("strength-baselines");
@@ -541,6 +553,11 @@
         item.className = "list-item";
         item.innerHTML = `<div class="list-title">${title}</div><div class="list-meta">${meta}</div>`;
         return item;
+      }
+
+      function pushAction(listEl, title, meta) {
+        if (!listEl) return;
+        listEl.appendChild(renderListItem(title, meta));
       }
 
       async function fetchStravaStats(days = 7) {
@@ -634,35 +651,51 @@
         overviewStatusEl.textContent = readiness.readiness_score ? "Ready to progress with caution." : "Waiting on readiness data.";
 
         const rec = plan?.plan_json?.recommendation || {};
-        if (rec?.type) {
-          overviewActionsEl.appendChild(
-            renderListItem("Primary session", `${rec.type} · ${rec.duration_min ?? "—"} min · ${rec.intensity ?? "—"}`),
-          );
-        }
+        const readinessScore = readiness.readiness_score ?? metrics.readiness_score;
         const nutritionCodes = plan?.plan_json?.nutrition_targets?.reason_codes || [];
-        if (nutritionCodes.includes("LOW_PROTEIN")) {
-          overviewActionsEl.appendChild(renderListItem("Protein focus", "Add 30–40g protein today."));
-        }
-        if (nutritionCodes.includes("LOW_CALORIES")) {
-          overviewActionsEl.appendChild(renderListItem("Fuel up", "Calories low — add carbs pre/post run."));
-        }
-        if (!overviewActionsEl.children.length) {
-          overviewActionsEl.appendChild(renderListItem("Consistency", "Stay on plan and keep intensity controlled."));
+
+        // Action recipe
+        if (rec?.type) {
+          pushAction(
+            overviewActionsEl,
+            "Primary session",
+            `${rec.type} · ${rec.duration_min ?? "—"} min · ${rec.intensity ?? "—"}`,
+          );
+        } else {
+          pushAction(overviewActionsEl, "Primary session", "Follow weekly plan focus and keep intensity easy.");
         }
 
-        if (!stravaStats.runCount) {
-          overviewRisksEl.appendChild(renderListItem("Run durability", "No recent run — schedule 20–30 min easy run."));
-        } else if (stravaStats.runCount < 2) {
-          overviewRisksEl.appendChild(renderListItem("Run frequency", "Only 1 run in 7d — add one short run."));
+        if (readinessScore != null && readinessScore < 50) {
+          pushAction(overviewActionsEl, "Intensity cap", "Stay in easy zones; skip hard intervals.");
+        } else if (readinessScore != null && readinessScore > 70) {
+          pushAction(overviewActionsEl, "Quality window", "Green light for a focused session if time allows.");
         }
-        if (readiness.readiness_score != null && readiness.readiness_score < 50) {
-          overviewRisksEl.appendChild(renderListItem("Recovery", "Readiness low — keep intensity easy."));
+
+        if (stravaStats.runCount < 2) {
+          pushAction(overviewActionsEl, "Run durability", "Add 20–30 min easy run + 4 strides.");
         }
-        if (metrics.sleep_updated_at && metrics.sleep_seconds && metrics.sleep_seconds < 5 * 3600) {
-          overviewRisksEl.appendChild(renderListItem("Sleep debt", "Sleep under 5h — prioritize early bedtime."));
+
+        pushAction(overviewActionsEl, "Posture reset", "10–15 min: chin tucks, scap retraction, hip flexor stretch.");
+
+        if (nutritionCodes.includes("LOW_PROTEIN")) {
+          pushAction(overviewActionsEl, "Protein", "Add 30–40g protein (shake, chicken, Greek yogurt)." );
+        }
+        if (nutritionCodes.includes("LOW_CALORIES")) {
+          pushAction(overviewActionsEl, "Fuel", "Calories low — add carbs pre/post run.");
+        }
+
+        // Risks & blockers
+        if (stravaStats.runCount === 0) {
+          pushAction(overviewRisksEl, "Run gap", "No run in 7d — prioritize short easy run today.");
+        }
+        if (readinessScore != null && readinessScore < 50) {
+          pushAction(overviewRisksEl, "Low readiness", "Reduce volume and avoid intensity.");
+        }
+        if (metrics.sleep_seconds && metrics.sleep_seconds < 5 * 3600) {
+          pushAction(overviewRisksEl, "Sleep debt", "Sleep <5h. Protect tonight's bedtime.");
         }
         if (!overviewRisksEl.children.length) {
-          overviewRisksEl.appendChild(renderListItem("All clear", "No major blockers today."));
+          pushAction(overviewRisksEl, "All clear", "No major blockers today.");
         }
       }
 
@@ -670,6 +703,8 @@
         trainingTemplateEl.innerHTML = "";
         trainingRecentEl.innerHTML = "";
         trainingRunEl.innerHTML = "";
+        trainingActionsEl.innerHTML = "";
+        trainingWeakestEl.innerHTML = "";
 
         const [calendarResp, stravaResp, strengthResp] = await Promise.all([
           supabase.from("calendar_state").select("next_workout_start,next_workout_end,meeting_load_24h").eq("id", "global").maybeSingle(),
@@ -690,12 +725,20 @@
         });
 
         const lastByType = { swim: null, ride: null, run: null };
+        const counts = { swim: 0, ride: 0, run: 0 };
         (stravaResp.data || []).forEach((row) => {
           const payload = row.payload || {};
           const type = String(payload.type ?? payload.sport_type ?? "").toLowerCase();
-          if (!lastByType.swim && type.includes("swim")) lastByType.swim = row.event_timestamp;
-          if (!lastByType.ride && (type.includes("ride") || type.includes("bike") || type.includes("cycle"))) lastByType.ride = row.event_timestamp;
-          if (!lastByType.run && type.includes("run")) lastByType.run = row.event_timestamp;
+          if (type.includes("swim")) {
+            counts.swim += 1;
+            if (!lastByType.swim) lastByType.swim = row.event_timestamp;
+          } else if (type.includes("ride") || type.includes("bike") || type.includes("cycle")) {
+            counts.ride += 1;
+            if (!lastByType.ride) lastByType.ride = row.event_timestamp;
+          } else if (type.includes("run")) {
+            counts.run += 1;
+            if (!lastByType.run) lastByType.run = row.event_timestamp;
+          }
         });
 
         trainingRecentEl.appendChild(renderListItem("Swim", lastByType.swim ? formatTimestamp(lastByType.swim) : "No recent swim"));
@@ -715,6 +758,33 @@
         trainingRunEl.appendChild(renderListItem("Run durability", runPriority));
         trainingRunEl.appendChild(renderListItem("Tibia resilience", "Tibialis raises + calf work 2–3 sets."));
         trainingRunEl.appendChild(renderListItem("Form cue", "Shorter stride, faster cadence, posture tall."));
+
+        // Action pack: pick 3 highest-impact actions today
+        if (counts.run < 2) {
+          trainingActionsEl.appendChild(renderListItem("Easy run", "20–30 min Z2 + 4 strides (20s)."));
+        }
+        if (counts.swim < 2) {
+          trainingActionsEl.appendChild(renderListItem("Swim technique", "1,000–1,400 yd easy + drills."));
+        }
+        if (counts.ride < 2) {
+          trainingActionsEl.appendChild(renderListItem("Bike endurance", "45–75 min easy, posture reset after."));
+        }
+        trainingActionsEl.appendChild(renderListItem("Posture reset", "10–15 min: chin tucks, scapular work, hip flexor stretch."));
+
+        const weakest = [
+          { name: "Run", count: counts.run },
+          { name: "Swim", count: counts.swim },
+          { name: "Bike", count: counts.ride },
+        ].sort((a, b) => a.count - b.count);
+        const weakestLink = weakest[0];
+        trainingWeakestEl.appendChild(renderListItem("Lowest frequency", `${weakestLink.name} (${weakestLink.count} sessions in 7d)`));
+        if (weakestLink.name === "Run") {
+          trainingWeakestEl.appendChild(renderListItem("Fix", "Add two short runs this week + tibia work."));
+        } else if (weakestLink.name === "Swim") {
+          trainingWeakestEl.appendChild(renderListItem("Fix", "Add 1–2 technique swims to keep feel for water."));
+        } else {
+          trainingWeakestEl.appendChild(renderListItem("Fix", "Add 1–2 aerobic rides, keep posture tall."));
+        }
       }
 
       async function loadStrength() {

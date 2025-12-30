@@ -107,6 +107,9 @@
       .grid.cols-2 {
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       }
+      .grid.cols-3 {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
       .card {
         background: var(--card);
         border: 1px solid rgba(59, 78, 119, 0.4);
@@ -161,6 +164,17 @@
       .list-meta {
         color: var(--muted);
         font-size: 12px;
+      }
+      .metric-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .metric-row strong {
+        color: var(--text);
+        font-weight: 600;
       }
       .auth {
         max-width: 420px;
@@ -241,6 +255,20 @@
             <div id="overview-next-note" class="muted">—</div>
           </div>
         </div>
+        <div class="grid cols-3">
+          <div class="card">
+            <div class="card-title">Form snapshot</div>
+            <div id="overview-forms" class="list"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Run readiness</div>
+            <div id="overview-run" class="list"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Discipline balance</div>
+            <div id="overview-balance" class="list"></div>
+          </div>
+        </div>
         <div class="grid cols-2">
           <div class="card">
             <div class="card-title">Today’s actions</div>
@@ -303,6 +331,16 @@
                 <div class="list-meta">Long aerobic ride + posture reset after riding.</div>
               </div>
             </div>
+          </div>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-title">Form snapshot</div>
+            <div id="training-forms" class="list"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Plan blocks</div>
+            <div id="training-blocks" class="list"></div>
           </div>
         </div>
         <div class="grid cols-2">
@@ -466,6 +504,9 @@
       const overviewActionsEl = document.getElementById("overview-actions");
       const overviewRisksEl = document.getElementById("overview-risks");
       const overviewStatusEl = document.getElementById("overview-status");
+      const overviewFormsEl = document.getElementById("overview-forms");
+      const overviewRunEl = document.getElementById("overview-run");
+      const overviewBalanceEl = document.getElementById("overview-balance");
 
       const trainingTemplateEl = document.getElementById("training-template");
       const trainingRecentEl = document.getElementById("training-recent");
@@ -473,6 +514,8 @@
       const trainingRunEl = document.getElementById("training-run");
       const trainingActionsEl = document.getElementById("training-actions");
       const trainingWeakestEl = document.getElementById("training-weakest");
+      const trainingFormsEl = document.getElementById("training-forms");
+      const trainingBlocksEl = document.getElementById("training-blocks");
 
       const strengthNoteEl = document.getElementById("strength-note");
       const strengthBaselinesEl = document.getElementById("strength-baselines");
@@ -560,6 +603,13 @@
         listEl.appendChild(renderListItem(title, meta));
       }
 
+      function renderMetricRow(label, value) {
+        const row = document.createElement("div");
+        row.className = "metric-row";
+        row.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+        return row;
+      }
+
       async function fetchStravaStats(days = 7) {
         const since = new Date();
         since.setDate(since.getDate() - days);
@@ -601,6 +651,9 @@
         overviewStatusEl.textContent = "";
         overviewActionsEl.innerHTML = "";
         overviewRisksEl.innerHTML = "";
+        overviewFormsEl.innerHTML = "";
+        overviewRunEl.innerHTML = "";
+        overviewBalanceEl.innerHTML = "";
 
         const [trainingResp, readinessResp, metricsResp, planResp, stravaStats] = await Promise.all([
           supabase.from("training_state").select("*").eq("id", "global").maybeSingle(),
@@ -638,9 +691,26 @@
         overviewNextEl.textContent = metrics.next_workout_start ? new Date(metrics.next_workout_start).toLocaleDateString() : "—";
         overviewNextNoteEl.textContent = metrics.next_workout_start ? formatTimestamp(metrics.next_workout_start) : "No upcoming workout";
 
+        const planJson = plan?.plan_json || {};
+        const stravaForms = planJson.strava_forms || {};
+        const formRun = stravaForms.running ?? metrics.strava_form_running;
+        const formBike = stravaForms.cycling ?? metrics.strava_form_cycling;
+        const formSwim = stravaForms.swimming ?? metrics.strava_form_swimming;
+        overviewFormsEl.appendChild(renderMetricRow("Run form", formatNumber(formRun, 1)));
+        overviewFormsEl.appendChild(renderMetricRow("Bike form", formatNumber(formBike, 1)));
+        overviewFormsEl.appendChild(renderMetricRow("Swim form", formatNumber(formSwim, 1)));
+
+        const runLevel = planJson.run_level || "walk";
+        overviewRunEl.appendChild(renderListItem("Current run level", runLevel === "walk" ? "Walk-only baseline." : `Run/walk level: ${runLevel}`));
+        overviewRunEl.appendChild(renderListItem("Next upgrade", "Hold walk baseline, then add short jog intervals when cleared."));
+
+        overviewBalanceEl.appendChild(renderListItem("Swim sessions (7d)", `${stravaStats.swimCount}`));
+        overviewBalanceEl.appendChild(renderListItem("Bike sessions (7d)", `${stravaStats.rideCount}`));
+        overviewBalanceEl.appendChild(renderListItem("Run sessions (7d)", `${stravaStats.runCount}`));
+
         if (plan) {
           overviewPlanEl.appendChild(renderListItem("Summary", plan.summary_text || "—"));
-          const rec = plan.plan_json?.recommendation;
+          const rec = planJson.recommendation;
           if (rec) {
             overviewPlanEl.appendChild(renderListItem("Focus", `${rec.type ?? "—"} · ${rec.duration_min ?? "—"} min · ${rec.intensity ?? "—"}`));
           }
@@ -650,9 +720,9 @@
 
         overviewStatusEl.textContent = readiness.readiness_score ? "Ready to progress with caution." : "Waiting on readiness data.";
 
-        const rec = plan?.plan_json?.recommendation || {};
+        const rec = planJson.recommendation || {};
         const readinessScore = readiness.readiness_score ?? metrics.readiness_score;
-        const nutritionCodes = plan?.plan_json?.nutrition_targets?.reason_codes || [];
+        const nutritionCodes = planJson.nutrition_targets?.reason_codes || [];
 
         // Action recipe
         if (rec?.type) {
@@ -705,11 +775,15 @@
         trainingRunEl.innerHTML = "";
         trainingActionsEl.innerHTML = "";
         trainingWeakestEl.innerHTML = "";
+        trainingFormsEl.innerHTML = "";
+        trainingBlocksEl.innerHTML = "";
 
-        const [calendarResp, stravaResp, strengthResp] = await Promise.all([
+        const [calendarResp, stravaResp, strengthResp, planResp, metricsResp] = await Promise.all([
           supabase.from("calendar_state").select("next_workout_start,next_workout_end,meeting_load_24h").eq("id", "global").maybeSingle(),
           supabase.from("pos_events").select("event_timestamp,payload").eq("source", "strava").eq("event_type", "activity").order("event_timestamp", { ascending: false }).limit(50),
           supabase.from("speediance_training_session_scores").select("session_date,quality_score").order("session_date", { ascending: false }).limit(1),
+          supabase.from("coach_plan_daily").select("plan_json").order("date", { ascending: false }).limit(1),
+          supabase.from("pos_day_metrics").select("strava_form_running,strava_form_cycling,strava_form_swimming").order("date", { ascending: false }).limit(1),
         ]);
 
         const now = new Date();
@@ -717,7 +791,17 @@
         weekStart.setDate(now.getDate() - now.getDay());
         trainingRangeEl.textContent = `Week of ${weekStart.toLocaleDateString()}`;
 
-        WEEK_TEMPLATE.forEach((entry, idx) => {
+        const planJson = planResp.data?.[0]?.plan_json || {};
+        const planBlocks = planJson.plan_blocks || [];
+        const template = planBlocks.length
+          ? planBlocks.map((block) => ({
+              day: block.day,
+              focus: block.focus,
+              note: block.note,
+            }))
+          : WEEK_TEMPLATE;
+
+        template.forEach((entry, idx) => {
           const isToday = idx === now.getDay();
           const title = `${entry.day} · ${entry.focus}`;
           const meta = `${entry.note}${isToday ? " · Today" : ""}`;
@@ -752,10 +836,34 @@
           trainingRecentEl.appendChild(renderListItem("Next workout", formatTimestamp(calendar.next_workout_start)));
         }
 
+        const stravaForms = planJson.strava_forms || {};
+        const formRun = stravaForms.running ?? metricsResp.data?.[0]?.strava_form_running;
+        const formBike = stravaForms.cycling ?? metricsResp.data?.[0]?.strava_form_cycling;
+        const formSwim = stravaForms.swimming ?? metricsResp.data?.[0]?.strava_form_swimming;
+        trainingFormsEl.appendChild(renderMetricRow("Run form", formatNumber(formRun, 1)));
+        trainingFormsEl.appendChild(renderMetricRow("Bike form", formatNumber(formBike, 1)));
+        trainingFormsEl.appendChild(renderMetricRow("Swim form", formatNumber(formSwim, 1)));
+
+        const runLevel = planJson.run_level || "walk";
+        trainingBlocksEl.appendChild(renderListItem("Run level", runLevel === "walk" ? "Walk-only baseline." : `Run/walk: ${runLevel}`));
+        if (planBlocks.length) {
+          planBlocks.forEach((block) => {
+            const meta = [block.endurance, block.strength ? `Strength ${block.strength}` : null, block.pt ? "PT" : null, block.face ? "Face/neck" : null]
+              .filter(Boolean)
+              .join(" · ");
+            trainingBlocksEl.appendChild(renderListItem(block.day, meta || block.note || "—"));
+          });
+        } else {
+          trainingBlocksEl.appendChild(renderListItem("Plan blocks", "No plan blocks found."));
+        }
+
         const runPriority = lastByType.run
           ? `Last run ${formatTimestamp(lastByType.run)}. Keep volume easy + add strides.`
           : "No recent run. Add a 20–30 min easy run + drills.";
         trainingRunEl.appendChild(renderListItem("Run durability", runPriority));
+        if (runLevel === "walk") {
+          trainingRunEl.appendChild(renderListItem("Baseline", "Walk-only until tolerance improves. No jogging yet."));
+        }
         trainingRunEl.appendChild(renderListItem("Tibia resilience", "Tibialis raises + calf work 2–3 sets."));
         trainingRunEl.appendChild(renderListItem("Form cue", "Shorter stride, faster cadence, posture tall."));
 

@@ -176,6 +176,56 @@
         color: var(--text);
         font-weight: 600;
       }
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        color: var(--accent);
+        background: rgba(14, 165, 233, 0.1);
+      }
+      .status-chip.good {
+        border-color: rgba(34, 197, 94, 0.45);
+        color: #86efac;
+        background: rgba(34, 197, 94, 0.12);
+      }
+      .status-chip.warn {
+        border-color: rgba(249, 115, 22, 0.55);
+        color: #fdba74;
+        background: rgba(249, 115, 22, 0.15);
+      }
+      .status-chip.bad {
+        border-color: rgba(244, 63, 94, 0.55);
+        color: #fda4af;
+        background: rgba(244, 63, 94, 0.15);
+      }
+      .bar {
+        width: 100%;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(30, 41, 59, 0.8);
+        overflow: hidden;
+        margin-top: 6px;
+      }
+      .bar-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: var(--accent);
+      }
+      .bar-fill.good {
+        background: var(--success);
+      }
+      .bar-fill.warn {
+        background: var(--warn);
+      }
+      .bar-fill.bad {
+        background: var(--danger);
+      }
       .auth {
         max-width: 420px;
         margin: 30px auto;
@@ -610,6 +660,67 @@
         return row;
       }
 
+      function renderStatusItem(title, status, tone = "good", meta = "") {
+        const item = document.createElement("div");
+        item.className = "list-item";
+        const metaHtml = meta ? `<div class="list-meta">${meta}</div>` : "";
+        item.innerHTML = `<div class="list-title">${title}</div>${metaHtml}`;
+        const chip = document.createElement("div");
+        chip.className = `status-chip ${tone}`;
+        chip.textContent = status;
+        item.appendChild(chip);
+        return item;
+      }
+
+      function renderBarItem(title, status, tone = "good", percent = 60, meta = "") {
+        const item = document.createElement("div");
+        item.className = "list-item";
+        const metaHtml = meta ? `<div class="list-meta">${meta}</div>` : "";
+        item.innerHTML = `<div class="list-title">${title}</div>${metaHtml}`;
+        const chip = document.createElement("div");
+        chip.className = `status-chip ${tone}`;
+        chip.textContent = status;
+        item.appendChild(chip);
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        const fill = document.createElement("div");
+        fill.className = `bar-fill ${tone}`;
+        fill.style.width = `${Math.max(5, Math.min(percent, 100))}%`;
+        bar.appendChild(fill);
+        item.appendChild(bar);
+        return item;
+      }
+
+      function bandFromScore(score) {
+        if (score == null || Number.isNaN(score)) {
+          return { label: "Unknown", tone: "warn" };
+        }
+        if (score >= 70) return { label: "Green", tone: "good" };
+        if (score >= 50) return { label: "Yellow", tone: "warn" };
+        return { label: "Red", tone: "bad" };
+      }
+
+      function formBand(value) {
+        if (value == null || Number.isNaN(value)) return { label: "Unknown", tone: "warn" };
+        if (value >= 8) return { label: "Fresh", tone: "good" };
+        if (value >= -4) return { label: "Steady", tone: "warn" };
+        return { label: "Loaded", tone: "bad" };
+      }
+
+      function frequencyBand(count) {
+        if (count >= 2) return { label: "On track", tone: "good", percent: 90 };
+        if (count === 1) return { label: "Light", tone: "warn", percent: 55 };
+        return { label: "Missing", tone: "bad", percent: 15 };
+      }
+
+      function durationBand(minutes) {
+        if (!minutes) return "Flexible";
+        if (minutes <= 20) return "Short";
+        if (minutes <= 40) return "Medium";
+        if (minutes <= 60) return "Long";
+        return "Extended";
+      }
+
       async function fetchStravaStats(days = 7) {
         const since = new Date();
         since.setDate(since.getDate() - days);
@@ -669,21 +780,30 @@
         const plan = planResp.data?.[0];
 
         const metricsList = [
-          { label: "Run sessions (7d)", value: stravaStats.runCount },
-          { label: "Swim sessions (7d)", value: stravaStats.swimCount },
-          { label: "Bike sessions (7d)", value: stravaStats.rideCount },
-          { label: "Strength sessions (7d)", value: metrics.strength_sessions_7d ?? training.strength_sessions_7d ?? 0 },
+          { label: "Run frequency", value: frequencyBand(stravaStats.runCount) },
+          { label: "Swim frequency", value: frequencyBand(stravaStats.swimCount) },
+          { label: "Bike frequency", value: frequencyBand(stravaStats.rideCount) },
+          { label: "Strength frequency", value: frequencyBand(metrics.strength_sessions_7d ?? training.strength_sessions_7d ?? 0) },
         ];
 
         metricsList.forEach((metric) => {
           const card = document.createElement("div");
           card.className = "card";
-          card.innerHTML = `<div class="card-title">${metric.label}</div><div class="card-value">${metric.value}</div>`;
+          card.innerHTML = `<div class="card-title">${metric.label}</div><div class="card-value">${metric.value.label}</div>`;
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          const fill = document.createElement("div");
+          fill.className = `bar-fill ${metric.value.tone}`;
+          fill.style.width = `${metric.value.percent}%`;
+          bar.appendChild(fill);
+          card.appendChild(bar);
           overviewMetricsEl.appendChild(card);
         });
 
         overviewUpdatedEl.textContent = metrics.updated_at ? `Updated ${formatTimestamp(metrics.updated_at)}` : "—";
-        overviewReadinessEl.textContent = readiness.readiness_score != null ? `${readiness.readiness_score}/100` : "—";
+        const readinessScore = readiness.readiness_score ?? metrics.readiness_score;
+        const readinessBand = bandFromScore(readinessScore);
+        overviewReadinessEl.textContent = readinessBand.label;
         const sleepNote = metrics.sleep_updated_at ? `Sleep updated ${formatTimestamp(metrics.sleep_updated_at)}` : "Sleep missing";
         const weightNote = metrics.weight_updated_at ? `Weight updated ${formatTimestamp(metrics.weight_updated_at)}` : "Weight missing";
         overviewReadinessNoteEl.textContent = `${sleepNote} · ${weightNote}`;
@@ -693,26 +813,29 @@
 
         const planJson = plan?.plan_json || {};
         const stravaForms = planJson.strava_forms || {};
-        const formRun = stravaForms.running ?? metrics.strava_form_running;
-        const formBike = stravaForms.cycling ?? metrics.strava_form_cycling;
-        const formSwim = stravaForms.swimming ?? metrics.strava_form_swimming;
-        overviewFormsEl.appendChild(renderMetricRow("Run form", formatNumber(formRun, 1)));
-        overviewFormsEl.appendChild(renderMetricRow("Bike form", formatNumber(formBike, 1)));
-        overviewFormsEl.appendChild(renderMetricRow("Swim form", formatNumber(formSwim, 1)));
+        const formRun = formBand(stravaForms.running ?? metrics.strava_form_running);
+        const formBike = formBand(stravaForms.cycling ?? metrics.strava_form_cycling);
+        const formSwim = formBand(stravaForms.swimming ?? metrics.strava_form_swimming);
+        overviewFormsEl.appendChild(renderStatusItem("Run form", formRun.label, formRun.tone, "Strava freshness"));
+        overviewFormsEl.appendChild(renderStatusItem("Bike form", formBike.label, formBike.tone, "Strava freshness"));
+        overviewFormsEl.appendChild(renderStatusItem("Swim form", formSwim.label, formSwim.tone, "Strava freshness"));
 
         const runLevel = planJson.run_level || "walk";
-        overviewRunEl.appendChild(renderListItem("Current run level", runLevel === "walk" ? "Walk-only baseline." : `Run/walk level: ${runLevel}`));
-        overviewRunEl.appendChild(renderListItem("Next upgrade", "Hold walk baseline, then add short jog intervals when cleared."));
+        overviewRunEl.appendChild(renderStatusItem("Current level", runLevel === "walk" ? "Walk-only" : "Run/walk", runLevel === "walk" ? "warn" : "good"));
+        overviewRunEl.appendChild(renderListItem("Next upgrade", "Hold walk baseline. Add short jog intervals once cleared."));
 
-        overviewBalanceEl.appendChild(renderListItem("Swim sessions (7d)", `${stravaStats.swimCount}`));
-        overviewBalanceEl.appendChild(renderListItem("Bike sessions (7d)", `${stravaStats.rideCount}`));
-        overviewBalanceEl.appendChild(renderListItem("Run sessions (7d)", `${stravaStats.runCount}`));
+        const swimFreq = frequencyBand(stravaStats.swimCount);
+        const bikeFreq = frequencyBand(stravaStats.rideCount);
+        const runFreq = frequencyBand(stravaStats.runCount);
+        overviewBalanceEl.appendChild(renderBarItem("Swim", swimFreq.label, swimFreq.tone, swimFreq.percent));
+        overviewBalanceEl.appendChild(renderBarItem("Bike", bikeFreq.label, bikeFreq.tone, bikeFreq.percent));
+        overviewBalanceEl.appendChild(renderBarItem("Run", runFreq.label, runFreq.tone, runFreq.percent));
 
         if (plan) {
           overviewPlanEl.appendChild(renderListItem("Summary", plan.summary_text || "—"));
           const rec = planJson.recommendation;
           if (rec) {
-            overviewPlanEl.appendChild(renderListItem("Focus", `${rec.type ?? "—"} · ${rec.duration_min ?? "—"} min · ${rec.intensity ?? "—"}`));
+            overviewPlanEl.appendChild(renderListItem("Focus", `${rec.type ?? "—"} · ${durationBand(rec.duration_min)} · ${rec.intensity ?? "—"}`));
           }
         } else {
           overviewPlanEl.appendChild(renderListItem("Summary", "No plan yet."));
@@ -721,7 +844,6 @@
         overviewStatusEl.textContent = readiness.readiness_score ? "Ready to progress with caution." : "Waiting on readiness data.";
 
         const rec = planJson.recommendation || {};
-        const readinessScore = readiness.readiness_score ?? metrics.readiness_score;
         const nutritionCodes = planJson.nutrition_targets?.reason_codes || [];
 
         // Action recipe
@@ -735,14 +857,14 @@
           pushAction(overviewActionsEl, "Primary session", "Follow weekly plan focus and keep intensity easy.");
         }
 
-        if (readinessScore != null && readinessScore < 50) {
+        if (readinessBand.label === "Red") {
           pushAction(overviewActionsEl, "Intensity cap", "Stay in easy zones; skip hard intervals.");
-        } else if (readinessScore != null && readinessScore > 70) {
+        } else if (readinessBand.label === "Green") {
           pushAction(overviewActionsEl, "Quality window", "Green light for a focused session if time allows.");
         }
 
         if (stravaStats.runCount < 2) {
-          pushAction(overviewActionsEl, "Run durability", "Add 20–30 min easy run + 4 strides.");
+          pushAction(overviewActionsEl, "Run durability", "Add a short easy run or walk + 4 strides.");
         }
 
         pushAction(overviewActionsEl, "Posture reset", "10–15 min: chin tucks, scap retraction, hip flexor stretch.");
@@ -758,7 +880,7 @@
         if (stravaStats.runCount === 0) {
           pushAction(overviewRisksEl, "Run gap", "No run in 7d — prioritize short easy run today.");
         }
-        if (readinessScore != null && readinessScore < 50) {
+        if (readinessBand.label === "Red") {
           pushAction(overviewRisksEl, "Low readiness", "Reduce volume and avoid intensity.");
         }
         if (metrics.sleep_seconds && metrics.sleep_seconds < 5 * 3600) {
@@ -837,15 +959,15 @@
         }
 
         const stravaForms = planJson.strava_forms || {};
-        const formRun = stravaForms.running ?? metricsResp.data?.[0]?.strava_form_running;
-        const formBike = stravaForms.cycling ?? metricsResp.data?.[0]?.strava_form_cycling;
-        const formSwim = stravaForms.swimming ?? metricsResp.data?.[0]?.strava_form_swimming;
-        trainingFormsEl.appendChild(renderMetricRow("Run form", formatNumber(formRun, 1)));
-        trainingFormsEl.appendChild(renderMetricRow("Bike form", formatNumber(formBike, 1)));
-        trainingFormsEl.appendChild(renderMetricRow("Swim form", formatNumber(formSwim, 1)));
+        const formRun = formBand(stravaForms.running ?? metricsResp.data?.[0]?.strava_form_running);
+        const formBike = formBand(stravaForms.cycling ?? metricsResp.data?.[0]?.strava_form_cycling);
+        const formSwim = formBand(stravaForms.swimming ?? metricsResp.data?.[0]?.strava_form_swimming);
+        trainingFormsEl.appendChild(renderStatusItem("Run form", formRun.label, formRun.tone, "Strava freshness"));
+        trainingFormsEl.appendChild(renderStatusItem("Bike form", formBike.label, formBike.tone, "Strava freshness"));
+        trainingFormsEl.appendChild(renderStatusItem("Swim form", formSwim.label, formSwim.tone, "Strava freshness"));
 
         const runLevel = planJson.run_level || "walk";
-        trainingBlocksEl.appendChild(renderListItem("Run level", runLevel === "walk" ? "Walk-only baseline." : `Run/walk: ${runLevel}`));
+        trainingBlocksEl.appendChild(renderStatusItem("Run level", runLevel === "walk" ? "Walk-only" : "Run/walk", runLevel === "walk" ? "warn" : "good"));
         if (planBlocks.length) {
           planBlocks.forEach((block) => {
             const meta = [block.endurance, block.strength ? `Strength ${block.strength}` : null, block.pt ? "PT" : null, block.face ? "Face/neck" : null]
@@ -858,8 +980,8 @@
         }
 
         const runPriority = lastByType.run
-          ? `Last run ${formatTimestamp(lastByType.run)}. Keep volume easy + add strides.`
-          : "No recent run. Add a 20–30 min easy run + drills.";
+          ? "Keep volume easy, add strides if fresh."
+          : "No recent run. Add a short easy run or walk + drills.";
         trainingRunEl.appendChild(renderListItem("Run durability", runPriority));
         if (runLevel === "walk") {
           trainingRunEl.appendChild(renderListItem("Baseline", "Walk-only until tolerance improves. No jogging yet."));
@@ -869,13 +991,13 @@
 
         // Action pack: pick 3 highest-impact actions today
         if (counts.run < 2) {
-          trainingActionsEl.appendChild(renderListItem("Easy run", "20–30 min Z2 + 4 strides (20s)."));
+          trainingActionsEl.appendChild(renderListItem("Easy run", "Short easy run or walk + 4 strides."));
         }
         if (counts.swim < 2) {
-          trainingActionsEl.appendChild(renderListItem("Swim technique", "1,000–1,400 yd easy + drills."));
+          trainingActionsEl.appendChild(renderListItem("Swim technique", "Easy technique swim, keep it smooth."));
         }
         if (counts.ride < 2) {
-          trainingActionsEl.appendChild(renderListItem("Bike endurance", "45–75 min easy, posture reset after."));
+          trainingActionsEl.appendChild(renderListItem("Bike endurance", "Easy aerobic ride, posture reset after."));
         }
         trainingActionsEl.appendChild(renderListItem("Posture reset", "10–15 min: chin tucks, scapular work, hip flexor stretch."));
 
@@ -907,9 +1029,13 @@
         ]);
 
         if (baselineResp.data?.length) {
+          const maxWatts = Math.max(...baselineResp.data.map((row) => row.max_watts || 0));
           baselineResp.data.forEach((row) => {
-            const meta = `Peak ${formatNumber(row.max_watts, 0)} W · 1RM ${formatNumber(row.one_rm, 1)} · ${row.total_reps ?? 0} reps`;
-            strengthBaselinesEl.appendChild(renderListItem(row.action_library_name || "Exercise", meta));
+            const ratio = maxWatts ? (row.max_watts || 0) / maxWatts : 0;
+            const tone = ratio > 0.75 ? "good" : ratio > 0.4 ? "warn" : "bad";
+            const status = ratio > 0.75 ? "High power" : ratio > 0.4 ? "Moderate" : "Develop";
+            const percent = ratio * 100;
+            strengthBaselinesEl.appendChild(renderBarItem(row.action_library_name || "Exercise", status, tone, percent));
           });
         } else {
           strengthBaselinesEl.appendChild(renderListItem("No baselines", "Run a strength session to populate."));
@@ -922,8 +1048,10 @@
 
         if (metricsResp.data?.length) {
           metricsResp.data.forEach((row) => {
-            const meta = `Quality ${formatNumber(row.quality_score, 1)} · Comp ${formatNumber((row.completion_ratio ?? 0) * 100, 0)}% · CV ${formatNumber(row.rep_time_cv, 2)}`;
-            strengthLastEl.appendChild(renderListItem(row.action_library_name || "Exercise", meta));
+            const quality = row.quality_score ?? 0;
+            const tone = quality > 70 ? "good" : quality > 45 ? "warn" : "bad";
+            const status = quality > 70 ? "Strong quality" : quality > 45 ? "Needs polish" : "Technique focus";
+            strengthLastEl.appendChild(renderStatusItem(row.action_library_name || "Exercise", status, tone, "Based on last session"));
           });
         } else {
           strengthLastEl.appendChild(renderListItem("No session details", "Run a session to populate."));
@@ -945,16 +1073,21 @@
         nutritionNoteEl.textContent = metrics.nutrition_entries_7d ? `${metrics.nutrition_entries_7d} logs in last 7d` : "No logs yet";
 
         const rows = [
-          { label: "Calories", actual: metrics.calories_avg_day, target: targets.calories_target, unit: "kcal" },
-          { label: "Protein", actual: metrics.protein_avg_day, target: targets.protein_target_g, unit: "g" },
-          { label: "Carbs", actual: metrics.carbs_avg_day, target: targets.carbs_target_g, unit: "g" },
-          { label: "Fat", actual: metrics.fat_avg_day, target: targets.fat_target_g, unit: "g" },
+          { label: "Calories", actual: metrics.calories_avg_day, target: targets.calories_target },
+          { label: "Protein", actual: metrics.protein_avg_day, target: targets.protein_target_g },
+          { label: "Carbs", actual: metrics.carbs_avg_day, target: targets.carbs_target_g },
+          { label: "Fat", actual: metrics.fat_avg_day, target: targets.fat_target_g },
         ];
 
         rows.forEach((row) => {
-          const actualLabel = row.actual != null ? `${formatNumber(row.actual, 1)} ${row.unit}/day` : "—";
-          const targetLabel = row.target != null ? `${formatNumber(row.target, 0)} ${row.unit}` : "—";
-          nutritionTargetsEl.appendChild(renderListItem(row.label, `Actual ${actualLabel} · Target ${targetLabel}`));
+          if (!row.actual || !row.target) {
+            nutritionTargetsEl.appendChild(renderStatusItem(row.label, "No data", "warn", "Needs logging"));
+            return;
+          }
+          const ratio = row.actual / row.target;
+          const tone = ratio >= 0.9 ? "good" : ratio >= 0.6 ? "warn" : "bad";
+          const status = ratio >= 0.9 ? "On target" : ratio >= 0.6 ? "Low" : "Very low";
+          nutritionTargetsEl.appendChild(renderBarItem(row.label, status, tone, Math.min(100, ratio * 100)));
         });
       }
 
@@ -973,14 +1106,27 @@
         const readiness = readinessResp.data || {};
         const plan = planResp.data?.[0];
 
-        recoverySleepEl.textContent = formatSleep(metrics.sleep_seconds);
-        recoverySleepNoteEl.textContent = metrics.sleep_baseline_7d ? `Baseline ${(metrics.sleep_baseline_7d / 3600).toFixed(1)} h` : "Baseline missing";
-        recoveryWeightEl.textContent = metrics.weight_kg ? `${metrics.weight_kg.toFixed(1)} kg` : "—";
-        recoveryWeightNoteEl.textContent = metrics.weight_baseline_7d ? `Baseline ${metrics.weight_baseline_7d.toFixed(1)} kg` : "Baseline missing";
+        const sleepBand = metrics.sleep_seconds && metrics.sleep_baseline_7d
+          ? metrics.sleep_seconds >= metrics.sleep_baseline_7d * 0.9
+            ? { label: "On target", tone: "good" }
+            : metrics.sleep_seconds >= metrics.sleep_baseline_7d * 0.7
+              ? { label: "Low", tone: "warn" }
+              : { label: "Very low", tone: "bad" }
+          : { label: "Unknown", tone: "warn" };
+        recoverySleepEl.textContent = sleepBand.label;
+        recoverySleepNoteEl.textContent = metrics.sleep_baseline_7d ? "Compared to baseline" : "Baseline missing";
 
-        recoveryReadinessEl.appendChild(renderListItem("Readiness score", readiness.readiness_score != null ? `${readiness.readiness_score}/100` : "—"));
-        recoveryReadinessEl.appendChild(renderListItem("Form score", metrics.form_score != null ? formatNumber(metrics.form_score, 1) : "—"));
-        recoveryReadinessEl.appendChild(renderListItem("Fatigue score", metrics.fatigue_score != null ? formatNumber(metrics.fatigue_score, 1) : "—"));
+        const weightBand = metrics.weight_kg && metrics.weight_baseline_7d
+          ? { label: "Tracking", tone: "good" }
+          : { label: "Missing", tone: "warn" };
+        recoveryWeightEl.textContent = weightBand.label;
+        recoveryWeightNoteEl.textContent = metrics.weight_baseline_7d ? "Weight trend active" : "Baseline missing";
+
+        const readinessBand = bandFromScore(readiness.readiness_score ?? metrics.readiness_score);
+        recoveryReadinessEl.appendChild(renderStatusItem("Readiness", readinessBand.label, readinessBand.tone, "Overall state"));
+        const formBandState = formBand(metrics.form_score);
+        recoveryReadinessEl.appendChild(renderStatusItem("Form", formBandState.label, formBandState.tone, "Training freshness"));
+        recoveryReadinessEl.appendChild(renderStatusItem("Fatigue", metrics.fatigue_score != null && metrics.fatigue_score < 40 ? "Low" : "Elevated", metrics.fatigue_score != null && metrics.fatigue_score < 40 ? "good" : "warn", "7‑day load"));
 
         const sleepTarget = plan?.plan_json?.recovery_targets?.sleep_target_hours;
         recoveryTargetsEl.appendChild(renderListItem("Sleep target", sleepTarget ? `${sleepTarget} h` : "—"));

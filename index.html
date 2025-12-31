@@ -30,13 +30,13 @@
         font-family: "Space Grotesk", system-ui, sans-serif;
         background: radial-gradient(circle at top, #111827 0%, #0b1020 52%, #070b16 100%);
         color: var(--text);
-        height: 100vh;
-        overflow: hidden;
+        min-height: 100vh;
+        overflow-y: auto;
       }
       .shell {
-        height: 100vh;
+        min-height: 100vh;
         display: grid;
-        grid-template-rows: auto 1fr;
+        grid-template-rows: auto auto;
       }
       header {
         padding: 24px clamp(20px, 6vw, 60px) 16px;
@@ -103,12 +103,12 @@
         padding: 0 clamp(16px, 5vw, 48px) 20px;
         display: grid;
         gap: 16px;
-        height: 100%;
+        height: auto;
       }
       .report-grid {
         display: grid;
         gap: 16px;
-        height: 100%;
+        height: auto;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         grid-template-rows: repeat(4, minmax(0, 1fr));
         grid-template-areas:

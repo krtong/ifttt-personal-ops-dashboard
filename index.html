@@ -466,6 +466,14 @@
         return date.toLocaleString();
       }
 
+      function isBlank(value) {
+        if (value === null || value === undefined) return true;
+        if (typeof value === "number" && Number.isNaN(value)) return true;
+        if (typeof value === "string" && value.trim() === "—") return true;
+        if (typeof value === "string" && value.trim() === "") return true;
+        return false;
+      }
+
       function clearElement(el) {
         if (el) el.innerHTML = "";
       }
@@ -498,8 +506,23 @@
         });
       }
 
-      function renderEvidence(el, rows) {
+      function renderEvidence(el, rows, { emptyMessage = "No data yet.", hideIfEmpty = false } = {}) {
         clearElement(el);
+        const filtered = (rows || []).filter((row) => !isBlank(row.current));
+        if (!filtered.length) {
+          const panel = el.closest(".subpanel");
+          if (panel && hideIfEmpty) {
+            panel.classList.add("hidden");
+            return false;
+          }
+          const empty = document.createElement("div");
+          empty.className = "muted";
+          empty.textContent = emptyMessage;
+          el.appendChild(empty);
+          return false;
+        }
+        const panel = el.closest(".subpanel");
+        if (panel) panel.classList.remove("hidden");
         const header = document.createElement("div");
         header.className = "evidence-grid";
         header.innerHTML = `
@@ -512,7 +535,7 @@
         el.appendChild(header);
         const grid = document.createElement("div");
         grid.className = "evidence-grid";
-        rows.forEach((row) => {
+        filtered.forEach((row) => {
           const wrapper = document.createElement("div");
           wrapper.className = "evidence-row";
           wrapper.setAttribute("data-metric-importance", row.importance || "5");
@@ -526,6 +549,7 @@
           grid.appendChild(wrapper);
         });
         el.appendChild(grid);
+        return true;
       }
 
       function trendDelta(current, previous, decimals = 1) {
@@ -654,10 +678,13 @@
           { label: "Training minutes", current: formatMinutes(trainingWeek?.total_duration_s), target: "—", window: "7d", trend: trainingPrev ? trendDelta(trainingWeek?.total_duration_s, trainingPrev?.total_duration_s, 0) : "—", importance: 8 },
           { label: "Sleep last", current: formatHours(dailySleep?.duration_s), target: "7.0 h", window: "last sleep", trend: "—", importance: 8 },
           { label: "Energy availability", current: eaWeek?.ea_kcal_per_kg ? formatNumber(eaWeek.ea_kcal_per_kg, 1) : "—", target: ">=45", window: "7d avg", trend: "—", importance: 8 },
-        ]);
+        ], { emptyMessage: "No summary metrics yet.", hideIfEmpty: false });
 
-        const nutritionState = `Intake avg ${formatNumber(macroWeek?.avg_protein_g_day, 0)} g protein/day (${formatNumber(macroWeek?.avg_protein_g_per_kg_day, 2)} g/kg), EA ${formatNumber(eaWeek?.ea_kcal_per_kg, 1)} kcal/kg.`;
-        nutritionStateEl.textContent = nutritionState;
+        if (macroWeek?.avg_protein_g_day != null || eaWeek?.ea_kcal_per_kg != null) {
+          nutritionStateEl.textContent = `Intake avg ${formatNumber(macroWeek?.avg_protein_g_day, 0)} g protein/day (${formatNumber(macroWeek?.avg_protein_g_per_kg_day, 2)} g/kg), EA ${formatNumber(eaWeek?.ea_kcal_per_kg, 1)} kcal/kg.`;
+        } else {
+          nutritionStateEl.textContent = "No nutrition data yet.";
+        }
 
         const nutritionActions = recommendations.filter((rec) => rec.domain === "nutrition" || rec.domain === "recovery").map((rec) => buildAction(rec.action)).filter(Boolean);
         renderActions(nutritionActionsEl, nutritionActions);
@@ -675,25 +702,25 @@
           { label: "Days logged", current: coverageWeek?.nutrition_days_logged ?? "—", target: "6/7", window: "7d", trend: "—", importance: 9 },
           { label: "Meal coverage", current: coverageWeek?.meal_coverage != null ? `${formatNumber(coverageWeek.meal_coverage * 100, 0)}%` : "—", target: ">=70%", window: "7d", trend: "—", importance: 7 },
           { label: "Meals logged", current: coverageWeek?.meals_logged ?? "—", target: coverageWeek?.expected_meals ?? "—", window: "7d", trend: "—", importance: 6 },
-        ]);
+        ], { hideIfEmpty: true });
 
         renderEvidence(nutritionEaEl, [
           { label: "EA kcal/kg", current: eaWeek?.ea_kcal_per_kg != null ? formatNumber(eaWeek.ea_kcal_per_kg, 1) : "—", target: ">=45", window: "7d", trend: "—", importance: 9 },
           { label: "Avg intake", current: eaWeek?.avg_intake_kcal_day != null ? `${formatNumber(eaWeek.avg_intake_kcal_day, 0)} kcal` : "—", target: "—", window: "7d", trend: "—", importance: 6 },
           { label: "Avg exercise", current: eaWeek?.avg_exercise_kcal_day != null ? `${formatNumber(eaWeek.avg_exercise_kcal_day, 0)} kcal` : "—", target: "—", window: "7d", trend: "—", importance: 6 },
-        ]);
+        ], { hideIfEmpty: true });
 
         renderEvidence(nutritionMacrosEl, [
           { label: "Protein g/kg", current: macroWeek?.avg_protein_g_per_kg_day != null ? formatNumber(macroWeek.avg_protein_g_per_kg_day, 2) : "—", target: ">=1.6", window: "7d avg", trend: "—", importance: 9 },
           { label: "Protein meal hit", current: macroWeek?.protein_meal_hit_rate != null ? `${formatNumber(macroWeek.protein_meal_hit_rate * 100, 0)}%` : "—", target: ">=60%", window: "7d", trend: "—", importance: 7 },
           { label: "Fat floor ok", current: macroWeek?.fat_floor_ok_days != null ? `${macroWeek.fat_floor_ok_days}/7` : "—", target: ">=5/7", window: "7d", trend: "—", importance: 6 },
-        ]);
+        ], { hideIfEmpty: true });
 
         renderEvidence(nutritionPeriodEl, [
           { label: "Key days", current: macroWeek?.key_days ?? "—", target: "—", window: "7d", trend: "—", importance: 6 },
           { label: "Carb under days", current: macroWeek?.carb_under_days ?? "—", target: "0", window: "7d", trend: "—", importance: 6 },
           { label: "Avg carbs g", current: macroWeek?.avg_carbs_g_day != null ? formatNumber(macroWeek.avg_carbs_g_day, 0) : "—", target: "—", window: "7d", trend: "—", importance: 5 },
-        ]);
+        ], { hideIfEmpty: true });
 
         const micronutrientRows = (microsRows || []).slice(0, 3).map((row) => ({
           label: row.nutrient_name || "Nutrient",
@@ -703,12 +730,13 @@
           trend: row.sustained_low ? "low" : "—",
           importance: 5,
         }));
-        renderEvidence(nutritionMicrosEl, micronutrientRows.length ? micronutrientRows : [
-          { label: "Micros", current: "—", target: "—", window: "28d", trend: "—", importance: 5 },
-        ]);
+        renderEvidence(nutritionMicrosEl, micronutrientRows, { hideIfEmpty: true });
 
-        const trainingState = `Total ${trainingWeek?.workout_count || 0} sessions, ${formatMinutes(trainingWeek?.total_duration_s)} total, ${formatDistance(trainingWeek?.total_distance_m)} distance.`;
-        trainingStateEl.textContent = trainingState;
+        if (trainingWeek?.workout_count != null || trainingWeek?.total_duration_s != null) {
+          trainingStateEl.textContent = `Total ${trainingWeek?.workout_count || 0} sessions, ${formatMinutes(trainingWeek?.total_duration_s)} total, ${formatDistance(trainingWeek?.total_distance_m)} distance.`;
+        } else {
+          trainingStateEl.textContent = "No training data for the current week.";
+        }
         const trainingActions = [];
         if (plan?.summary_text) {
           trainingActions.push({ title: "Plan", body: plan.summary_text });
@@ -730,10 +758,14 @@
           { label: "Strength sessions", current: trainingWeek?.strength_sessions ?? "—", target: strengthWeek?.planned_sessions ?? "—", window: "7d", trend: strengthPrev ? trendDelta(strengthWeek?.completed_sessions, strengthPrev?.completed_sessions, 0) : "—", importance: 7 },
           { label: "Training load", current: trainingWeek?.training_load_minutes != null ? `${formatNumber(trainingWeek.training_load_minutes, 0)} min` : "—", target: "—", window: "7d", trend: trainingPrev ? trendDelta(trainingWeek?.training_load_minutes, trainingPrev?.training_load_minutes, 0) : "—", importance: 7 },
           { label: "Exercise energy", current: trainingWeek?.exercise_energy_kcal != null ? `${formatNumber(trainingWeek.exercise_energy_kcal, 0)} kcal` : "—", target: "—", window: "7d", trend: "—", importance: 6 },
-        ]);
+        ], { emptyMessage: "No training metrics yet.", hideIfEmpty: false });
 
         const sleepStaleDays = dailySleep?.sleep_end ? daysBetween(new Date(dailySleep.sleep_end), new Date()) : null;
-        sleepStateEl.textContent = `Last sleep ${formatHours(dailySleep?.duration_s)}. Sleep stale ${sleepStaleDays != null ? formatNumber(sleepStaleDays, 1) : "—"} days.`;
+        if (dailySleep?.duration_s != null) {
+          sleepStateEl.textContent = `Last sleep ${formatHours(dailySleep?.duration_s)}. Sleep stale ${sleepStaleDays != null ? formatNumber(sleepStaleDays, 1) : "—"} days.`;
+        } else {
+          sleepStateEl.textContent = "No sleep data yet.";
+        }
         renderActions(sleepActionsEl, [{ title: "Sleep target", body: "Aim for >=7.0 h tonight. Protect bedtime window." }]);
         renderConfidence(sleepConfidenceEl, [
           { label: sleepStaleDays != null ? `Stale ${formatNumber(sleepStaleDays, 1)}d` : "Stale —", warn: sleepStaleDays != null && sleepStaleDays > 1 },
@@ -742,10 +774,13 @@
           { label: "Sleep duration", current: formatHours(dailySleep?.duration_s), target: ">=7.0 h", window: "last sleep", trend: "—", importance: 9 },
           { label: "Sleep window", current: dailySleep?.sleep_start ? formatDate(dailySleep.sleep_start) : "—", target: "—", window: "start", trend: "—", importance: 5 },
           { label: "Sleep end", current: dailySleep?.sleep_end ? formatDate(dailySleep.sleep_end) : "—", target: "—", window: "end", trend: "—", importance: 5 },
-        ]);
+        ], { emptyMessage: "No sleep metrics yet.", hideIfEmpty: false });
 
-        const strengthState = `Completed ${strengthWeek?.completed_sessions ?? 0}/${strengthWeek?.planned_sessions ?? "—"} sessions. Tonnage ${formatNumber(strengthWeek?.tonnage, 0)}.`;
-        strengthStateEl.textContent = strengthState;
+        if (strengthWeek?.completed_sessions != null || strengthWeek?.planned_sessions != null) {
+          strengthStateEl.textContent = `Completed ${strengthWeek?.completed_sessions ?? 0}/${strengthWeek?.planned_sessions ?? "—"} sessions. Tonnage ${formatNumber(strengthWeek?.tonnage, 0)}.`;
+        } else {
+          strengthStateEl.textContent = "No strength data yet.";
+        }
         renderActions(strengthActionsEl, [{ title: "Strength", body: "Execute planned sessions; keep PT blocks consistent." }]);
         renderConfidence(strengthConfidenceEl, [
           { label: `Planned ${strengthWeek?.planned_sessions ?? "—"}`, warn: strengthWeek?.completed_sessions < strengthWeek?.planned_sessions },
@@ -756,10 +791,13 @@
           { label: "Total sets", current: strengthWeek?.total_sets ?? "—", target: "—", window: "7d", trend: strengthPrev ? trendDelta(strengthWeek?.total_sets, strengthPrev?.total_sets, 0) : "—", importance: 6 },
           { label: "Total reps", current: strengthWeek?.total_reps ?? "—", target: "—", window: "7d", trend: strengthPrev ? trendDelta(strengthWeek?.total_reps, strengthPrev?.total_reps, 0) : "—", importance: 6 },
           { label: "Tonnage", current: strengthWeek?.tonnage != null ? formatNumber(strengthWeek.tonnage, 0) : "—", target: "—", window: "7d", trend: strengthPrev ? trendDelta(strengthWeek?.tonnage, strengthPrev?.tonnage, 0) : "—", importance: 6 },
-        ]);
+        ], { emptyMessage: "No strength metrics yet.", hideIfEmpty: false });
 
-        const bodyState = `Weight ${formatNumber(dailyBody?.weight_kg, 1)} kg, BF ${formatNumber(dailyBody?.body_fat_pct, 1)}%, FFM ${formatNumber(dailyBody?.ffm_kg, 1)} kg.`;
-        bodyStateEl.textContent = bodyState;
+        if (dailyBody?.weight_kg != null || dailyBody?.body_fat_pct != null) {
+          bodyStateEl.textContent = `Weight ${formatNumber(dailyBody?.weight_kg, 1)} kg, BF ${formatNumber(dailyBody?.body_fat_pct, 1)}%, FFM ${formatNumber(dailyBody?.ffm_kg, 1)} kg.`;
+        } else {
+          bodyStateEl.textContent = "No body comp data yet.";
+        }
         renderActions(bodyActionsEl, [{ title: "Weigh-in", body: dailyBody?.is_stale ? "Weigh in to refresh body metrics." : "Next weigh-in per schedule." }]);
         renderConfidence(bodyConfidenceEl, [
           { label: dailyBody?.stale_days != null ? `Stale ${formatNumber(dailyBody.stale_days, 1)}d` : "Stale —", warn: dailyBody?.stale_days > 7 },
@@ -769,7 +807,7 @@
           { label: "Body fat", current: formatNumber(dailyBody?.body_fat_pct, 1), target: "—", window: "latest", trend: dailyBody?.slope_28d_pct_per_week != null ? `${formatNumber(dailyBody.slope_28d_pct_per_week, 2)} %/wk` : "—", importance: 6 },
           { label: "FFM", current: formatNumber(dailyBody?.ffm_kg, 1), target: "—", window: "latest", trend: "—", importance: 6 },
           { label: "Volatility", current: formatNumber(dailyBody?.volatility_kg, 2), target: "—", window: "28d", trend: dailyBody?.trend_noise ? "noise" : "—", importance: 5 },
-        ]);
+        ], { emptyMessage: "No body metrics yet.", hideIfEmpty: false });
       }
 
       async function init() {

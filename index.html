@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Personal Ops Dashboard</title>
+    <title>Personal Ops Report</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -11,17 +11,15 @@
       :root {
         color-scheme: dark;
         --bg: #0b1020;
-        --panel: rgba(15, 23, 42, 0.92);
-        --panel-strong: rgba(17, 25, 44, 0.98);
-        --card: rgba(12, 18, 34, 0.75);
+        --panel: rgba(13, 19, 35, 0.95);
+        --panel-strong: rgba(12, 18, 34, 0.95);
+        --card: rgba(9, 14, 28, 0.7);
         --text: #f8fafc;
-        --muted: #94a3b8;
+        --muted: #9aa6bd;
         --accent: #38bdf8;
         --accent-strong: #0ea5e9;
-        --warn: #f97316;
-        --danger: #f43f5e;
-        --success: #22c55e;
-        --border: rgba(59, 78, 119, 0.5);
+        --border: rgba(59, 78, 119, 0.45);
+        --danger: #f97316;
       }
       * {
         box-sizing: border-box;
@@ -30,205 +28,45 @@
       }
       body {
         font-family: "Space Grotesk", system-ui, sans-serif;
-        background: radial-gradient(circle at top, #111827 0%, #0b1020 50%, #070b16 100%);
+        background: radial-gradient(circle at top, #111827 0%, #0b1020 52%, #070b16 100%);
         color: var(--text);
-        min-height: 100vh;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .shell {
+        height: 100vh;
+        display: grid;
+        grid-template-rows: auto 1fr;
       }
       header {
-        padding: 28px clamp(20px, 6vw, 60px) 14px;
+        padding: 24px clamp(20px, 6vw, 60px) 16px;
         display: flex;
-        flex-direction: column;
-        gap: 12px;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 24px;
       }
       .title {
-        font-size: clamp(28px, 5vw, 44px);
+        font-size: clamp(26px, 4vw, 40px);
         font-weight: 700;
         letter-spacing: -0.02em;
       }
       .subtitle {
         color: var(--muted);
-        font-size: 14px;
-      }
-      .tabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        padding: 0 clamp(20px, 6vw, 60px) 20px;
-      }
-      .tab {
-        border: 1px solid var(--border);
-        background: rgba(15, 23, 42, 0.6);
-        color: var(--muted);
-        padding: 8px 16px;
-        border-radius: 999px;
         font-size: 13px;
-        cursor: pointer;
-        transition: 0.2s ease;
-      }
-      .tab.active {
-        border-color: rgba(56, 189, 248, 0.7);
-        color: var(--text);
-        background: rgba(14, 165, 233, 0.2);
-      }
-      main {
-        padding: 0 clamp(20px, 6vw, 60px) 60px;
-        display: grid;
-        gap: 24px;
-      }
-      .panel {
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 20px;
-        padding: 24px;
-        display: grid;
-        gap: 16px;
-      }
-      .panel.hidden {
-        display: none;
-      }
-      .panel-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 12px;
-      }
-      .panel-title {
-        font-size: 18px;
-        font-weight: 600;
-      }
-      .panel-meta {
-        color: var(--muted);
-        font-size: 12px;
-      }
-      .grid {
-        display: grid;
-        gap: 16px;
-      }
-      .grid.cols-2 {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      }
-      .grid.cols-3 {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      }
-      .card {
-        background: var(--card);
-        border: 1px solid rgba(59, 78, 119, 0.4);
-        border-radius: 16px;
-        padding: 16px;
-        display: grid;
-        gap: 8px;
-      }
-      .card-title {
-        font-size: 13px;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-      }
-      .card-value {
-        font-size: 24px;
-        font-weight: 600;
-      }
-      .pill {
-        display: inline-flex;
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        border: 1px solid rgba(56, 189, 248, 0.4);
-        color: var(--accent);
-      }
-      .pill.warn {
-        border-color: rgba(249, 115, 22, 0.6);
-        color: #fca5a5;
-      }
-      .pill.good {
-        border-color: rgba(34, 197, 94, 0.5);
-        color: #86efac;
-      }
-      .list {
-        display: grid;
-        gap: 10px;
-      }
-      .list-item {
-        border-radius: 12px;
-        border: 1px solid rgba(42, 51, 82, 0.6);
-        padding: 12px;
-        background: rgba(9, 13, 26, 0.6);
-        display: grid;
-        gap: 6px;
-      }
-      .list-title {
-        font-weight: 600;
-      }
-      .list-meta {
-        color: var(--muted);
-        font-size: 12px;
-      }
-      .metric-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 8px;
-        font-size: 13px;
-        color: var(--muted);
-      }
-      .metric-row strong {
-        color: var(--text);
-        font-weight: 600;
-      }
-      .status-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-size: 11px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        border: 1px solid rgba(56, 189, 248, 0.35);
-        color: var(--accent);
-        background: rgba(14, 165, 233, 0.1);
-      }
-      .status-chip.good {
-        border-color: rgba(34, 197, 94, 0.45);
-        color: #86efac;
-        background: rgba(34, 197, 94, 0.12);
-      }
-      .status-chip.warn {
-        border-color: rgba(249, 115, 22, 0.55);
-        color: #fdba74;
-        background: rgba(249, 115, 22, 0.15);
-      }
-      .status-chip.bad {
-        border-color: rgba(244, 63, 94, 0.55);
-        color: #fda4af;
-        background: rgba(244, 63, 94, 0.15);
-      }
-      .bar {
-        width: 100%;
-        height: 6px;
-        border-radius: 999px;
-        background: rgba(30, 41, 59, 0.8);
-        overflow: hidden;
         margin-top: 6px;
       }
-      .bar-fill {
-        height: 100%;
-        border-radius: inherit;
-        background: var(--accent);
+      .header-meta {
+        text-align: right;
+        font-size: 12px;
+        color: var(--muted);
       }
-      .bar-fill.good {
-        background: var(--success);
-      }
-      .bar-fill.warn {
-        background: var(--warn);
-      }
-      .bar-fill.bad {
-        background: var(--danger);
+      .header-meta strong {
+        color: var(--text);
+        font-weight: 600;
       }
       .auth {
         max-width: 420px;
-        margin: 30px auto;
+        margin: 40px auto;
         display: grid;
         gap: 12px;
         padding: 24px;
@@ -261,265 +99,280 @@
         color: var(--muted);
         font-size: 12px;
       }
-      .highlight {
-        color: var(--accent);
+      main.report {
+        padding: 0 clamp(16px, 5vw, 48px) 20px;
+        display: grid;
+        gap: 16px;
+        height: 100%;
       }
-      .section-divider {
-        border-top: 1px solid rgba(51, 65, 85, 0.5);
-        margin-top: 8px;
+      .report-grid {
+        display: grid;
+        gap: 16px;
+        height: 100%;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+        grid-template-areas:
+          "summary summary nutrition nutrition"
+          "training training nutrition nutrition"
+          "sleep sleep strength strength"
+          "body body strength strength";
+      }
+      .section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 16px;
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        gap: 12px;
+        overflow: hidden;
+      }
+      .section.summary { grid-area: summary; }
+      .section.training { grid-area: training; }
+      .section.nutrition { grid-area: nutrition; }
+      .section.sleep { grid-area: sleep; }
+      .section.strength { grid-area: strength; }
+      .section.body { grid-area: body; }
+
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .section-title {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .section-meta {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .section-state {
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--text);
+      }
+      .hero-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 8px;
+      }
+      .hero-action {
+        background: var(--card);
+        border: 1px solid rgba(59, 78, 119, 0.4);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .hero-action strong {
+        display: block;
+        font-size: 12px;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+      .confidence {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: 11px;
+      }
+      .confidence .chip {
+        border-radius: 999px;
+        padding: 4px 10px;
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        color: var(--accent);
+        background: rgba(14, 165, 233, 0.12);
+      }
+      .confidence .chip.warn {
+        border-color: rgba(249, 115, 22, 0.55);
+        color: #fcd34d;
+        background: rgba(249, 115, 22, 0.12);
+      }
+      .evidence {
+        display: grid;
+        gap: 10px;
+        overflow: hidden;
+      }
+      .evidence-grid {
+        display: grid;
+        gap: 4px;
+        grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .evidence-grid .head {
+        color: var(--text);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .evidence-row {
+        display: contents;
+      }
+      .evidence-row span {
+        padding: 4px 0;
+        border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+      }
+      .evidence-row strong {
+        color: var(--text);
+      }
+      .subpanel {
+        border: 1px solid rgba(59, 78, 119, 0.35);
+        border-radius: 14px;
+        padding: 8px 10px;
+        display: grid;
+        gap: 6px;
+        background: rgba(9, 14, 28, 0.7);
+      }
+      .subpanel-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+      }
+      .report-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0 0;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .hidden {
+        display: none;
       }
     </style>
   </head>
   <body>
-    <header>
-      <div class="title">Personal Ops</div>
-      <div class="subtitle">Triathlon readiness, posture repair, and strength balance.</div>
-    </header>
+    <div class="shell">
+      <header>
+        <div>
+          <div class="title">Personal Ops - Single Page Report</div>
+          <div class="subtitle">Evidence-first report for training, fuel, and recovery.</div>
+        </div>
+        <div class="header-meta">
+          <div id="report-updated">Updated —</div>
+          <div id="race-countdown">Race —</div>
+        </div>
+      </header>
 
-    <div class="tabs" id="view-tabs"></div>
+      <div id="auth" class="auth">
+        <div class="section-title">Sign in</div>
+        <input id="email" type="email" placeholder="Email" />
+        <input id="password" type="password" placeholder="Password" />
+        <button id="login" class="btn">Sign in</button>
+        <div id="auth-status" class="muted"></div>
+      </div>
 
-    <div id="auth" class="auth">
-      <div class="panel-title">Sign in</div>
-      <input id="email" type="email" placeholder="Email" />
-      <input id="password" type="password" placeholder="Password" />
-      <button id="login" class="btn">Sign in</button>
-      <div id="auth-status" class="muted"></div>
+      <main id="content" class="report hidden">
+        <div class="report-grid">
+          <section class="section summary" data-importance="10">
+            <div class="section-head">
+              <div class="section-title">Operational summary</div>
+              <div class="section-meta" id="summary-updated">—</div>
+            </div>
+            <div class="section-state" id="summary-state">—</div>
+            <div class="hero-actions" id="summary-actions"></div>
+            <div class="confidence" id="summary-confidence"></div>
+            <div class="evidence">
+              <div class="evidence-grid" id="summary-evidence"></div>
+            </div>
+          </section>
+
+          <section class="section nutrition" data-importance="10">
+            <div class="section-head">
+              <div class="section-title">Nutrition + fuel</div>
+              <div class="section-meta" id="nutrition-updated">—</div>
+            </div>
+            <div class="section-state" id="nutrition-state">—</div>
+            <div class="hero-actions" id="nutrition-actions"></div>
+            <div class="confidence" id="nutrition-confidence"></div>
+            <div class="evidence">
+              <div class="subpanel">
+                <div class="subpanel-title">Coverage</div>
+                <div class="evidence-grid" id="nutrition-coverage"></div>
+              </div>
+              <div class="subpanel">
+                <div class="subpanel-title">Energy availability</div>
+                <div class="evidence-grid" id="nutrition-ea"></div>
+              </div>
+              <div class="subpanel">
+                <div class="subpanel-title">Macros</div>
+                <div class="evidence-grid" id="nutrition-macros"></div>
+              </div>
+              <div class="subpanel">
+                <div class="subpanel-title">Periodization</div>
+                <div class="evidence-grid" id="nutrition-period"></div>
+              </div>
+              <div class="subpanel">
+                <div class="subpanel-title">Micronutrients</div>
+                <div class="evidence-grid" id="nutrition-micros"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section training" data-importance="9">
+            <div class="section-head">
+              <div class="section-title">Training plan + load</div>
+              <div class="section-meta" id="training-updated">—</div>
+            </div>
+            <div class="section-state" id="training-state">—</div>
+            <div class="hero-actions" id="training-actions"></div>
+            <div class="confidence" id="training-confidence"></div>
+            <div class="evidence">
+              <div class="evidence-grid" id="training-evidence"></div>
+            </div>
+          </section>
+
+          <section class="section sleep" data-importance="9">
+            <div class="section-head">
+              <div class="section-title">Sleep + recovery</div>
+              <div class="section-meta" id="sleep-updated">—</div>
+            </div>
+            <div class="section-state" id="sleep-state">—</div>
+            <div class="hero-actions" id="sleep-actions"></div>
+            <div class="confidence" id="sleep-confidence"></div>
+            <div class="evidence">
+              <div class="evidence-grid" id="sleep-evidence"></div>
+            </div>
+          </section>
+
+          <section class="section strength" data-importance="8">
+            <div class="section-head">
+              <div class="section-title">Strength + PT</div>
+              <div class="section-meta" id="strength-updated">—</div>
+            </div>
+            <div class="section-state" id="strength-state">—</div>
+            <div class="hero-actions" id="strength-actions"></div>
+            <div class="confidence" id="strength-confidence"></div>
+            <div class="evidence">
+              <div class="evidence-grid" id="strength-evidence"></div>
+            </div>
+          </section>
+
+          <section class="section body" data-importance="8">
+            <div class="section-head">
+              <div class="section-title">Body comp + trend</div>
+              <div class="section-meta" id="body-updated">—</div>
+            </div>
+            <div class="section-state" id="body-state">—</div>
+            <div class="hero-actions" id="body-actions"></div>
+            <div class="confidence" id="body-confidence"></div>
+            <div class="evidence">
+              <div class="evidence-grid" id="body-evidence"></div>
+            </div>
+          </section>
+        </div>
+        <div class="report-footer">
+          <button id="logout" class="btn secondary">Sign out</button>
+          <div id="report-window">—</div>
+        </div>
+      </main>
     </div>
-
-    <main id="content" class="hidden">
-      <section id="overview-view" class="panel">
-        <div class="panel-header">
-          <div class="panel-title">Overview</div>
-          <div class="panel-meta" id="overview-updated">—</div>
-        </div>
-        <div class="grid cols-2" id="overview-metrics"></div>
-        <div class="grid cols-2">
-          <div class="card">
-            <div class="card-title">Readiness</div>
-            <div id="overview-readiness" class="card-value">—</div>
-            <div id="overview-readiness-note" class="muted">—</div>
-          </div>
-          <div class="card">
-            <div class="card-title">Next session</div>
-            <div id="overview-next" class="card-value">—</div>
-            <div id="overview-next-note" class="muted">—</div>
-          </div>
-        </div>
-        <div class="grid cols-3">
-          <div class="card">
-            <div class="card-title">Form snapshot</div>
-            <div id="overview-forms" class="list"></div>
-          </div>
-          <div class="card">
-            <div class="card-title">Run readiness</div>
-            <div id="overview-run" class="list"></div>
-          </div>
-          <div class="card">
-            <div class="card-title">Discipline balance</div>
-            <div id="overview-balance" class="list"></div>
-          </div>
-        </div>
-        <div class="grid cols-2">
-          <div class="card">
-            <div class="card-title">Today’s actions</div>
-            <div id="overview-actions" class="list"></div>
-          </div>
-          <div class="card">
-            <div class="card-title">Risks & blockers</div>
-            <div id="overview-risks" class="list"></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Plan summary</div>
-          <div id="overview-plan" class="list"></div>
-        </div>
-        <div id="overview-status" class="muted"></div>
-      </section>
-
-      <section id="training-view" class="panel hidden">
-        <div class="panel-header">
-          <div class="panel-title">Training plan</div>
-          <div class="panel-meta" id="training-range">—</div>
-        </div>
-        <div class="grid cols-2">
-          <div class="card">
-            <div class="card-title">Weekly focus</div>
-            <div id="training-template" class="list"></div>
-          </div>
-          <div class="card">
-            <div class="card-title">Recent sessions</div>
-            <div id="training-recent" class="list"></div>
-          </div>
-        </div>
-        <div class="grid cols-2">
-          <div class="card">
-            <div class="card-title">Run priority</div>
-            <div id="training-run" class="list"></div>
-          </div>
-          <div class="card">
-            <div class="card-title">Run development</div>
-            <div class="list">
-              <div class="list-item">
-                <div class="list-title">Form + durability</div>
-                <div class="list-meta">Short easy runs, drills, and tibialis work are priority.</div>
-              </div>
-              <div class="list-item">
-                <div class="list-title">Stride economy</div>
-                <div class="list-meta">Add 4–6 strides after easy runs (fast, relaxed).</div>
-              </div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">Bike & swim strengths</div>
-            <div class="list">
-              <div class="list-item">
-                <div class="list-title">Swim consistency</div>
-                <div class="list-meta">Maintain 1,000 yd/day base with technique focus.</div>
-              </div>
-              <div class="list-item">
-                <div class="list-title">Bike endurance</div>
-                <div class="list-meta">Long aerobic ride + posture reset after riding.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="grid cols-2">
-          <div class="card">
-            <div class="card-title">Form snapshot</div>
-            <div id="training-forms" class="list"></div>
-          </div>
-          <div class="card">
-            <div class="card-title">Plan blocks</div>
-            <div id="training-blocks" class="list"></div>
-          </div>
-        </div>
-        <div class="grid cols-2">
-          <div class="card">
-            <div class="card-title">Action pack (today)</div>
-            <div id="training-actions" class="list"></div>
-          </div>
-          <div class="card">
-            <div class="card-title">Weakest link</div>
-            <div id="training-weakest" class="list"></div>
-          </div>
-        </div>
-      </section>
-
-      <section id="strength-view" class="panel hidden">
-        <div class="panel-header">
-          <div class="panel-title">Strength & posture</div>
-          <div class="panel-meta" id="strength-note">—</div>
-        </div>
-        <div class="grid cols-2">
-          <div class="card">
-            <div class="card-title">Strength baselines</div>
-            <div id="strength-baselines" class="list"></div>
-          </div>
-          <div class="card">
-            <div class="card-title">Last session breakdown</div>
-            <div id="strength-last" class="list"></div>
-          </div>
-        </div>
-        <div class="grid cols-2">
-          <div class="card">
-            <div class="card-title">Posture reset (daily 10–15m)</div>
-            <div class="list">
-              <div class="list-item">
-                <div class="list-title">Forward head + rounded shoulders</div>
-                <div class="list-meta">Chin tucks · Scap retraction · Thoracic extension · Pec stretch</div>
-              </div>
-              <div class="list-item">
-                <div class="list-title">Anterior pelvic tilt</div>
-                <div class="list-meta">Glute bridges · Dead bug · Hip flexor stretch · Hamstring hinge</div>
-              </div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">Run durability (tibias + feet)</div>
-            <div class="list">
-              <div class="list-item">
-                <div class="list-title">Tibialis raises</div>
-                <div class="list-meta">2–3 sets, controlled tempo.</div>
-              </div>
-              <div class="list-item">
-                <div class="list-title">Calf + foot intrinsics</div>
-                <div class="list-meta">Standing calf raises + short-foot drills.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Face & neck routine (5–8m)</div>
-          <div class="list">
-            <div class="list-item">
-              <div class="list-title">Neck isometrics</div>
-              <div class="list-meta">Front/side/back holds · 10–15s each.</div>
-            </div>
-            <div class="list-item">
-              <div class="list-title">Jawline & neckline</div>
-              <div class="list-meta">Light resistance + posture awareness, avoid jaw tension.</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="nutrition-view" class="panel hidden">
-        <div class="panel-header">
-          <div class="panel-title">Nutrition</div>
-          <div class="panel-meta" id="nutrition-note">—</div>
-        </div>
-        <div class="grid cols-2">
-          <div class="card">
-            <div class="card-title">Targets vs actual</div>
-            <div id="nutrition-targets" class="list"></div>
-          </div>
-          <div class="card">
-            <div class="card-title">Guidance</div>
-            <div class="list">
-              <div class="list-item">
-                <div class="list-title">Protein anchor</div>
-                <div class="list-meta">Hit target daily to support recovery + posture work.</div>
-              </div>
-              <div class="list-item">
-                <div class="list-title">Carb timing</div>
-                <div class="list-meta">Prioritize carbs before/after run sessions.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="recovery-view" class="panel hidden">
-        <div class="panel-header">
-          <div class="panel-title">Recovery</div>
-          <div class="panel-meta" id="recovery-note">—</div>
-        </div>
-        <div class="grid cols-2">
-          <div class="card">
-            <div class="card-title">Sleep</div>
-            <div id="recovery-sleep" class="card-value">—</div>
-            <div id="recovery-sleep-note" class="muted">—</div>
-          </div>
-          <div class="card">
-            <div class="card-title">Weight</div>
-            <div id="recovery-weight" class="card-value">—</div>
-            <div id="recovery-weight-note" class="muted">—</div>
-          </div>
-        </div>
-        <div class="grid cols-2">
-          <div class="card">
-            <div class="card-title">Readiness + form</div>
-            <div id="recovery-readiness" class="list"></div>
-          </div>
-          <div class="card">
-            <div class="card-title">Recovery targets</div>
-            <div id="recovery-targets" class="list"></div>
-          </div>
-        </div>
-      </section>
-
-      <button id="logout" class="btn secondary">Sign out</button>
-    </main>
 
     <script type="module">
       import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -528,91 +381,56 @@
       const SUPABASE_ANON_KEY = "sb_publishable_E8-dvNNh5V3VQLAcK-xqiQ_dLEu1Bsh";
       const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      const viewTabsEl = document.getElementById("view-tabs");
       const authEl = document.getElementById("auth");
       const authStatusEl = document.getElementById("auth-status");
       const contentEl = document.getElementById("content");
       const emailEl = document.getElementById("email");
       const passwordEl = document.getElementById("password");
+      const reportUpdatedEl = document.getElementById("report-updated");
+      const reportWindowEl = document.getElementById("report-window");
+      const raceCountdownEl = document.getElementById("race-countdown");
 
-      const VIEW_DEFS = {
-        overview: { label: "Overview" },
-        training: { label: "Training" },
-        strength: { label: "Strength/PT" },
-        nutrition: { label: "Nutrition" },
-        recovery: { label: "Recovery" },
-      };
-      let currentView = "overview";
+      const summaryStateEl = document.getElementById("summary-state");
+      const summaryActionsEl = document.getElementById("summary-actions");
+      const summaryConfidenceEl = document.getElementById("summary-confidence");
+      const summaryEvidenceEl = document.getElementById("summary-evidence");
+      const summaryUpdatedEl = document.getElementById("summary-updated");
 
-      const overviewMetricsEl = document.getElementById("overview-metrics");
-      const overviewUpdatedEl = document.getElementById("overview-updated");
-      const overviewReadinessEl = document.getElementById("overview-readiness");
-      const overviewReadinessNoteEl = document.getElementById("overview-readiness-note");
-      const overviewNextEl = document.getElementById("overview-next");
-      const overviewNextNoteEl = document.getElementById("overview-next-note");
-      const overviewPlanEl = document.getElementById("overview-plan");
-      const overviewActionsEl = document.getElementById("overview-actions");
-      const overviewRisksEl = document.getElementById("overview-risks");
-      const overviewStatusEl = document.getElementById("overview-status");
-      const overviewFormsEl = document.getElementById("overview-forms");
-      const overviewRunEl = document.getElementById("overview-run");
-      const overviewBalanceEl = document.getElementById("overview-balance");
+      const nutritionStateEl = document.getElementById("nutrition-state");
+      const nutritionActionsEl = document.getElementById("nutrition-actions");
+      const nutritionConfidenceEl = document.getElementById("nutrition-confidence");
+      const nutritionCoverageEl = document.getElementById("nutrition-coverage");
+      const nutritionEaEl = document.getElementById("nutrition-ea");
+      const nutritionMacrosEl = document.getElementById("nutrition-macros");
+      const nutritionPeriodEl = document.getElementById("nutrition-period");
+      const nutritionMicrosEl = document.getElementById("nutrition-micros");
+      const nutritionUpdatedEl = document.getElementById("nutrition-updated");
 
-      const trainingTemplateEl = document.getElementById("training-template");
-      const trainingRecentEl = document.getElementById("training-recent");
-      const trainingRangeEl = document.getElementById("training-range");
-      const trainingRunEl = document.getElementById("training-run");
+      const trainingStateEl = document.getElementById("training-state");
       const trainingActionsEl = document.getElementById("training-actions");
-      const trainingWeakestEl = document.getElementById("training-weakest");
-      const trainingFormsEl = document.getElementById("training-forms");
-      const trainingBlocksEl = document.getElementById("training-blocks");
+      const trainingConfidenceEl = document.getElementById("training-confidence");
+      const trainingEvidenceEl = document.getElementById("training-evidence");
+      const trainingUpdatedEl = document.getElementById("training-updated");
 
-      const strengthNoteEl = document.getElementById("strength-note");
-      const strengthBaselinesEl = document.getElementById("strength-baselines");
-      const strengthLastEl = document.getElementById("strength-last");
+      const sleepStateEl = document.getElementById("sleep-state");
+      const sleepActionsEl = document.getElementById("sleep-actions");
+      const sleepConfidenceEl = document.getElementById("sleep-confidence");
+      const sleepEvidenceEl = document.getElementById("sleep-evidence");
+      const sleepUpdatedEl = document.getElementById("sleep-updated");
 
-      const nutritionNoteEl = document.getElementById("nutrition-note");
-      const nutritionTargetsEl = document.getElementById("nutrition-targets");
+      const strengthStateEl = document.getElementById("strength-state");
+      const strengthActionsEl = document.getElementById("strength-actions");
+      const strengthConfidenceEl = document.getElementById("strength-confidence");
+      const strengthEvidenceEl = document.getElementById("strength-evidence");
+      const strengthUpdatedEl = document.getElementById("strength-updated");
 
-      const recoveryNoteEl = document.getElementById("recovery-note");
-      const recoverySleepEl = document.getElementById("recovery-sleep");
-      const recoverySleepNoteEl = document.getElementById("recovery-sleep-note");
-      const recoveryWeightEl = document.getElementById("recovery-weight");
-      const recoveryWeightNoteEl = document.getElementById("recovery-weight-note");
-      const recoveryReadinessEl = document.getElementById("recovery-readiness");
-      const recoveryTargetsEl = document.getElementById("recovery-targets");
+      const bodyStateEl = document.getElementById("body-state");
+      const bodyActionsEl = document.getElementById("body-actions");
+      const bodyConfidenceEl = document.getElementById("body-confidence");
+      const bodyEvidenceEl = document.getElementById("body-evidence");
+      const bodyUpdatedEl = document.getElementById("body-updated");
 
-      const WEEK_TEMPLATE = [
-        { day: "Sunday", focus: "Rest + mobility", note: "Light movement, posture reset." },
-        { day: "Monday", focus: "Swim technique", note: "1,000–1,600 yd + posture." },
-        { day: "Tuesday", focus: "Strength + tibias", note: "Speediance strength + tibialis work." },
-        { day: "Wednesday", focus: "Easy run + drills", note: "Short run + strides, KB optional." },
-        { day: "Thursday", focus: "Bike endurance", note: "Long ride + posture reset." },
-        { day: "Friday", focus: "Strength + short run", note: "Single-leg + trunk + easy run." },
-        { day: "Saturday", focus: "Long run / brick", note: "Long run or bike→run brick." },
-      ];
-
-      function renderTabs() {
-        viewTabsEl.innerHTML = "";
-        Object.entries(VIEW_DEFS).forEach(([id, view]) => {
-          const btn = document.createElement("button");
-          btn.className = "tab" + (currentView === id ? " active" : "");
-          btn.textContent = view.label;
-          btn.addEventListener("click", () => {
-            currentView = id;
-            setActiveView();
-            loadView();
-          });
-          viewTabsEl.appendChild(btn);
-        });
-      }
-
-      function setActiveView() {
-        document.querySelectorAll("main > section").forEach((section) => {
-          section.classList.toggle("hidden", !section.id.startsWith(currentView));
-        });
-        renderTabs();
-      }
+      const RACE_DATE = new Date("2026-06-06T00:00:00-07:00");
 
       function formatNumber(value, decimals = 0) {
         if (value === null || value === undefined || Number.isNaN(value)) return "—";
@@ -620,13 +438,25 @@
       }
 
       function formatMinutes(seconds) {
-        if (!seconds) return "—";
-        return `${Math.round(seconds / 60)} min`;
+        if (seconds === null || seconds === undefined) return "—";
+        return `${Math.round(Number(seconds) / 60)} min`;
+      }
+
+      function formatHours(seconds) {
+        if (seconds === null || seconds === undefined) return "—";
+        return `${(Number(seconds) / 3600).toFixed(1)} h`;
       }
 
       function formatDistance(meters) {
-        if (!meters) return "—";
-        return `${(meters / 1609.34).toFixed(1)} mi`;
+        if (meters === null || meters === undefined) return "—";
+        return `${(Number(meters) / 1609.34).toFixed(1)} mi`;
+      }
+
+      function formatDate(value) {
+        if (!value) return "—";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "—";
+        return date.toLocaleDateString();
       }
 
       function formatTimestamp(value) {
@@ -636,544 +466,342 @@
         return date.toLocaleString();
       }
 
-      function formatSleep(seconds) {
-        if (!seconds) return "—";
-        return `${(seconds / 3600).toFixed(1)} h`;
+      function clearElement(el) {
+        if (el) el.innerHTML = "";
       }
 
-      function renderListItem(title, meta) {
-        const item = document.createElement("div");
-        item.className = "list-item";
-        item.innerHTML = `<div class="list-title">${title}</div><div class="list-meta">${meta}</div>`;
-        return item;
-      }
-
-      function pushAction(listEl, title, meta) {
-        if (!listEl) return;
-        listEl.appendChild(renderListItem(title, meta));
-      }
-
-      function renderMetricRow(label, value) {
-        const row = document.createElement("div");
-        row.className = "metric-row";
-        row.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
-        return row;
-      }
-
-      function renderStatusItem(title, status, tone = "good", meta = "") {
-        const item = document.createElement("div");
-        item.className = "list-item";
-        const metaHtml = meta ? `<div class="list-meta">${meta}</div>` : "";
-        item.innerHTML = `<div class="list-title">${title}</div>${metaHtml}`;
-        const chip = document.createElement("div");
-        chip.className = `status-chip ${tone}`;
-        chip.textContent = status;
-        item.appendChild(chip);
-        return item;
-      }
-
-      function renderBarItem(title, status, tone = "good", percent = 60, meta = "") {
-        const item = document.createElement("div");
-        item.className = "list-item";
-        const metaHtml = meta ? `<div class="list-meta">${meta}</div>` : "";
-        item.innerHTML = `<div class="list-title">${title}</div>${metaHtml}`;
-        const chip = document.createElement("div");
-        chip.className = `status-chip ${tone}`;
-        chip.textContent = status;
-        item.appendChild(chip);
-        const bar = document.createElement("div");
-        bar.className = "bar";
-        const fill = document.createElement("div");
-        fill.className = `bar-fill ${tone}`;
-        fill.style.width = `${Math.max(5, Math.min(percent, 100))}%`;
-        bar.appendChild(fill);
-        item.appendChild(bar);
-        return item;
-      }
-
-      function bandFromScore(score) {
-        if (score == null || Number.isNaN(score)) {
-          return { label: "Unknown", tone: "warn" };
+      function renderActions(el, actions) {
+        clearElement(el);
+        if (!actions || !actions.length) {
+          const item = document.createElement("div");
+          item.className = "hero-action";
+          item.innerHTML = `<strong>Actions</strong>No changes triggered for this domain.`;
+          el.appendChild(item);
+          return;
         }
-        if (score >= 70) return { label: "Green", tone: "good" };
-        if (score >= 50) return { label: "Yellow", tone: "warn" };
-        return { label: "Red", tone: "bad" };
-      }
-
-      function formBand(value) {
-        if (value == null || Number.isNaN(value)) return { label: "Unknown", tone: "warn" };
-        if (value >= 8) return { label: "Fresh", tone: "good" };
-        if (value >= -4) return { label: "Steady", tone: "warn" };
-        return { label: "Loaded", tone: "bad" };
-      }
-
-      function frequencyBand(count) {
-        if (count >= 2) return { label: "On track", tone: "good", percent: 90 };
-        if (count === 1) return { label: "Light", tone: "warn", percent: 55 };
-        return { label: "Missing", tone: "bad", percent: 15 };
-      }
-
-      function durationBand(minutes) {
-        if (!minutes) return "Flexible";
-        if (minutes <= 20) return "Short";
-        if (minutes <= 40) return "Medium";
-        if (minutes <= 60) return "Long";
-        return "Extended";
-      }
-
-      async function fetchStravaStats(days = 7) {
-        const since = new Date();
-        since.setDate(since.getDate() - days);
-        const resp = await supabase
-          .from("pos_events")
-          .select("event_timestamp,payload")
-          .eq("source", "strava")
-          .eq("event_type", "activity")
-          .gte("event_timestamp", since.toISOString());
-        const stats = {
-          runCount: 0,
-          swimCount: 0,
-          rideCount: 0,
-          lastRun: null,
-          lastSwim: null,
-          lastRide: null,
-        };
-        if (!resp.data) return stats;
-        resp.data.forEach((row) => {
-          const payload = row.payload || {};
-          const type = String(payload.type ?? payload.sport_type ?? "").toLowerCase();
-          if (type.includes("run")) {
-            stats.runCount += 1;
-            if (!stats.lastRun) stats.lastRun = row.event_timestamp;
-          } else if (type.includes("swim")) {
-            stats.swimCount += 1;
-            if (!stats.lastSwim) stats.lastSwim = row.event_timestamp;
-          } else if (type.includes("ride") || type.includes("bike") || type.includes("cycle")) {
-            stats.rideCount += 1;
-            if (!stats.lastRide) stats.lastRide = row.event_timestamp;
-          }
+        actions.slice(0, 5).forEach((action) => {
+          const item = document.createElement("div");
+          item.className = "hero-action";
+          item.innerHTML = `<strong>${action.title}</strong>${action.body}`;
+          el.appendChild(item);
         });
-        return stats;
       }
 
-      async function loadOverview() {
-        overviewMetricsEl.innerHTML = "";
-        overviewPlanEl.innerHTML = "";
-        overviewStatusEl.textContent = "";
-        overviewActionsEl.innerHTML = "";
-        overviewRisksEl.innerHTML = "";
-        overviewFormsEl.innerHTML = "";
-        overviewRunEl.innerHTML = "";
-        overviewBalanceEl.innerHTML = "";
-
-        const [trainingResp, readinessResp, metricsResp, planResp, stravaStats] = await Promise.all([
-          supabase.from("training_state").select("*").eq("id", "global").maybeSingle(),
-          supabase.from("readiness_state").select("*").eq("id", "global").maybeSingle(),
-          supabase.from("pos_day_metrics").select("*").order("date", { ascending: false }).limit(1),
-          supabase.from("coach_plan_daily").select("date,summary_text,plan_json").order("date", { ascending: false }).limit(1),
-          fetchStravaStats(7),
-        ]);
-
-        const training = trainingResp.data || {};
-        const readiness = readinessResp.data || {};
-        const metrics = metricsResp.data?.[0] || {};
-        const plan = planResp.data?.[0];
-
-        const metricsList = [
-          { label: "Run frequency", value: frequencyBand(stravaStats.runCount) },
-          { label: "Swim frequency", value: frequencyBand(stravaStats.swimCount) },
-          { label: "Bike frequency", value: frequencyBand(stravaStats.rideCount) },
-          { label: "Strength frequency", value: frequencyBand(metrics.strength_sessions_7d ?? training.strength_sessions_7d ?? 0) },
-        ];
-
-        metricsList.forEach((metric) => {
-          const card = document.createElement("div");
-          card.className = "card";
-          card.innerHTML = `<div class="card-title">${metric.label}</div><div class="card-value">${metric.value.label}</div>`;
-          const bar = document.createElement("div");
-          bar.className = "bar";
-          const fill = document.createElement("div");
-          fill.className = `bar-fill ${metric.value.tone}`;
-          fill.style.width = `${metric.value.percent}%`;
-          bar.appendChild(fill);
-          card.appendChild(bar);
-          overviewMetricsEl.appendChild(card);
+      function renderConfidence(el, items) {
+        clearElement(el);
+        if (!items || !items.length) return;
+        items.forEach((item) => {
+          const chip = document.createElement("span");
+          chip.className = `chip${item.warn ? " warn" : ""}`;
+          chip.textContent = item.label;
+          el.appendChild(chip);
         });
-
-        overviewUpdatedEl.textContent = metrics.updated_at ? `Updated ${formatTimestamp(metrics.updated_at)}` : "—";
-        const readinessScore = readiness.readiness_score ?? metrics.readiness_score;
-        const readinessBand = bandFromScore(readinessScore);
-        overviewReadinessEl.textContent = readinessBand.label;
-        const sleepNote = metrics.sleep_updated_at ? `Sleep updated ${formatTimestamp(metrics.sleep_updated_at)}` : "Sleep missing";
-        const weightNote = metrics.weight_updated_at ? `Weight updated ${formatTimestamp(metrics.weight_updated_at)}` : "Weight missing";
-        overviewReadinessNoteEl.textContent = `${sleepNote} · ${weightNote}`;
-
-        overviewNextEl.textContent = metrics.next_workout_start ? new Date(metrics.next_workout_start).toLocaleDateString() : "—";
-        overviewNextNoteEl.textContent = metrics.next_workout_start ? formatTimestamp(metrics.next_workout_start) : "No upcoming workout";
-
-        const planJson = plan?.plan_json || {};
-        const stravaForms = planJson.strava_forms || {};
-        const formRun = formBand(stravaForms.running ?? metrics.strava_form_running);
-        const formBike = formBand(stravaForms.cycling ?? metrics.strava_form_cycling);
-        const formSwim = formBand(stravaForms.swimming ?? metrics.strava_form_swimming);
-        overviewFormsEl.appendChild(renderStatusItem("Run form", formRun.label, formRun.tone, "Strava freshness"));
-        overviewFormsEl.appendChild(renderStatusItem("Bike form", formBike.label, formBike.tone, "Strava freshness"));
-        overviewFormsEl.appendChild(renderStatusItem("Swim form", formSwim.label, formSwim.tone, "Strava freshness"));
-
-        const runLevel = planJson.run_level || "walk";
-        overviewRunEl.appendChild(renderStatusItem("Current level", runLevel === "walk" ? "Walk-only" : "Run/walk", runLevel === "walk" ? "warn" : "good"));
-        overviewRunEl.appendChild(renderListItem("Next upgrade", "Hold walk baseline. Add short jog intervals once cleared."));
-
-        const swimFreq = frequencyBand(stravaStats.swimCount);
-        const bikeFreq = frequencyBand(stravaStats.rideCount);
-        const runFreq = frequencyBand(stravaStats.runCount);
-        overviewBalanceEl.appendChild(renderBarItem("Swim", swimFreq.label, swimFreq.tone, swimFreq.percent));
-        overviewBalanceEl.appendChild(renderBarItem("Bike", bikeFreq.label, bikeFreq.tone, bikeFreq.percent));
-        overviewBalanceEl.appendChild(renderBarItem("Run", runFreq.label, runFreq.tone, runFreq.percent));
-
-        if (plan) {
-          overviewPlanEl.appendChild(renderListItem("Summary", plan.summary_text || "—"));
-          const rec = planJson.recommendation;
-          if (rec) {
-            overviewPlanEl.appendChild(renderListItem("Focus", `${rec.type ?? "—"} · ${durationBand(rec.duration_min)} · ${rec.intensity ?? "—"}`));
-          }
-        } else {
-          overviewPlanEl.appendChild(renderListItem("Summary", "No plan yet."));
-        }
-
-        overviewStatusEl.textContent = readiness.readiness_score ? "Ready to progress with caution." : "Waiting on readiness data.";
-
-        const rec = planJson.recommendation || {};
-        const nutritionCodes = planJson.nutrition_targets?.reason_codes || [];
-
-        // Action recipe
-        if (rec?.type) {
-          pushAction(
-            overviewActionsEl,
-            "Primary session",
-            `${rec.type} · ${rec.duration_min ?? "—"} min · ${rec.intensity ?? "—"}`,
-          );
-        } else {
-          pushAction(overviewActionsEl, "Primary session", "Follow weekly plan focus and keep intensity easy.");
-        }
-
-        if (readinessBand.label === "Red") {
-          pushAction(overviewActionsEl, "Intensity cap", "Stay in easy zones; skip hard intervals.");
-        } else if (readinessBand.label === "Green") {
-          pushAction(overviewActionsEl, "Quality window", "Green light for a focused session if time allows.");
-        }
-
-        if (stravaStats.runCount < 2) {
-          pushAction(overviewActionsEl, "Run durability", "Add a short easy run or walk + 4 strides.");
-        }
-
-        pushAction(overviewActionsEl, "Posture reset", "10–15 min: chin tucks, scap retraction, hip flexor stretch.");
-
-        if (nutritionCodes.includes("LOW_PROTEIN")) {
-          pushAction(overviewActionsEl, "Protein", "Add 30–40g protein (shake, chicken, Greek yogurt)." );
-        }
-        if (nutritionCodes.includes("LOW_CALORIES")) {
-          pushAction(overviewActionsEl, "Fuel", "Calories low — add carbs pre/post run.");
-        }
-
-        // Risks & blockers
-        if (stravaStats.runCount === 0) {
-          pushAction(overviewRisksEl, "Run gap", "No run in 7d — prioritize short easy run today.");
-        }
-        if (readinessBand.label === "Red") {
-          pushAction(overviewRisksEl, "Low readiness", "Reduce volume and avoid intensity.");
-        }
-        if (metrics.sleep_seconds && metrics.sleep_seconds < 5 * 3600) {
-          pushAction(overviewRisksEl, "Sleep debt", "Sleep <5h. Protect tonight's bedtime.");
-        }
-        if (!overviewRisksEl.children.length) {
-          pushAction(overviewRisksEl, "All clear", "No major blockers today.");
-        }
       }
 
-      async function loadTraining() {
-        trainingTemplateEl.innerHTML = "";
-        trainingRecentEl.innerHTML = "";
-        trainingRunEl.innerHTML = "";
-        trainingActionsEl.innerHTML = "";
-        trainingWeakestEl.innerHTML = "";
-        trainingFormsEl.innerHTML = "";
-        trainingBlocksEl.innerHTML = "";
-
-        const [calendarResp, stravaResp, strengthResp, planResp, metricsResp] = await Promise.all([
-          supabase.from("calendar_state").select("next_workout_start,next_workout_end,meeting_load_24h").eq("id", "global").maybeSingle(),
-          supabase.from("pos_events").select("event_timestamp,payload").eq("source", "strava").eq("event_type", "activity").order("event_timestamp", { ascending: false }).limit(50),
-          supabase.from("speediance_training_session_scores").select("session_date,quality_score").order("session_date", { ascending: false }).limit(1),
-          supabase.from("coach_plan_daily").select("plan_json").order("date", { ascending: false }).limit(1),
-          supabase.from("pos_day_metrics").select("strava_form_running,strava_form_cycling,strava_form_swimming").order("date", { ascending: false }).limit(1),
-        ]);
-
-        const now = new Date();
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - now.getDay());
-        trainingRangeEl.textContent = `Week of ${weekStart.toLocaleDateString()}`;
-
-        const planJson = planResp.data?.[0]?.plan_json || {};
-        const planBlocks = planJson.plan_blocks || [];
-        const template = planBlocks.length
-          ? planBlocks.map((block) => ({
-              day: block.day,
-              focus: block.focus,
-              note: block.note,
-            }))
-          : WEEK_TEMPLATE;
-
-        template.forEach((entry, idx) => {
-          const isToday = idx === now.getDay();
-          const title = `${entry.day} · ${entry.focus}`;
-          const meta = `${entry.note}${isToday ? " · Today" : ""}`;
-          trainingTemplateEl.appendChild(renderListItem(title, meta));
-        });
-
-        const lastByType = { swim: null, ride: null, run: null };
-        const counts = { swim: 0, ride: 0, run: 0 };
-        (stravaResp.data || []).forEach((row) => {
-          const payload = row.payload || {};
-          const type = String(payload.type ?? payload.sport_type ?? "").toLowerCase();
-          if (type.includes("swim")) {
-            counts.swim += 1;
-            if (!lastByType.swim) lastByType.swim = row.event_timestamp;
-          } else if (type.includes("ride") || type.includes("bike") || type.includes("cycle")) {
-            counts.ride += 1;
-            if (!lastByType.ride) lastByType.ride = row.event_timestamp;
-          } else if (type.includes("run")) {
-            counts.run += 1;
-            if (!lastByType.run) lastByType.run = row.event_timestamp;
-          }
-        });
-
-        trainingRecentEl.appendChild(renderListItem("Swim", lastByType.swim ? formatTimestamp(lastByType.swim) : "No recent swim"));
-        trainingRecentEl.appendChild(renderListItem("Bike", lastByType.ride ? formatTimestamp(lastByType.ride) : "No recent ride"));
-        trainingRecentEl.appendChild(renderListItem("Run", lastByType.run ? formatTimestamp(lastByType.run) : "No recent run"));
-        const strengthRow = strengthResp.data?.[0];
-        trainingRecentEl.appendChild(renderListItem("Strength", strengthRow?.session_date ? strengthRow.session_date : "No recent strength"));
-
-        const calendar = calendarResp.data || {};
-        if (calendar.next_workout_start) {
-          trainingRecentEl.appendChild(renderListItem("Next workout", formatTimestamp(calendar.next_workout_start)));
-        }
-
-        const stravaForms = planJson.strava_forms || {};
-        const formRun = formBand(stravaForms.running ?? metricsResp.data?.[0]?.strava_form_running);
-        const formBike = formBand(stravaForms.cycling ?? metricsResp.data?.[0]?.strava_form_cycling);
-        const formSwim = formBand(stravaForms.swimming ?? metricsResp.data?.[0]?.strava_form_swimming);
-        trainingFormsEl.appendChild(renderStatusItem("Run form", formRun.label, formRun.tone, "Strava freshness"));
-        trainingFormsEl.appendChild(renderStatusItem("Bike form", formBike.label, formBike.tone, "Strava freshness"));
-        trainingFormsEl.appendChild(renderStatusItem("Swim form", formSwim.label, formSwim.tone, "Strava freshness"));
-
-        const runLevel = planJson.run_level || "walk";
-        trainingBlocksEl.appendChild(renderStatusItem("Run level", runLevel === "walk" ? "Walk-only" : "Run/walk", runLevel === "walk" ? "warn" : "good"));
-        if (planBlocks.length) {
-          planBlocks.forEach((block) => {
-            const meta = [block.endurance, block.strength ? `Strength ${block.strength}` : null, block.pt ? "PT" : null, block.face ? "Face/neck" : null]
-              .filter(Boolean)
-              .join(" · ");
-            trainingBlocksEl.appendChild(renderListItem(block.day, meta || block.note || "—"));
-          });
-        } else {
-          trainingBlocksEl.appendChild(renderListItem("Plan blocks", "No plan blocks found."));
-        }
-
-        const runPriority = lastByType.run
-          ? "Keep volume easy, add strides if fresh."
-          : "No recent run. Add a short easy run or walk + drills.";
-        trainingRunEl.appendChild(renderListItem("Run durability", runPriority));
-        if (runLevel === "walk") {
-          trainingRunEl.appendChild(renderListItem("Baseline", "Walk-only until tolerance improves. No jogging yet."));
-        }
-        trainingRunEl.appendChild(renderListItem("Tibia resilience", "Tibialis raises + calf work 2–3 sets."));
-        trainingRunEl.appendChild(renderListItem("Form cue", "Shorter stride, faster cadence, posture tall."));
-
-        // Action pack: pick 3 highest-impact actions today
-        if (counts.run < 2) {
-          trainingActionsEl.appendChild(renderListItem("Easy run", "Short easy run or walk + 4 strides."));
-        }
-        if (counts.swim < 2) {
-          trainingActionsEl.appendChild(renderListItem("Swim technique", "Easy technique swim, keep it smooth."));
-        }
-        if (counts.ride < 2) {
-          trainingActionsEl.appendChild(renderListItem("Bike endurance", "Easy aerobic ride, posture reset after."));
-        }
-        trainingActionsEl.appendChild(renderListItem("Posture reset", "10–15 min: chin tucks, scapular work, hip flexor stretch."));
-
-        const weakest = [
-          { name: "Run", count: counts.run },
-          { name: "Swim", count: counts.swim },
-          { name: "Bike", count: counts.ride },
-        ].sort((a, b) => a.count - b.count);
-        const weakestLink = weakest[0];
-        trainingWeakestEl.appendChild(renderListItem("Lowest frequency", `${weakestLink.name} (${weakestLink.count} sessions in 7d)`));
-        if (weakestLink.name === "Run") {
-          trainingWeakestEl.appendChild(renderListItem("Fix", "Add two short runs this week + tibia work."));
-        } else if (weakestLink.name === "Swim") {
-          trainingWeakestEl.appendChild(renderListItem("Fix", "Add 1–2 technique swims to keep feel for water."));
-        } else {
-          trainingWeakestEl.appendChild(renderListItem("Fix", "Add 1–2 aerobic rides, keep posture tall."));
-        }
-      }
-
-      async function loadStrength() {
-        strengthBaselinesEl.innerHTML = "";
-        strengthLastEl.innerHTML = "";
-        strengthNoteEl.textContent = "";
-
-        const [baselineResp, sessionResp, metricsResp] = await Promise.all([
-          supabase.from("speediance_exercise_baselines").select("action_library_name,max_watts,one_rm,total_reps,last_seen_at").order("max_watts", { ascending: false }).limit(6),
-          supabase.from("speediance_training_session_scores").select("training_id,session_date,quality_score").order("session_date", { ascending: false }).limit(1),
-          supabase.from("speediance_exercise_session_metrics").select("action_library_name,quality_score,rep_time_cv,completion_ratio,avg_watts,total_reps").order("session_date", { ascending: false }).limit(6),
-        ]);
-
-        if (baselineResp.data?.length) {
-          const maxWatts = Math.max(...baselineResp.data.map((row) => row.max_watts || 0));
-          baselineResp.data.forEach((row) => {
-            const ratio = maxWatts ? (row.max_watts || 0) / maxWatts : 0;
-            const tone = ratio > 0.75 ? "good" : ratio > 0.4 ? "warn" : "bad";
-            const status = ratio > 0.75 ? "High power" : ratio > 0.4 ? "Moderate" : "Develop";
-            const percent = ratio * 100;
-            strengthBaselinesEl.appendChild(renderBarItem(row.action_library_name || "Exercise", status, tone, percent));
-          });
-        } else {
-          strengthBaselinesEl.appendChild(renderListItem("No baselines", "Run a strength session to populate."));
-        }
-
-        if (sessionResp.data?.length) {
-          const session = sessionResp.data[0];
-          strengthNoteEl.textContent = session.session_date ? `Last session: ${session.session_date}` : "";
-        }
-
-        if (metricsResp.data?.length) {
-          metricsResp.data.forEach((row) => {
-            const quality = row.quality_score ?? 0;
-            const tone = quality > 70 ? "good" : quality > 45 ? "warn" : "bad";
-            const status = quality > 70 ? "Strong quality" : quality > 45 ? "Needs polish" : "Technique focus";
-            strengthLastEl.appendChild(renderStatusItem(row.action_library_name || "Exercise", status, tone, "Based on last session"));
-          });
-        } else {
-          strengthLastEl.appendChild(renderListItem("No session details", "Run a session to populate."));
-        }
-      }
-
-      async function loadNutrition() {
-        nutritionTargetsEl.innerHTML = "";
-        nutritionNoteEl.textContent = "";
-
-        const dateKey = new Date().toISOString().slice(0, 10);
-        const [metricsResp, planResp] = await Promise.all([
-          supabase.from("pos_day_metrics").select("nutrition_entries_7d,calories_avg_day,protein_avg_day,carbs_avg_day,fat_avg_day").order("date", { ascending: false }).limit(1),
-          supabase.from("coach_plan_daily").select("plan_json").lte("date", dateKey).order("date", { ascending: false }).limit(1),
-        ]);
-
-        const metrics = metricsResp.data?.[0] || {};
-        const targets = planResp.data?.[0]?.plan_json?.nutrition_targets || {};
-        nutritionNoteEl.textContent = metrics.nutrition_entries_7d ? `${metrics.nutrition_entries_7d} logs in last 7d` : "No logs yet";
-
-        const rows = [
-          { label: "Calories", actual: metrics.calories_avg_day, target: targets.calories_target },
-          { label: "Protein", actual: metrics.protein_avg_day, target: targets.protein_target_g },
-          { label: "Carbs", actual: metrics.carbs_avg_day, target: targets.carbs_target_g },
-          { label: "Fat", actual: metrics.fat_avg_day, target: targets.fat_target_g },
-        ];
-
+      function renderEvidence(el, rows) {
+        clearElement(el);
+        const header = document.createElement("div");
+        header.className = "evidence-grid";
+        header.innerHTML = `
+          <div class="head">Metric</div>
+          <div class="head">Current</div>
+          <div class="head">Target</div>
+          <div class="head">Window</div>
+          <div class="head">Trend</div>
+        `;
+        el.appendChild(header);
+        const grid = document.createElement("div");
+        grid.className = "evidence-grid";
         rows.forEach((row) => {
-          if (!row.actual || !row.target) {
-            nutritionTargetsEl.appendChild(renderStatusItem(row.label, "No data", "warn", "Needs logging"));
-            return;
-          }
-          const ratio = row.actual / row.target;
-          const tone = ratio >= 0.9 ? "good" : ratio >= 0.6 ? "warn" : "bad";
-          const status = ratio >= 0.9 ? "On target" : ratio >= 0.6 ? "Low" : "Very low";
-          nutritionTargetsEl.appendChild(renderBarItem(row.label, status, tone, Math.min(100, ratio * 100)));
+          const wrapper = document.createElement("div");
+          wrapper.className = "evidence-row";
+          wrapper.setAttribute("data-metric-importance", row.importance || "5");
+          wrapper.innerHTML = `
+            <span>${row.label}</span>
+            <span><strong>${row.current}</strong></span>
+            <span>${row.target}</span>
+            <span>${row.window}</span>
+            <span>${row.trend}</span>
+          `;
+          grid.appendChild(wrapper);
         });
+        el.appendChild(grid);
       }
 
-      async function loadRecovery() {
-        recoveryReadinessEl.innerHTML = "";
-        recoveryTargetsEl.innerHTML = "";
-        recoveryNoteEl.textContent = "";
+      function trendDelta(current, previous, decimals = 1) {
+        if (current === null || current === undefined || previous === null || previous === undefined) return "—";
+        const delta = Number(current) - Number(previous);
+        const sign = delta >= 0 ? "+" : "";
+        return `${sign}${delta.toFixed(decimals)}`;
+      }
 
-        const [metricsResp, readinessResp, planResp] = await Promise.all([
-          supabase.from("pos_day_metrics").select("sleep_seconds,sleep_baseline_7d,weight_kg,weight_baseline_7d,readiness_score,form_score,fatigue_score,updated_at").order("date", { ascending: false }).limit(1),
-          supabase.from("readiness_state").select("sleep_updated_at,weight_updated_at,readiness_score").eq("id", "global").maybeSingle(),
-          supabase.from("coach_plan_daily").select("plan_json").order("date", { ascending: false }).limit(1),
+      async function fetchLatest(table, orderKey) {
+        const { data } = await supabase.from(table).select("*").order(orderKey, { ascending: false }).limit(1);
+        return data && data[0] ? data[0] : null;
+      }
+
+      async function fetchLatestTwo(table, orderKey) {
+        const { data } = await supabase.from(table).select("*").order(orderKey, { ascending: false }).limit(2);
+        if (!data || data.length === 0) return [null, null];
+        return [data[0], data[1] || null];
+      }
+
+      function daysBetween(dateA, dateB) {
+        const ms = dateB.getTime() - dateA.getTime();
+        return Math.ceil(ms / (1000 * 60 * 60 * 24));
+      }
+
+      function buildAction(action) {
+        if (!action) return null;
+        if (action.message) {
+          return { title: "Action", body: action.message };
+        }
+        if (action.target && action.delta_g_per_day) {
+          return { title: "Adjust", body: `${action.target}: add ${action.delta_g_per_day} g/day for ${action.days}` };
+        }
+        if (action.target && action.delta_g_per_key_day) {
+          return { title: "Adjust", body: `${action.target}: add ${action.delta_g_per_key_day} g on ${action.days}` };
+        }
+        if (action.delta_kcal_per_day) {
+          return { title: "Adjust", body: `Add ${action.delta_kcal_per_day} kcal/day for ${action.days}` };
+        }
+        if (action.target) {
+          return { title: "Action", body: `${action.target} - ${action.days || "next"}` };
+        }
+        return null;
+      }
+
+      async function loadReport() {
+        const [trainingWeek, trainingPrev] = await fetchLatestTwo("health_agg_weekly.training", "week_start");
+        const [enduranceWeek, endurancePrev] = await fetchLatestTwo("health_agg_weekly.endurance", "week_start");
+        const [strengthWeek, strengthPrev] = await fetchLatestTwo("health_agg_weekly.strength", "week_start");
+        const [coverageWeek] = await fetchLatestTwo("health_agg_weekly.coverage", "week_start");
+        const [macroWeek] = await fetchLatestTwo("health_agg_weekly.macro_adequacy", "week_start");
+        const [eaWeek] = await fetchLatestTwo("health_agg_weekly.energy_availability", "week_start");
+        const [conservationWeek] = await fetchLatestTwo("health_agg_weekly.conservation", "week_start");
+        const { data: microsRows } = await supabase
+          .from("health_agg_weekly.micronutrients")
+          .select("nutrient_name,hit_rate_28d,sustained_low")
+          .order("week_start", { ascending: false })
+          .limit(12);
+
+        const dailySleep = await fetchLatest("health_agg_daily.sleep", "day");
+        const dailyBody = await fetchLatest("health_agg_daily.body", "day");
+
+        const { data: planRows } = await supabase.from("coach_plan_daily").select("date,summary_text,plan_json").order("date", { ascending: false }).limit(1);
+        const plan = planRows && planRows[0] ? planRows[0] : null;
+
+        const { data: recRows } = await supabase.from("health_agg_weekly.recommendations").select("week_start,domain,action").order("week_start", { ascending: false }).limit(40);
+        const latestWeek = trainingWeek?.week_start || coverageWeek?.week_start || macroWeek?.week_start || eaWeek?.week_start;
+        const recommendations = (recRows || []).filter((row) => row.week_start === latestWeek);
+
+        const updatedStamp = trainingWeek?.updated_at || coverageWeek?.updated_at || macroWeek?.updated_at || eaWeek?.updated_at;
+        reportUpdatedEl.textContent = `Updated ${formatTimestamp(updatedStamp)}`;
+        if (latestWeek) {
+          reportWindowEl.textContent = `Week starting ${latestWeek}`;
+          summaryUpdatedEl.textContent = `Week of ${latestWeek}`;
+          nutritionUpdatedEl.textContent = `Week of ${latestWeek}`;
+          trainingUpdatedEl.textContent = `Week of ${latestWeek}`;
+          strengthUpdatedEl.textContent = `Week of ${latestWeek}`;
+          bodyUpdatedEl.textContent = dailyBody?.measured_at ? `Measured ${formatDate(dailyBody.measured_at)}` : `Week of ${latestWeek}`;
+          sleepUpdatedEl.textContent = dailySleep?.sleep_end ? `Last sleep ${formatDate(dailySleep.sleep_end)}` : `Week of ${latestWeek}`;
+        }
+
+        const daysToRace = daysBetween(new Date(), RACE_DATE);
+        raceCountdownEl.textContent = `Escape from Alcatraz 2026 in ${daysToRace} days`;
+
+        const summaryConstraints = [];
+        if (coverageWeek?.nutrition_coverage !== null && coverageWeek?.nutrition_coverage < 0.6) {
+          summaryConstraints.push(`Nutrition coverage ${formatNumber(coverageWeek.nutrition_coverage * 100, 0)}% (${coverageWeek.nutrition_days_logged || 0}/7 days logged)`);
+        }
+        if (coverageWeek?.weight_stale_days !== null && coverageWeek?.weight_stale_days > 7) {
+          summaryConstraints.push(`Weight stale ${formatNumber(coverageWeek.weight_stale_days, 1)}d`);
+        }
+        if (eaWeek?.ea_kcal_per_kg !== null && eaWeek?.ea_kcal_per_kg < 30) {
+          summaryConstraints.push(`Energy availability ${formatNumber(eaWeek.ea_kcal_per_kg, 1)} kcal/kg (below 30)`);
+        }
+        const constraintText = summaryConstraints[0] || "No dominant constraint detected; review domain panels for detail.";
+        summaryStateEl.textContent = constraintText;
+
+        const summaryActions = [];
+        if (plan?.plan_json?.recommendation) {
+          const rec = plan.plan_json.recommendation;
+          summaryActions.push({
+            title: "Today plan",
+            body: `${rec.type || "session"} · ${rec.duration_min || "—"} min · ${rec.intensity || "—"}`,
+          });
+        }
+        recommendations.forEach((rec) => {
+          const action = buildAction(rec.action);
+          if (action) summaryActions.push(action);
+        });
+        renderActions(summaryActionsEl, summaryActions);
+
+        const summaryConfidence = [];
+        if (coverageWeek?.confidence != null) {
+          summaryConfidence.push({ label: `Confidence ${formatNumber(coverageWeek.confidence * 100, 0)}%`, warn: coverageWeek.confidence < 0.6 });
+        }
+        if (coverageWeek?.nutrition_days_logged != null) {
+          summaryConfidence.push({ label: `Nutrition logs ${coverageWeek.nutrition_days_logged}/7`, warn: coverageWeek.nutrition_days_logged < 5 });
+        }
+        if (coverageWeek?.weight_stale_days != null) {
+          summaryConfidence.push({ label: `Weight stale ${formatNumber(coverageWeek.weight_stale_days, 1)}d`, warn: coverageWeek.weight_stale_days > 7 });
+        }
+        renderConfidence(summaryConfidenceEl, summaryConfidence);
+
+        renderEvidence(summaryEvidenceEl, [
+          { label: "Workouts (7d)", current: trainingWeek?.workout_count ?? "—", target: coverageWeek?.planned_sessions ?? "—", window: "7d", trend: trainingPrev ? trendDelta(trainingWeek?.workout_count, trainingPrev?.workout_count, 0) : "—", importance: 9 },
+          { label: "Training minutes", current: formatMinutes(trainingWeek?.total_duration_s), target: "—", window: "7d", trend: trainingPrev ? trendDelta(trainingWeek?.total_duration_s, trainingPrev?.total_duration_s, 0) : "—", importance: 8 },
+          { label: "Sleep last", current: formatHours(dailySleep?.duration_s), target: "7.0 h", window: "last sleep", trend: "—", importance: 8 },
+          { label: "Energy availability", current: eaWeek?.ea_kcal_per_kg ? formatNumber(eaWeek.ea_kcal_per_kg, 1) : "—", target: ">=45", window: "7d avg", trend: "—", importance: 8 },
         ]);
 
-        const metrics = metricsResp.data?.[0] || {};
-        const readiness = readinessResp.data || {};
-        const plan = planResp.data?.[0];
+        const nutritionState = `Intake avg ${formatNumber(macroWeek?.avg_protein_g_day, 0)} g protein/day (${formatNumber(macroWeek?.avg_protein_g_per_kg_day, 2)} g/kg), EA ${formatNumber(eaWeek?.ea_kcal_per_kg, 1)} kcal/kg.`;
+        nutritionStateEl.textContent = nutritionState;
 
-        const sleepBand = metrics.sleep_seconds && metrics.sleep_baseline_7d
-          ? metrics.sleep_seconds >= metrics.sleep_baseline_7d * 0.9
-            ? { label: "On target", tone: "good" }
-            : metrics.sleep_seconds >= metrics.sleep_baseline_7d * 0.7
-              ? { label: "Low", tone: "warn" }
-              : { label: "Very low", tone: "bad" }
-          : { label: "Unknown", tone: "warn" };
-        recoverySleepEl.textContent = sleepBand.label;
-        recoverySleepNoteEl.textContent = metrics.sleep_baseline_7d ? "Compared to baseline" : "Baseline missing";
+        const nutritionActions = recommendations.filter((rec) => rec.domain === "nutrition" || rec.domain === "recovery").map((rec) => buildAction(rec.action)).filter(Boolean);
+        renderActions(nutritionActionsEl, nutritionActions);
 
-        const weightBand = metrics.weight_kg && metrics.weight_baseline_7d
-          ? { label: "Tracking", tone: "good" }
-          : { label: "Missing", tone: "warn" };
-        recoveryWeightEl.textContent = weightBand.label;
-        recoveryWeightNoteEl.textContent = metrics.weight_baseline_7d ? "Weight trend active" : "Baseline missing";
+        const nutritionConf = [];
+        if (coverageWeek?.nutrition_confidence != null) {
+          nutritionConf.push({ label: `Confidence ${formatNumber(coverageWeek.nutrition_confidence * 100, 0)}%`, warn: coverageWeek.nutrition_confidence < 0.6 });
+        }
+        if (coverageWeek?.nutrition_days_logged != null) {
+          nutritionConf.push({ label: `Days logged ${coverageWeek.nutrition_days_logged}/7`, warn: coverageWeek.nutrition_days_logged < 5 });
+        }
+        renderConfidence(nutritionConfidenceEl, nutritionConf);
 
-        const readinessBand = bandFromScore(readiness.readiness_score ?? metrics.readiness_score);
-        recoveryReadinessEl.appendChild(renderStatusItem("Readiness", readinessBand.label, readinessBand.tone, "Overall state"));
-        const formBandState = formBand(metrics.form_score);
-        recoveryReadinessEl.appendChild(renderStatusItem("Form", formBandState.label, formBandState.tone, "Training freshness"));
-        recoveryReadinessEl.appendChild(renderStatusItem("Fatigue", metrics.fatigue_score != null && metrics.fatigue_score < 40 ? "Low" : "Elevated", metrics.fatigue_score != null && metrics.fatigue_score < 40 ? "good" : "warn", "7‑day load"));
+        renderEvidence(nutritionCoverageEl, [
+          { label: "Days logged", current: coverageWeek?.nutrition_days_logged ?? "—", target: "6/7", window: "7d", trend: "—", importance: 9 },
+          { label: "Meal coverage", current: coverageWeek?.meal_coverage != null ? `${formatNumber(coverageWeek.meal_coverage * 100, 0)}%` : "—", target: ">=70%", window: "7d", trend: "—", importance: 7 },
+          { label: "Meals logged", current: coverageWeek?.meals_logged ?? "—", target: coverageWeek?.expected_meals ?? "—", window: "7d", trend: "—", importance: 6 },
+        ]);
 
-        const sleepTarget = plan?.plan_json?.recovery_targets?.sleep_target_hours;
-        recoveryTargetsEl.appendChild(renderListItem("Sleep target", sleepTarget ? `${sleepTarget} h` : "—"));
-        recoveryNoteEl.textContent = metrics.updated_at ? `Updated ${formatTimestamp(metrics.updated_at)}` : "—";
+        renderEvidence(nutritionEaEl, [
+          { label: "EA kcal/kg", current: eaWeek?.ea_kcal_per_kg != null ? formatNumber(eaWeek.ea_kcal_per_kg, 1) : "—", target: ">=45", window: "7d", trend: "—", importance: 9 },
+          { label: "Avg intake", current: eaWeek?.avg_intake_kcal_day != null ? `${formatNumber(eaWeek.avg_intake_kcal_day, 0)} kcal` : "—", target: "—", window: "7d", trend: "—", importance: 6 },
+          { label: "Avg exercise", current: eaWeek?.avg_exercise_kcal_day != null ? `${formatNumber(eaWeek.avg_exercise_kcal_day, 0)} kcal` : "—", target: "—", window: "7d", trend: "—", importance: 6 },
+        ]);
+
+        renderEvidence(nutritionMacrosEl, [
+          { label: "Protein g/kg", current: macroWeek?.avg_protein_g_per_kg_day != null ? formatNumber(macroWeek.avg_protein_g_per_kg_day, 2) : "—", target: ">=1.6", window: "7d avg", trend: "—", importance: 9 },
+          { label: "Protein meal hit", current: macroWeek?.protein_meal_hit_rate != null ? `${formatNumber(macroWeek.protein_meal_hit_rate * 100, 0)}%` : "—", target: ">=60%", window: "7d", trend: "—", importance: 7 },
+          { label: "Fat floor ok", current: macroWeek?.fat_floor_ok_days != null ? `${macroWeek.fat_floor_ok_days}/7` : "—", target: ">=5/7", window: "7d", trend: "—", importance: 6 },
+        ]);
+
+        renderEvidence(nutritionPeriodEl, [
+          { label: "Key days", current: macroWeek?.key_days ?? "—", target: "—", window: "7d", trend: "—", importance: 6 },
+          { label: "Carb under days", current: macroWeek?.carb_under_days ?? "—", target: "0", window: "7d", trend: "—", importance: 6 },
+          { label: "Avg carbs g", current: macroWeek?.avg_carbs_g_day != null ? formatNumber(macroWeek.avg_carbs_g_day, 0) : "—", target: "—", window: "7d", trend: "—", importance: 5 },
+        ]);
+
+        const micronutrientRows = (microsRows || []).slice(0, 3).map((row) => ({
+          label: row.nutrient_name || "Nutrient",
+          current: row.hit_rate_28d != null ? `${formatNumber(row.hit_rate_28d * 100, 0)}%` : "—",
+          target: ">=60%",
+          window: "28d",
+          trend: row.sustained_low ? "low" : "—",
+          importance: 5,
+        }));
+        renderEvidence(nutritionMicrosEl, micronutrientRows.length ? micronutrientRows : [
+          { label: "Micros", current: "—", target: "—", window: "28d", trend: "—", importance: 5 },
+        ]);
+
+        const trainingState = `Total ${trainingWeek?.workout_count || 0} sessions, ${formatMinutes(trainingWeek?.total_duration_s)} total, ${formatDistance(trainingWeek?.total_distance_m)} distance.`;
+        trainingStateEl.textContent = trainingState;
+        const trainingActions = [];
+        if (plan?.summary_text) {
+          trainingActions.push({ title: "Plan", body: plan.summary_text });
+        }
+        renderActions(trainingActionsEl, trainingActions);
+
+        const trainingConf = [];
+        if (coverageWeek?.workout_confidence != null) {
+          trainingConf.push({ label: `Confidence ${formatNumber(coverageWeek.workout_confidence * 100, 0)}%`, warn: coverageWeek.workout_confidence < 0.6 });
+        }
+        if (coverageWeek?.workout_coverage != null) {
+          trainingConf.push({ label: `Coverage ${formatNumber(coverageWeek.workout_coverage * 100, 0)}%`, warn: coverageWeek.workout_coverage < 0.7 });
+        }
+        renderConfidence(trainingConfidenceEl, trainingConf);
+
+        renderEvidence(trainingEvidenceEl, [
+          { label: "Workouts", current: trainingWeek?.workout_count ?? "—", target: coverageWeek?.planned_sessions ?? "—", window: "7d", trend: trainingPrev ? trendDelta(trainingWeek?.workout_count, trainingPrev?.workout_count, 0) : "—", importance: 9 },
+          { label: "Endurance sessions", current: trainingWeek?.endurance_sessions ?? "—", target: "—", window: "7d", trend: endurancePrev ? trendDelta(enduranceWeek?.session_count, endurancePrev?.session_count, 0) : "—", importance: 8 },
+          { label: "Strength sessions", current: trainingWeek?.strength_sessions ?? "—", target: strengthWeek?.planned_sessions ?? "—", window: "7d", trend: strengthPrev ? trendDelta(strengthWeek?.completed_sessions, strengthPrev?.completed_sessions, 0) : "—", importance: 7 },
+          { label: "Training load", current: trainingWeek?.training_load_minutes != null ? `${formatNumber(trainingWeek.training_load_minutes, 0)} min` : "—", target: "—", window: "7d", trend: trainingPrev ? trendDelta(trainingWeek?.training_load_minutes, trainingPrev?.training_load_minutes, 0) : "—", importance: 7 },
+          { label: "Exercise energy", current: trainingWeek?.exercise_energy_kcal != null ? `${formatNumber(trainingWeek.exercise_energy_kcal, 0)} kcal` : "—", target: "—", window: "7d", trend: "—", importance: 6 },
+        ]);
+
+        const sleepStaleDays = dailySleep?.sleep_end ? daysBetween(new Date(dailySleep.sleep_end), new Date()) : null;
+        sleepStateEl.textContent = `Last sleep ${formatHours(dailySleep?.duration_s)}. Sleep stale ${sleepStaleDays != null ? formatNumber(sleepStaleDays, 1) : "—"} days.`;
+        renderActions(sleepActionsEl, [{ title: "Sleep target", body: "Aim for >=7.0 h tonight. Protect bedtime window." }]);
+        renderConfidence(sleepConfidenceEl, [
+          { label: sleepStaleDays != null ? `Stale ${formatNumber(sleepStaleDays, 1)}d` : "Stale —", warn: sleepStaleDays != null && sleepStaleDays > 1 },
+        ]);
+        renderEvidence(sleepEvidenceEl, [
+          { label: "Sleep duration", current: formatHours(dailySleep?.duration_s), target: ">=7.0 h", window: "last sleep", trend: "—", importance: 9 },
+          { label: "Sleep window", current: dailySleep?.sleep_start ? formatDate(dailySleep.sleep_start) : "—", target: "—", window: "start", trend: "—", importance: 5 },
+          { label: "Sleep end", current: dailySleep?.sleep_end ? formatDate(dailySleep.sleep_end) : "—", target: "—", window: "end", trend: "—", importance: 5 },
+        ]);
+
+        const strengthState = `Completed ${strengthWeek?.completed_sessions ?? 0}/${strengthWeek?.planned_sessions ?? "—"} sessions. Tonnage ${formatNumber(strengthWeek?.tonnage, 0)}.`;
+        strengthStateEl.textContent = strengthState;
+        renderActions(strengthActionsEl, [{ title: "Strength", body: "Execute planned sessions; keep PT blocks consistent." }]);
+        renderConfidence(strengthConfidenceEl, [
+          { label: `Planned ${strengthWeek?.planned_sessions ?? "—"}`, warn: strengthWeek?.completed_sessions < strengthWeek?.planned_sessions },
+        ]);
+        renderEvidence(strengthEvidenceEl, [
+          { label: "Planned sessions", current: strengthWeek?.planned_sessions ?? "—", target: "—", window: "7d", trend: "—", importance: 7 },
+          { label: "Completed sessions", current: strengthWeek?.completed_sessions ?? "—", target: strengthWeek?.planned_sessions ?? "—", window: "7d", trend: strengthPrev ? trendDelta(strengthWeek?.completed_sessions, strengthPrev?.completed_sessions, 0) : "—", importance: 8 },
+          { label: "Total sets", current: strengthWeek?.total_sets ?? "—", target: "—", window: "7d", trend: strengthPrev ? trendDelta(strengthWeek?.total_sets, strengthPrev?.total_sets, 0) : "—", importance: 6 },
+          { label: "Total reps", current: strengthWeek?.total_reps ?? "—", target: "—", window: "7d", trend: strengthPrev ? trendDelta(strengthWeek?.total_reps, strengthPrev?.total_reps, 0) : "—", importance: 6 },
+          { label: "Tonnage", current: strengthWeek?.tonnage != null ? formatNumber(strengthWeek.tonnage, 0) : "—", target: "—", window: "7d", trend: strengthPrev ? trendDelta(strengthWeek?.tonnage, strengthPrev?.tonnage, 0) : "—", importance: 6 },
+        ]);
+
+        const bodyState = `Weight ${formatNumber(dailyBody?.weight_kg, 1)} kg, BF ${formatNumber(dailyBody?.body_fat_pct, 1)}%, FFM ${formatNumber(dailyBody?.ffm_kg, 1)} kg.`;
+        bodyStateEl.textContent = bodyState;
+        renderActions(bodyActionsEl, [{ title: "Weigh-in", body: dailyBody?.is_stale ? "Weigh in to refresh body metrics." : "Next weigh-in per schedule." }]);
+        renderConfidence(bodyConfidenceEl, [
+          { label: dailyBody?.stale_days != null ? `Stale ${formatNumber(dailyBody.stale_days, 1)}d` : "Stale —", warn: dailyBody?.stale_days > 7 },
+        ]);
+        renderEvidence(bodyEvidenceEl, [
+          { label: "Weight", current: formatNumber(dailyBody?.weight_kg, 1), target: "—", window: "latest", trend: dailyBody?.slope_7d_kg_per_week != null ? `${formatNumber(dailyBody.slope_7d_kg_per_week, 2)} kg/wk` : "—", importance: 7 },
+          { label: "Body fat", current: formatNumber(dailyBody?.body_fat_pct, 1), target: "—", window: "latest", trend: dailyBody?.slope_28d_pct_per_week != null ? `${formatNumber(dailyBody.slope_28d_pct_per_week, 2)} %/wk` : "—", importance: 6 },
+          { label: "FFM", current: formatNumber(dailyBody?.ffm_kg, 1), target: "—", window: "latest", trend: "—", importance: 6 },
+          { label: "Volatility", current: formatNumber(dailyBody?.volatility_kg, 2), target: "—", window: "28d", trend: dailyBody?.trend_noise ? "noise" : "—", importance: 5 },
+        ]);
       }
 
-      async function loadView() {
-        if (currentView === "overview") await loadOverview();
-        if (currentView === "training") await loadTraining();
-        if (currentView === "strength") await loadStrength();
-        if (currentView === "nutrition") await loadNutrition();
-        if (currentView === "recovery") await loadRecovery();
-      }
-
-      async function refreshSession() {
+      async function init() {
         const { data } = await supabase.auth.getSession();
-        const session = data?.session;
-        if (session) {
+        if (data?.session) {
           authEl.classList.add("hidden");
           contentEl.classList.remove("hidden");
-          renderTabs();
-          setActiveView();
-          await loadView();
-        } else {
-          authEl.classList.remove("hidden");
-          contentEl.classList.add("hidden");
-          if (authStatusEl) authStatusEl.textContent = "Please sign in";
+          await loadReport();
         }
       }
 
       document.getElementById("login").addEventListener("click", async () => {
+        authStatusEl.textContent = "";
         const email = emailEl.value.trim();
-        const password = passwordEl.value;
+        const password = passwordEl.value.trim();
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
-          if (authStatusEl) authStatusEl.textContent = `Sign in failed: ${error.message}`;
+          authStatusEl.textContent = error.message;
           return;
         }
-        await refreshSession();
+        authEl.classList.add("hidden");
+        contentEl.classList.remove("hidden");
+        await loadReport();
       });
 
       document.getElementById("logout").addEventListener("click", async () => {
         await supabase.auth.signOut();
-        await refreshSession();
+        contentEl.classList.add("hidden");
+        authEl.classList.remove("hidden");
       });
 
-      refreshSession();
+      init();
     </script>
   </body>
 </html>

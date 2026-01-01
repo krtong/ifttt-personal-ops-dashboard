@@ -357,6 +357,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         return `${hours}h${minutes ? ` ${minutes}m` : ""}`;
       }
 
+      function normalizeSeconds(value) {
+        const num = Number(value ?? NaN);
+        if (Number.isNaN(num) || num <= 0) return null;
+        if (num < 1000) return num * 60;
+        return num;
+      }
+
       function formatLatency(seconds, label) {
         const value = Number(seconds ?? NaN);
         if (Number.isNaN(value) || value <= 0) {
@@ -559,11 +566,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         const runRow = Array.isArray(runData) && runData.length ? runData[0] : null;
         const metrics = metricsRows?.[0] ?? null;
         const latestForm = Array.isArray(formRows) && formRows.length ? Number(formRows[0].form ?? 0) : null;
-        let nutritionEntries = metrics?.nutrition_entries_7d ?? 0;
-        if ((!nutritionEntries || nutritionEntries === 0) && cronoTotals && cronoTotals.size) {
-          nutritionEntries = cronoTotals.size;
+        let nutritionDays = cronoTotals?.size ?? null;
+        if ((nutritionDays == null || nutritionDays === 0) && metrics?.nutrition_entries_7d != null) {
+          nutritionDays = Number(metrics.nutrition_entries_7d) || 0;
         }
-        const nutritionDaysDisplay = Math.min(Number(nutritionEntries) || 0, 7);
+        const nutritionDaysDisplay = Math.min(Number(nutritionDays) || 0, 7);
 
         if (trainingError) {
           if (posSummaryNoteEl) posSummaryNoteEl.textContent = "Training summary unavailable.";
@@ -584,7 +591,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         let confidence = 100;
         if (sleepAge == null || sleepAge >= 2) confidence -= 25;
         if (weightAge == null || weightAge >= 7) confidence -= 15;
-        if ((nutritionEntries ?? 0) === 0) confidence -= 15;
+        if ((nutritionDays ?? 0) === 0) confidence -= 15;
         if (latestForm == null) confidence -= 10;
         if (!training?.updated_at) confidence -= 10;
         confidence = Math.max(0, Math.min(100, confidence));
@@ -651,7 +658,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         if (posSummaryNoteEl) {
           const sleepNote = sleepAge != null ? `Sleep updated ${formatNumber(sleepAge, sleepAge >= 10 ? 0 : 1)}d ago` : "Sleep missing";
           const weightNote = weightAge != null ? `Weight updated ${formatNumber(weightAge, weightAge >= 10 ? 0 : 1)}d ago` : "Weight missing";
-          const nutritionNote = `Nutrition coverage ${nutritionDaysDisplay}/7 days (logged)`;
+          const nutritionNote = `Nutrition logs ${nutritionDaysDisplay}/7 days (Cronometer)`;
           posSummaryNoteEl.textContent = `Inputs: ${sleepNote} · ${weightNote} · ${nutritionNote}`;
           if (posSummaryFreshnessEl) {
             posSummaryFreshnessEl.textContent = `Coverage ${confidence}%`;
@@ -701,7 +708,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
             });
           }
             drivers.push({
-              label: `Nutrition coverage ${nutritionDaysDisplay}/7 days (${nutritionEntries} entries, logged)`,
+              label: `Nutrition logs ${nutritionDaysDisplay}/7 days`,
               tone: nutritionDaysDisplay >= 5 ? "good" : nutritionDaysDisplay >= 2 ? "warn" : "bad",
               meta: { importance: 8, group: "drivers", related: "nutrition,coverage" },
             });
@@ -1945,10 +1952,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       async function loadPosSleepQuality() {
         if (!posSleepQualityDurationEl || !posSleepQualityScoreEl || !posSleepQualityBarsEl) return;
         posSleepQualityDurationEl.textContent = "—";
-        posSleepQualityScoreEl.textContent = "Score —";
+        posSleepQualityScoreEl.textContent = "Efficiency —";
         posSleepQualityBarsEl.innerHTML = "";
         if (posBreathingQualityValueEl) posBreathingQualityValueEl.textContent = "—";
-        if (posBreathingQualityNoteEl) posBreathingQualityNoteEl.textContent = "Respiration assessment";
+        if (posBreathingQualityNoteEl) posBreathingQualityNoteEl.textContent = "Respiration metrics";
 
         const recentStart = rangeStartDate(7).toISOString().slice(0, 10);
         const [sleepRawResp, metricsResp] = await Promise.all([
@@ -1973,17 +1980,20 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           "asleepduration",
           "sleep_duration_s",
         ]);
-        if (duration != null && duration < 1000) {
-          duration *= 60;
-        }
-        const score = pickNumber(summary, ["sleep_score", "score"]);
+        duration = normalizeSeconds(duration);
+        const efficiencyRaw = pickNumber(summary, ["sleep_efficiency", "efficiency"]);
+        const efficiencyPct = efficiencyRaw != null
+          ? (efficiencyRaw <= 1 ? efficiencyRaw * 100 : efficiencyRaw)
+          : null;
         const breathingScore = pickNumber(summary, ["breathing_score", "respiratory_score"]);
         const respRate = pickNumber(summary, ["rr_average", "respiratory_rate", "breathing_rate"]);
 
         if (duration != null) {
           posSleepQualityDurationEl.textContent = formatDurationHM(duration);
         }
-        posSleepQualityScoreEl.textContent = score != null ? `Score ${formatNumber(score, 0)}` : "Score —";
+        posSleepQualityScoreEl.textContent = efficiencyPct != null
+          ? `Efficiency ${formatNumber(efficiencyPct, 0)}%`
+          : "Efficiency —";
 
         const sleepSeries = (metricsResp.data || []).map((row) => {
           const hrs = row.sleep_seconds ? row.sleep_seconds / 3600 : 0;
@@ -1992,21 +2002,21 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         posSleepQualityBarsEl.innerHTML = renderMiniBars(sleepSeries);
 
         if (posBreathingQualityValueEl) {
-          if (breathingScore != null) {
-            posBreathingQualityValueEl.textContent = `${formatNumber(breathingScore, 0)}/100`;
-          } else if (respRate != null) {
+          if (respRate != null) {
             posBreathingQualityValueEl.textContent = `${formatNumber(respRate, 1)} rpm`;
+          } else if (breathingScore != null) {
+            posBreathingQualityValueEl.textContent = `${formatNumber(breathingScore, 0)}/100`;
           } else {
-            posBreathingQualityValueEl.textContent = "No data";
+            hintEmpty(posBreathingQualityValueEl, "No respiratory data");
           }
         }
         if (posBreathingQualityNoteEl) {
-          if (breathingScore != null) {
-            posBreathingQualityNoteEl.textContent = respRate != null ? `Respiration ${formatNumber(respRate, 1)} rpm` : "Breathing score";
-          } else if (respRate != null) {
+          if (respRate != null) {
             posBreathingQualityNoteEl.textContent = "Average respiratory rate";
+          } else if (breathingScore != null) {
+            posBreathingQualityNoteEl.textContent = "Breathing score (if provided)";
           } else {
-            posBreathingQualityNoteEl.textContent = "Add Withings sleep data";
+            posBreathingQualityNoteEl.textContent = "Respiration not provided by Withings summary";
           }
         }
       }
@@ -2041,12 +2051,18 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           "asleepduration",
           "sleep_duration_s",
         ]);
-        if (duration != null && duration < 1000) duration *= 60;
-        const hrAvg = pickNumber(summary, ["hr_average", "hr_avg", "heart_rate_avg"]);
-        const hrv = pickNumber(summary, ["hrv", "hrv_average", "rmssd"]);
-        const deep = pickNumber(summary, ["deep_sleep_duration", "deepsleepduration", "deep_duration"]);
+        duration = normalizeSeconds(duration);
+        const deep = normalizeSeconds(pickNumber(summary, ["deep_sleep_duration", "deepsleepduration", "deep_duration"]));
+        const light = normalizeSeconds(pickNumber(summary, ["lightsleepduration", "light_sleep_duration"]));
+        const rem = normalizeSeconds(pickNumber(summary, ["remsleepduration", "rem_sleep_duration"]));
+        const timeInBed = normalizeSeconds(pickNumber(summary, ["total_timeinbed", "time_in_bed"]));
+        const waso = normalizeSeconds(pickNumber(summary, ["waso", "wakeupduration", "wakeup_duration"]));
         const regularity = pickNumber(summary, ["regularity", "sleep_regularity_score"]);
         const interruptions = pickNumber(summary, ["wakeupcount", "wakeup_count", "interruptions"]);
+        const efficiencyRaw = pickNumber(summary, ["sleep_efficiency", "efficiency"]);
+        const efficiencyPct = efficiencyRaw != null
+          ? (efficiencyRaw <= 1 ? efficiencyRaw * 100 : efficiencyRaw)
+          : null;
         const timeToSleepSeconds = pickNumber(summary, ["time_to_sleep_s"]);
         const timeToGetUpSeconds = pickNumber(summary, ["time_to_getup_s"]);
         let timeToSleep = timeToSleepSeconds ?? pickNumber(summary, ["time_to_sleep", "sleep_latency"]);
@@ -2062,14 +2078,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         const sleepLatency = formatLatency(timeToSleep, "Sleep latency");
         const wakeLatency = formatLatency(timeToGetUp, "Wake latency");
         const entries = [
-          { label: "Duration", value: duration != null ? formatDurationHM(duration) : "—", meta: "Total sleep" },
-          { label: "Heart rate", value: hrAvg != null ? `${formatNumber(hrAvg, 0)} bpm` : "—", meta: "Average" },
-          { label: "HRV", value: hrv != null ? `${formatNumber(hrv, 0)} ms` : "—", meta: "Average" },
-          { label: "Deep sleep", value: deep != null ? formatDurationHM(deep) : "—", meta: "Deep stage" },
-          { label: "Regularity", value: regularity != null ? `${formatNumber(regularity, 0)}/100` : "—", meta: "Consistency score" },
-          { label: "Interruptions", value: interruptions != null ? `${formatNumber(interruptions, 0)}` : "—", meta: "Wake ups" },
-          { label: "Time to sleep", value: sleepLatency.value, meta: sleepLatency.meta },
-          { label: "Time to get up", value: wakeLatency.value, meta: wakeLatency.meta },
+          { label: "Total sleep", value: duration != null ? formatDurationHM(duration) : "—", meta: "total_sleep_time" },
+          { label: "Time in bed", value: timeInBed != null ? formatDurationHM(timeInBed) : "—", meta: "total_timeinbed" },
+          { label: "Efficiency", value: efficiencyPct != null ? `${formatNumber(efficiencyPct, 0)}%` : "—", meta: "sleep_efficiency" },
+          { label: "REM sleep", value: rem != null ? formatDurationHM(rem) : "—", meta: "remsleepduration" },
+          { label: "Light sleep", value: light != null ? formatDurationHM(light) : "—", meta: "lightsleepduration" },
+          { label: "Deep sleep", value: deep != null ? formatDurationHM(deep) : "—", meta: "deepsleepduration" },
+          { label: "WASO", value: waso != null ? formatDurationHM(waso) : "—", meta: "wake after sleep onset" },
+          { label: "Wakeups", value: interruptions != null ? `${formatNumber(interruptions, 0)}` : "—", meta: "wakeupcount" },
+          { label: "Sleep latency", value: sleepLatency.value, meta: sleepLatency.meta },
+          { label: "Wake latency", value: wakeLatency.value, meta: wakeLatency.meta },
+          { label: "Regularity", value: regularity != null ? `${formatNumber(regularity, 0)}/100` : "—", meta: "regularity score" },
         ];
 
         entries.forEach((entry) => {
@@ -2082,7 +2101,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         });
 
         if (posSleepScoreNoteEl) {
-          posSleepScoreNoteEl.textContent = latest.summary_date ? `Latest ${latest.summary_date}` : "Latest sleep summary";
+          posSleepScoreNoteEl.textContent = latest.summary_date
+            ? `Latest Withings summary: ${latest.summary_date}`
+            : "Latest Withings sleep summary";
         }
       }
 
@@ -2395,7 +2416,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           renderStatusItem(
             "Average",
             `${formatNumber(avgSleep, 1)} h`,
-            avgSleep >= target * 0.9 ? "good" : "warn",
+            "neutral",
             `Target ${formatNumber(target, 1)} h`,
             { importance: 8, group: "sleep_trend", related: "average,target" },
           ),
@@ -2404,7 +2425,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           renderStatusItem(
             "Consistency",
             `${formatNumber(sleepStd, 1)} h σ`,
-            sleepStd <= 0.8 ? "good" : "warn",
+            "neutral",
             "Std dev of sleep hours",
             { importance: 6, group: "sleep_trend", related: "variability" },
           ),
@@ -2413,7 +2434,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           renderStatusItem(
             "Sleep debt",
             `${formatNumber(debt, 1)} h`,
-            debt <= 2 ? "good" : debt <= 5 ? "warn" : "bad",
+            "neutral",
             `${dayCount}d window`,
             { importance: 7, group: "sleep_trend", related: "debt" },
           ),

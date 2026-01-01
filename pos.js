@@ -3057,11 +3057,20 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       }
 
       function renderGoalBar({ label, actual, target, unit, meta = null }) {
-        const ratio = target ? actual / target : 0;
-        const percent = Math.round(ratio * 100);
-        const status = Number.isFinite(percent) ? `${percent}% of target` : "Target missing";
-        const tone = ratio >= 0.9 && ratio <= 1.1 ? "good" : ratio >= 0.6 ? "warn" : "bad";
-        const metaText = `${formatNumber(actual, 1)} ${unit} / ${formatNumber(target, 0)} ${unit} (${percent}%)`;
+        const hasTarget = target !== null && target !== undefined && !Number.isNaN(target) && Number(target) > 0;
+        const ratio = hasTarget ? actual / target : null;
+        const percent = hasTarget ? Math.round(ratio * 100) : null;
+        const status = hasTarget && Number.isFinite(percent) ? `${percent}% of goal` : "Goal not set";
+        const tone = hasTarget
+          ? ratio >= 0.9 && ratio <= 1.1
+            ? "good"
+            : ratio >= 0.6
+              ? "warn"
+              : "bad"
+          : "neutral";
+        const metaText = hasTarget
+          ? `${formatNumber(actual, 1)} ${unit} / ${formatNumber(target, 0)} ${unit} (${percent}%)`
+          : `${formatNumber(actual, 1)} ${unit} · set goal`;
 
         const item = document.createElement("div");
         item.className = "list-item";
@@ -3071,22 +3080,24 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         chip.textContent = status;
         item.appendChild(chip);
 
-        const bar = document.createElement("div");
-        bar.className = "bar goal-bar";
-        const fill = document.createElement("div");
-        fill.className = `bar-fill ${tone}`;
-        fill.style.width = `${Math.max(3, Math.min(percent, 100))}%`;
-        bar.appendChild(fill);
+        if (hasTarget) {
+          const bar = document.createElement("div");
+          bar.className = "bar goal-bar";
+          const fill = document.createElement("div");
+          fill.className = `bar-fill ${tone}`;
+          fill.style.width = `${Math.max(3, Math.min(percent, 100))}%`;
+          bar.appendChild(fill);
 
-        const tickLow = document.createElement("div");
-        tickLow.className = "bar-tick";
-        tickLow.style.left = "60%";
-        const tickTarget = document.createElement("div");
-        tickTarget.className = "bar-tick";
-        tickTarget.style.left = "90%";
-        bar.appendChild(tickLow);
-        bar.appendChild(tickTarget);
-        item.appendChild(bar);
+          const tickLow = document.createElement("div");
+          tickLow.className = "bar-tick";
+          tickLow.style.left = "60%";
+          const tickTarget = document.createElement("div");
+          tickTarget.className = "bar-tick";
+          tickTarget.style.left = "90%";
+          bar.appendChild(tickLow);
+          bar.appendChild(tickTarget);
+          item.appendChild(bar);
+        }
         attachMeta(item, meta);
         return item;
       }
@@ -3443,6 +3454,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       function formatNumber(value, decimals = 0) {
         if (value === null || value === undefined || Number.isNaN(value)) return "—";
         return Number(value).toFixed(decimals);
+      }
+
+      function normalizeExerciseName(value) {
+        if (!value) return "";
+        return String(value).toLowerCase().replace(/\s+/g, " ").trim();
       }
 
       function formatMiles(meters) {
@@ -3844,6 +3860,21 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         posBaselinesListEl.innerHTML = "";
         if (posBaselinesNoteEl) posBaselinesNoteEl.textContent = "";
 
+        const { data: goalData } = await supabase
+          .schema("health_core")
+          .from("strength_goals")
+          .select("exercise_id,exercise_name,goal_watts,goal_basis,set_by,updated_at");
+        const goalByName = new Map();
+        const goalById = new Map();
+        (goalData || []).forEach((row) => {
+          if (row.exercise_name) {
+            goalByName.set(normalizeExerciseName(row.exercise_name), row);
+          }
+          if (row.exercise_id) {
+            goalById.set(String(row.exercise_id), row);
+          }
+        });
+
         const { data, error } = await supabase
           .from("speediance_exercise_baselines")
           .select("action_library_group_id,action_library_name,max_weight,max_watts,avg_watts,one_rm,watt_asym_pct,speed_asym_pct,amplitude_asym_pct,total_reps,last_seen_at")
@@ -3854,17 +3885,85 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           if (posBaselinesNoteEl) posBaselinesNoteEl.textContent = "No baselines yet.";
           return;
         }
-        if (posBaselinesNoteEl) posBaselinesNoteEl.textContent = "Relative power bands";
-        const maxWatts = Math.max(...data.map((row) => row.max_watts || 0));
+        if (posBaselinesNoteEl) posBaselinesNoteEl.textContent = "Peak watts vs per-exercise goals";
         data.forEach((row) => {
           const name = row.action_library_name || `Exercise ${row.action_library_group_id}`;
-          const ratio = maxWatts ? (row.max_watts || 0) / maxWatts : 0;
-          const percent = ratio * 100;
-          const tone = ratio > 0.75 ? "good" : ratio > 0.4 ? "warn" : "bad";
-          const status = ratio > 0.75 ? "≥75% of best" : ratio > 0.4 ? "40–75% of best" : "<40% of best";
-          const meta = row.max_watts ? `${formatNumber(row.max_watts, 0)} W (${formatNumber(percent, 0)}% of best)` : "No watts";
-          const item = renderStatusItem(name, status, tone, meta, { importance: 6, group: "strength_baseline", related: "max_watts,max_weight,one_rm" });
-          item.appendChild(renderThresholdBar(percent));
+          const exerciseId = row.action_library_group_id ? String(row.action_library_group_id) : null;
+          const goal =
+            (exerciseId && goalById.get(exerciseId)) ||
+            goalByName.get(normalizeExerciseName(name)) ||
+            null;
+
+          const item = document.createElement("div");
+          item.className = "list-item baseline-item";
+          attachMeta(item, { importance: 7, group: "strength_goal", related: "max_watts,goal_watts" });
+
+          const header = document.createElement("div");
+          header.className = "baseline-header";
+          header.innerHTML = `
+            <div class="baseline-title">${name}</div>
+            <div class="baseline-value">${formatNumber(row.max_watts, 0)} W peak</div>
+          `;
+          item.appendChild(header);
+
+          const goalBar = renderGoalBar({
+            label: "Goal vs peak",
+            actual: row.max_watts || 0,
+            target: goal?.goal_watts ?? null,
+            unit: "W",
+            meta: { importance: 7, group: "strength_goal", related: "goal_watts" },
+          });
+          item.appendChild(goalBar);
+
+          const editor = document.createElement("div");
+          editor.className = "goal-editor";
+          const input = document.createElement("input");
+          input.type = "number";
+          input.placeholder = "Set goal watts";
+          if (goal?.goal_watts) input.value = String(Math.round(goal.goal_watts));
+          const button = document.createElement("button");
+          button.className = "secondary";
+          button.textContent = "Save goal";
+          const meta = document.createElement("div");
+          meta.className = "goal-meta";
+          if (goal?.goal_watts) {
+            const updated = goal.updated_at ? new Date(goal.updated_at).toLocaleDateString() : "—";
+            meta.textContent = `Goal ${formatNumber(goal.goal_watts, 0)} W · ${goal.goal_basis || "manual"} · ${updated}`;
+          } else {
+            meta.textContent = "Goal not set";
+          }
+          editor.appendChild(input);
+          editor.appendChild(button);
+          editor.appendChild(meta);
+          item.appendChild(editor);
+
+          button.addEventListener("click", async () => {
+            const value = Number(input.value);
+            if (!Number.isFinite(value) || value <= 0) {
+              showToast("Enter a valid goal in watts.", "error");
+              return;
+            }
+            const payload = {
+              athlete_id: "global",
+              exercise_id: exerciseId,
+              exercise_name: name,
+              goal_watts: value,
+              goal_basis: "manual",
+              set_by: "user",
+              updated_at: new Date().toISOString(),
+            };
+            const { error: upsertError } = await supabase
+              .schema("health_core")
+              .from("strength_goals")
+              .upsert(payload, { onConflict: "athlete_id,exercise_name" });
+            if (upsertError) {
+              showToast("Failed to save goal.", "error");
+              return;
+            }
+            showToast("Goal saved.", "success");
+            await loadPosBaselines();
+          });
+
           posBaselinesListEl.appendChild(item);
         });
       }

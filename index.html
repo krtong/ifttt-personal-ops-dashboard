@@ -22,6 +22,10 @@
 
       * { box-sizing: border-box; }
 
+      html, body {
+        height: 100%;
+      }
+
       body {
         margin: 0;
         padding: 24px;
@@ -29,6 +33,7 @@
         background: radial-gradient(circle at 20% 20%, #1a2547 0%, #0a0f1f 45%, #070b16 100%);
         color: var(--text);
         min-height: 100vh;
+        overflow-y: auto;
       }
 
       .wrap {

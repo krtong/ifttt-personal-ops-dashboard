@@ -284,13 +284,51 @@ async function signIn() {
     const signInPromise = supabase.auth.signInWithPassword({ email, password });
     const { data, error } = await Promise.race([signInPromise, timeout]);
     if (error || !data?.session) {
-      if (authStatusEl) authStatusEl.textContent = error?.message || "Sign in failed";
+      if (authStatusEl) authStatusEl.textContent = "Sign-in failed. Retrying direct auth…";
+      await signInDirect(email, password);
+      await refreshAuth();
       return;
     }
     if (authStatusEl) authStatusEl.textContent = "Signed in";
     await refreshAuth();
   } catch (err) {
-    if (authStatusEl) authStatusEl.textContent = err?.message || "Sign in failed";
+    try {
+      if (authStatusEl) authStatusEl.textContent = "Sign-in timed out. Retrying direct auth…";
+      await signInDirect(email, password);
+      await refreshAuth();
+    } catch (inner) {
+      if (authStatusEl) authStatusEl.textContent = inner?.message || err?.message || "Sign in failed";
+    }
+  }
+}
+
+async function signInDirect(email, password) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+      signal: controller.signal,
+    });
+    const payload = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      const message = payload?.error_description || payload?.message || "Direct sign-in failed";
+      throw new Error(message);
+    }
+    if (!payload?.access_token || !payload?.refresh_token) {
+      throw new Error("Direct sign-in failed: missing token");
+    }
+    await supabase.auth.setSession({
+      access_token: payload.access_token,
+      refresh_token: payload.refresh_token,
+    });
+  } finally {
+    clearTimeout(timer);
   }
 }
 

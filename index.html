@@ -245,6 +245,491 @@
       .hidden {
         display: none;
       }
+      .view-toggle {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 12px;
+      }
+      .dashboard-view {
+        display: grid;
+        gap: 20px;
+      }
+
+      /* Personal Ops dashboard styles (from legacy ops view) */
+      .grid { display: grid; gap: 12px; }
+      .card {
+        border: 1px solid rgba(42, 51, 82, 0.6);
+        border-radius: 16px;
+        padding: 14px;
+        background: rgba(10, 15, 31, 0.6);
+      }
+      .pos-layout {
+        display: grid;
+        gap: 22px;
+      }
+      .pos-hero {
+        border-radius: 22px;
+        border: 1px solid rgba(42, 51, 82, 0.6);
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(12, 18, 34, 0.92));
+        padding: 18px;
+        display: grid;
+        gap: 18px;
+      }
+      .pos-hero-grid {
+        display: grid;
+        gap: 18px;
+      }
+      @media (min-width: 900px) {
+        .pos-hero-grid { grid-template-columns: minmax(0, 1fr); }
+      }
+      .pos-summary { display: grid; gap: 12px; }
+      .stale-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .stale-chip {
+        display: inline-flex;
+        gap: 6px;
+        align-items: baseline;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: 11px;
+        line-height: 1.1;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        color: var(--muted);
+        background: rgba(15, 23, 42, 0.6);
+        white-space: nowrap;
+      }
+      .stale-chip b { font-weight: 700; }
+      .stale-chip.good {
+        border-color: rgba(52, 211, 153, 0.6);
+        color: #86efac;
+        background: rgba(52, 211, 153, 0.14);
+      }
+      .stale-chip.warn {
+        border-color: rgba(248, 171, 111, 0.55);
+        color: #fdba74;
+        background: rgba(249, 115, 22, 0.14);
+      }
+      .stale-chip.bad {
+        border-color: rgba(248, 113, 113, 0.55);
+        color: #fda4af;
+        background: rgba(244, 63, 94, 0.14);
+      }
+      .stale-chip.neutral {
+        border-color: rgba(148, 163, 184, 0.45);
+        color: #e2e8f0;
+        background: rgba(148, 163, 184, 0.16);
+      }
+      .pos-summary-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .pos-summary-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .pos-body {
+        display: grid;
+        gap: 20px;
+      }
+      @media (min-width: 960px) {
+        .pos-body { grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr); }
+      }
+      .pos-body.pos-domains { grid-template-columns: 1fr; }
+      .pos-report { display: grid; gap: 16px; }
+      .pos-report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .pos-report-title { font-weight: 700; }
+      .report-chip {
+        font-size: 11px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        color: var(--muted);
+        background: rgba(15, 23, 42, 0.6);
+      }
+      .pos-report-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+      .report-card {
+        border: 1px solid rgba(42, 51, 82, 0.6);
+        border-radius: 16px;
+        padding: 12px 14px;
+        background: rgba(9, 14, 28, 0.7);
+        display: grid;
+        gap: 8px;
+      }
+      .report-card-title { font-weight: 700; }
+      .report-assessment { font-size: 13px; }
+      .report-action { font-size: 12px; color: var(--muted); }
+      .report-metrics { display: grid; gap: 6px; }
+      .report-metric {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        font-size: 12px;
+      }
+      .report-metric span { color: var(--muted); }
+      .segmented {
+        display: inline-flex;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+      .segmented button {
+        border-radius: 0;
+        border: none;
+        background: transparent;
+        color: var(--text);
+        padding: 10px 14px;
+        font-size: 14px;
+        min-height: 40px;
+      }
+      .segmented button.active {
+        background: rgba(34, 211, 238, 0.2);
+        color: var(--accent-2);
+      }
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        color: var(--accent);
+        background: rgba(14, 165, 233, 0.1);
+      }
+      .status-chip.good {
+        border-color: rgba(52, 211, 153, 0.5);
+        color: #86efac;
+        background: rgba(52, 211, 153, 0.12);
+      }
+      .status-chip.warn {
+        border-color: rgba(248, 171, 111, 0.55);
+        color: #fdba74;
+        background: rgba(249, 115, 22, 0.15);
+      }
+      .status-chip.bad {
+        border-color: rgba(248, 113, 113, 0.55);
+        color: #fda4af;
+        background: rgba(244, 63, 94, 0.15);
+      }
+      .status-chip.neutral {
+        border-color: rgba(148, 163, 184, 0.45);
+        color: #e2e8f0;
+        background: rgba(148, 163, 184, 0.12);
+      }
+      .bar {
+        width: 100%;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(30, 41, 59, 0.8);
+        overflow: hidden;
+        margin-top: 8px;
+      }
+      .bar-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: var(--accent);
+      }
+      .bar-fill.good { background: #34d399; }
+      .bar-fill.warn { background: #f59e0b; }
+      .bar-fill.bad { background: #f87171; }
+      .goal-bar { position: relative; }
+      .goal-bar .bar-tick {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: rgba(148, 163, 184, 0.4);
+      }
+      .goal-legend {
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .goal-legend span { display: inline-flex; align-items: center; gap: 6px; }
+      .legend-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--muted);
+      }
+      .legend-dot.good { background: #34d399; }
+      .legend-dot.warn { background: #f59e0b; }
+      .legend-dot.bad { background: #f87171; }
+      .bullet {
+        position: relative;
+        height: 12px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(248,113,113,0.2) 0%, rgba(249,115,22,0.2) 60%, rgba(34,197,94,0.25) 90%, rgba(249,115,22,0.2) 110%);
+        overflow: hidden;
+      }
+      .bullet > span {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        background: rgba(56, 189, 248, 0.8);
+      }
+      .bullet .tick {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: rgba(226, 232, 240, 0.8);
+      }
+      .kpi-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+      .kpi-card {
+        border: 1px solid rgba(42, 51, 82, 0.6);
+        border-radius: 16px;
+        padding: 12px 14px;
+        background: rgba(9, 14, 28, 0.7);
+        display: grid;
+        gap: 6px;
+      }
+      .kpi-card .kpi-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+      .kpi-card .kpi-value { font-size: 20px; font-weight: 700; }
+      .kpi-card .kpi-sub { font-size: 12px; color: var(--muted); }
+      .kpi-card .kpi-icon { font-size: 16px; }
+      .pos-domain {
+        border: 1px solid rgba(42, 51, 82, 0.6);
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(9, 14, 28, 0.7);
+        display: grid;
+        gap: 12px;
+      }
+      .pos-domain-hero {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .pos-domain-hero-main { display: grid; gap: 4px; }
+      .pos-domain-plan { font-size: 16px; font-weight: 600; }
+      .pos-domain-plan-sub { font-size: 12px; color: var(--muted); }
+      .plan-hero-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+      }
+      .pos-domain-body { display: grid; gap: 10px; }
+      .pos-domain-metrics { display: grid; gap: 8px; }
+      .pos-panel {
+        border: 1px solid rgba(42, 51, 82, 0.45);
+        border-radius: 14px;
+        padding: 12px;
+        background: rgba(12, 18, 34, 0.6);
+      }
+      .list { display: grid; gap: 8px; }
+      .list-item {
+        border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+        padding-bottom: 6px;
+      }
+      .list-item:last-child { border-bottom: none; padding-bottom: 0; }
+      .list-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .list-title { font-weight: 600; margin-bottom: 4px; }
+      .list-meta { font-size: 13px; color: var(--muted); line-height: 1.4; }
+      .pill {
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(42, 51, 82, 0.6);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+      .pill.good { color: #86efac; border-color: rgba(52, 211, 153, 0.6); }
+      .pill.warn { color: #fdba74; border-color: rgba(249, 115, 22, 0.6); }
+      .pill.bad { color: #fda4af; border-color: rgba(248, 113, 113, 0.6); }
+      .pill.unknown { color: var(--muted); }
+      .chart {
+        min-height: 120px;
+        border-radius: 14px;
+        border: 1px dashed rgba(42, 51, 82, 0.5);
+        background: rgba(9, 14, 28, 0.5);
+      }
+      .chart-caption { font-size: 11px; color: var(--muted); margin-top: 4px; }
+      .heatmap {
+        display: grid;
+        gap: 6px;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+      }
+      .heatmap-cell {
+        border-radius: 10px;
+        padding: 8px;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(42, 51, 82, 0.5);
+        font-size: 11px;
+        color: var(--muted);
+        display: grid;
+        gap: 6px;
+      }
+      .heatmap-cell strong { color: var(--text); }
+      .training-card,
+      .sleep-card {
+        border: 1px solid rgba(42, 51, 82, 0.45);
+        border-radius: 16px;
+        padding: 12px;
+        background: rgba(10, 15, 31, 0.6);
+        display: grid;
+        gap: 8px;
+      }
+      .sleep-quality-card {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .sleep-quality-time { font-size: 22px; font-weight: 700; }
+      .sleep-score-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .sleep-metric-card {
+        border: 1px solid rgba(42, 51, 82, 0.5);
+        border-radius: 12px;
+        padding: 8px;
+        background: rgba(9, 14, 28, 0.6);
+      }
+      .mini-bars {
+        display: flex;
+        gap: 4px;
+        align-items: flex-end;
+      }
+      .mini-bar {
+        width: 10px;
+        border-radius: 6px;
+        background: rgba(148, 163, 184, 0.3);
+      }
+      .mini-bar.active { background: rgba(96, 165, 250, 0.6); }
+      .pillar-grid {
+        display: grid;
+        gap: 10px;
+      }
+      .pillar {
+        display: grid;
+        gap: 6px;
+      }
+      .pillar-label { font-size: 12px; color: var(--muted); }
+      .pillar-bar {
+        position: relative;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(30, 41, 59, 0.8);
+      }
+      .pillar-bar span {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        border-radius: 999px;
+        background: rgba(34, 197, 94, 0.6);
+      }
+      .matrix-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+      .matrix-table th,
+      .matrix-table td {
+        padding: 6px;
+        border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+        text-align: left;
+      }
+      .matrix-table th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .meta { color: var(--muted); font-size: 12px; }
+      .row-inline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .sport-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+      .sport-tab {
+        border: 1px solid rgba(42, 51, 82, 0.6);
+        border-radius: 999px;
+        padding: 6px 12px;
+        background: rgba(10, 15, 31, 0.6);
+        color: var(--text);
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .sport-tab.active {
+        background: rgba(34, 211, 238, 0.2);
+        color: var(--accent-2);
+        border-color: rgba(34, 211, 238, 0.6);
+      }
+      .streak-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .streak-row-labels {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 6px;
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .streak-cell {
+        border-radius: 10px;
+        padding: 8px;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(42, 51, 82, 0.5);
+        text-align: center;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .pos-section {
+        border: 1px solid rgba(42, 51, 82, 0.45);
+        border-radius: 14px;
+        padding: 12px;
+        background: rgba(12, 18, 34, 0.6);
+        display: grid;
+        gap: 8px;
+      }
+      .pos-day-drawer {
+        border: 1px solid rgba(42, 51, 82, 0.45);
+        border-radius: 14px;
+        padding: 12px;
+        background: rgba(12, 18, 34, 0.6);
+        display: grid;
+        gap: 8px;
+      }
+      .pos-left { display: grid; gap: 12px; }
+      .pos-right { display: grid; gap: 12px; }
+      .pos-right-stack { display: grid; gap: 12px; }
+      .sleep-quality-sub { font-size: 12px; color: var(--muted); }
     </style>
   </head>
   <body>
@@ -269,7 +754,14 @@
       </div>
 
       <main id="content" class="report hidden">
-        <div class="report-grid">
+        <div class="view-toggle">
+          <div class="segmented" id="view-tabs">
+            <button type="button" data-view="dashboard" class="active">Dashboard</button>
+            <button type="button" data-view="report">Operational report</button>
+          </div>
+        </div>
+        <section id="report-view" class="report-view">
+          <div class="report-grid">
           <section class="section summary" data-importance="10">
             <div class="section-head">
               <div class="section-title">Operational summary</div>
@@ -366,11 +858,476 @@
               <div class="evidence-grid" id="body-evidence"></div>
             </div>
           </section>
-        </div>
-        <div class="report-footer">
-          <button id="logout" class="btn secondary">Sign out</button>
-          <div id="report-window">—</div>
-        </div>
+          </div>
+          <div class="report-footer">
+            <button data-action="logout" class="btn secondary">Sign out</button>
+            <div id="report-window">—</div>
+          </div>
+        </section>
+        <section id="dashboard-view" class="dashboard-view hidden">
+          <div id="pos-dashboard" class="pos-layout" data-importance="10" data-group="personal_ops">
+            <div id="pos-report" class="pos-report">
+              <div class="pos-report-header">
+                <div>
+                  <div class="pos-report-title">Personal Ops — Operational Report</div>
+                  <div id="pos-report-updated" class="meta">Updated —</div>
+                </div>
+                <div id="pos-report-coverage" class="report-chip">Coverage —</div>
+              </div>
+              <div class="pos-report-grid">
+                <section id="report-training" class="report-card" data-importance="10" data-group="report_training" data-related="workouts,load,form">
+                  <div class="report-card-title">Training / Exercise</div>
+                  <div id="report-training-assessment" class="report-assessment">—</div>
+                  <div id="report-training-action" class="report-action">—</div>
+                  <div id="report-training-metrics" class="report-metrics"></div>
+                </section>
+                <section id="report-sleep" class="report-card" data-importance="10" data-group="report_sleep" data-related="sleep,baseline,stale">
+                  <div class="report-card-title">Sleep</div>
+                  <div id="report-sleep-assessment" class="report-assessment">—</div>
+                  <div id="report-sleep-action" class="report-action">—</div>
+                  <div id="report-sleep-metrics" class="report-metrics"></div>
+                </section>
+                <section id="report-nutrition" class="report-card" data-importance="9" data-group="report_nutrition" data-related="calories,protein,coverage">
+                  <div class="report-card-title">Nutrition</div>
+                  <div id="report-nutrition-assessment" class="report-assessment">—</div>
+                  <div id="report-nutrition-action" class="report-action">—</div>
+                  <div id="report-nutrition-metrics" class="report-metrics"></div>
+                </section>
+                <section id="report-body" class="report-card" data-importance="8" data-group="report_body" data-related="weight,recovery">
+                  <div class="report-card-title">Body composition / recovery</div>
+                  <div id="report-body-assessment" class="report-assessment">—</div>
+                  <div id="report-body-action" class="report-action">—</div>
+                  <div id="report-body-metrics" class="report-metrics"></div>
+                </section>
+                <section id="report-risk" class="report-card" data-importance="8" data-group="report_risk" data-related="form,stale,coverage">
+                  <div class="report-card-title">Readiness / risk</div>
+                  <div id="report-risk-assessment" class="report-assessment">—</div>
+                  <div id="report-risk-action" class="report-action">—</div>
+                  <div id="report-risk-metrics" class="report-metrics"></div>
+                </section>
+              </div>
+            </div>
+            <div class="pos-hero">
+              <div class="pos-summary-header">
+                <div style="font-weight:600;">Personal Ops · Today</div>
+                <div class="meta" id="pos-summary-updated">—</div>
+              </div>
+              <div class="pos-summary-meta">
+                <div class="meta">Range</div>
+                <div id="pos-range" class="segmented"></div>
+                <div id="pos-summary-freshness" class="pill unknown">Data status</div>
+                <div id="pos-run-status" class="pill unknown">Last run</div>
+              </div>
+              <div class="pos-summary-meta">
+                <div class="meta">View</div>
+                <div id="pos-nav" class="segmented"></div>
+              </div>
+              <div class="pos-hero-grid">
+                <div id="pos-summary" class="pos-summary" data-pos-view="overview" data-importance="10" data-group="summary" data-related="sleep,adherence,workouts,load,race">
+                  <div id="pos-summary-metrics" class="kpi-grid"></div>
+                  <div class="meta" id="pos-summary-note"></div>
+                  <div id="pos-summary-drivers" class="stale-row"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pos-body pos-domains" data-pos-view="overview training nutrition sleep data">
+              <section class="pos-domain" id="pos-domain-sleep" data-pos-view="overview sleep" data-importance="9" data-group="sleep" data-related="sleep,recovery,plan">
+                <div class="pos-domain-hero">
+                  <div class="pos-domain-hero-main">
+                    <div class="plan-hero-label">Sleep</div>
+                    <div class="pos-domain-plan" id="pos-domain-sleep-plan" data-importance="9">Plan: —</div>
+                    <div class="pos-domain-plan-sub" id="pos-domain-sleep-plan-sub">Inputs used below</div>
+                  </div>
+                  <div class="meta">Recovery drivers</div>
+                </div>
+                <div class="pos-domain-body">
+                  <div id="pos-domain-sleep-metrics" class="pos-domain-metrics list" data-pos-view="overview sleep" data-importance="8" data-group="sleep_metrics" data-related="sleep,baseline,delta,stale"></div>
+                  <div class="pos-sleep-grid hidden" data-pos-view="sleep" data-importance="9" data-group="sleep_overview" data-related="sleep,score,breathing">
+                    <div id="pos-sleep-quality" class="sleep-card" data-importance="9" data-group="sleep_quality" data-related="duration,score,trend">
+                      <div class="sleep-quality-card">
+                        <div class="sleep-quality-main">
+                          <div class="plan-hero-label">Sleep quality</div>
+                          <div class="sleep-quality-time" id="pos-sleep-quality-duration">—</div>
+                          <div class="sleep-quality-sub" id="pos-sleep-quality-score">Score —</div>
+                        </div>
+                        <div id="pos-sleep-quality-bars" class="mini-bars"></div>
+                      </div>
+                    </div>
+                    <div id="pos-breathing-quality" class="sleep-card compact" data-importance="7" data-group="sleep_breathing" data-related="respiration">
+                      <div class="plan-hero-label">Breathing quality</div>
+                      <div id="pos-breathing-quality-value" style="font-size:18px;font-weight:600;">—</div>
+                      <div class="meta" id="pos-breathing-quality-note">Respiration assessment</div>
+                    </div>
+                    <div id="pos-sleep-score" class="sleep-card" data-importance="8" data-group="sleep_score" data-related="duration,hr,hrv,depth,regularity">
+                      <div class="row-inline">
+                        <div style="font-weight:600;">Sleep quality score</div>
+                        <div class="meta" id="pos-sleep-score-note">—</div>
+                      </div>
+                      <div id="pos-sleep-score-grid" class="sleep-score-grid"></div>
+                    </div>
+                    <div id="pos-sleep-heart" class="sleep-card" data-importance="7" data-group="sleep_hr" data-related="heart_rate">
+                      <div class="row-inline">
+                        <div style="font-weight:600;">Heart rate during sleep</div>
+                        <div class="meta" id="pos-sleep-heart-note">—</div>
+                      </div>
+                      <div id="pos-sleep-heart-chart" class="chart"></div>
+                    </div>
+                    <div id="pos-recovery" class="pos-panel hidden" data-pos-view="sleep" data-importance="8" data-group="recovery" data-related="sleep,weight,hrv,rhr">
+                      <div class="row-inline">
+                        <div style="font-weight:600;">Withings recovery</div>
+                        <div class="meta" id="pos-recovery-note">—</div>
+                      </div>
+                      <div id="pos-recovery-list" class="list"></div>
+                    </div>
+                    <div id="pos-sleep-trend" class="pos-panel hidden" data-pos-view="sleep" data-importance="8" data-group="sleep_trend" data-related="sleep,consistency,debt">
+                      <div class="row-inline">
+                        <div style="font-weight:600;">Sleep trend</div>
+                        <div class="meta" id="pos-sleep-trend-note">—</div>
+                      </div>
+                      <div id="pos-sleep-trend-chart" class="chart"></div>
+                      <div class="chart-caption" id="pos-sleep-trend-caption"></div>
+                      <div id="pos-sleep-trend-list" class="list"></div>
+                    </div>
+                    <div id="pos-sleep-plan" class="pos-panel hidden" data-pos-view="sleep" data-importance="7" data-group="sleep_plan" data-related="sleep,baseline,targets">
+                      <div class="row-inline">
+                        <div style="font-weight:600;">Sleep plan</div>
+                        <div class="meta" id="pos-sleep-plan-note">—</div>
+                      </div>
+                      <div id="pos-sleep-plan-list" class="list"></div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="pos-domain" id="pos-domain-diet" data-pos-view="overview nutrition" data-importance="9" data-group="diet" data-related="calories,protein,carbs,fat">
+                <div class="pos-domain-hero">
+                  <div class="pos-domain-hero-main">
+                    <div class="plan-hero-label">Diet</div>
+                    <div class="pos-domain-plan" id="pos-domain-diet-plan" data-importance="9">Plan: —</div>
+                    <div class="pos-domain-plan-sub" id="pos-domain-diet-plan-sub">Inputs used below</div>
+                  </div>
+                  <div class="meta">Fuel coverage & targets</div>
+                </div>
+                <div class="pos-domain-body">
+                  <div id="pos-domain-diet-metrics" class="pos-domain-metrics list" data-pos-view="overview nutrition" data-importance="8" data-group="diet_metrics" data-related="calories,protein,carbs,fat,coverage"></div>
+                  <div id="pos-nutrition" class="pos-panel hidden" data-pos-view="nutrition" data-importance="7" data-group="fuel" data-related="calories,protein,carbs,fat">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Nutrition budget</div>
+                      <div class="meta" id="pos-nutrition-note">—</div>
+                    </div>
+                    <div id="pos-nutrition-list" class="list"></div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="pos-domain" id="pos-domain-progress" data-pos-view="overview training" data-importance="9" data-group="progress" data-related="heatmap,load,form,relationships">
+                <div class="pos-domain-hero">
+                  <div class="pos-domain-hero-main">
+                    <div class="plan-hero-label">Progress report</div>
+                    <div class="pos-domain-plan" id="pos-domain-progress-plan" data-importance="9">Plan: —</div>
+                    <div class="pos-domain-plan-sub" id="pos-domain-progress-plan-sub">Inputs used below</div>
+                  </div>
+                  <div class="meta">Form, load, adherence</div>
+                </div>
+                <div class="pos-domain-body">
+                  <div id="pos-domain-progress-metrics" class="pos-domain-metrics list" data-pos-view="overview training" data-importance="8" data-group="progress_metrics" data-related="adherence,load,form,coverage"></div>
+                  <div class="pos-training-grid hidden" data-pos-view="training" data-importance="9" data-group="training_overview" data-related="weekly,fitness,streak">
+                    <div id="pos-week-sport" class="training-card" data-importance="9" data-group="weekly_sport" data-related="distance,time,weekly">
+                      <div class="row-inline">
+                        <div style="font-weight:600;">This week</div>
+                        <div class="sport-tabs" id="pos-week-sport-tabs"></div>
+                      </div>
+                      <div id="pos-week-sport-summary" class="meta">—</div>
+                      <div id="pos-week-sport-chart" class="chart"></div>
+                      <div class="chart-caption" id="pos-week-sport-caption">Interval: daily · Range: Last 7 days</div>
+                    </div>
+                    <div id="pos-fitness-card" class="training-card" data-importance="9" data-group="fitness_trend" data-related="fitness,form">
+                      <div class="row-inline">
+                        <div style="font-weight:600;">Fitness trend</div>
+                        <div class="meta" id="pos-fitness-card-note">—</div>
+                      </div>
+                      <div id="pos-fitness-card-chart" class="chart"></div>
+                      <div class="chart-caption" id="pos-fitness-card-caption">Interval: daily</div>
+                    </div>
+                    <div id="pos-streak-card" class="training-card" data-importance="8" data-group="streak" data-related="streak,consistency">
+                      <div class="row-inline">
+                        <div style="font-weight:600;">Monthly streak</div>
+                        <div class="meta" id="pos-streak-note">—</div>
+                      </div>
+                      <div class="streak-row-labels" id="pos-streak-labels"></div>
+                      <div class="streak-grid" id="pos-streak-grid"></div>
+                    </div>
+                    <div id="pos-power-skills" class="training-card" data-importance="6" data-group="power_profile" data-related="power,skills">
+                      <div style="font-weight:600;">Power skills</div>
+                      <div class="meta" id="pos-power-skills-note">No power profile data yet.</div>
+                      <div id="pos-power-skills-chart" class="chart"></div>
+                    </div>
+                  </div>
+                  <div id="pos-heatmap" class="pos-section hidden" data-pos-view="training" data-importance="8" data-group="consistency" data-related="sleep,training,nutrition">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Week heatmap</div>
+                      <div class="meta" id="pos-heatmap-note">—</div>
+                    </div>
+                    <div id="pos-heatmap-grid" class="heatmap"></div>
+                  </div>
+                  <div id="pos-day-drawer" class="pos-day-drawer hidden" data-pos-view="training" data-importance="8" data-group="day_detail" data-related="sleep,training,nutrition,load">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Day detail</div>
+                      <div class="meta" id="pos-day-drawer-date">—</div>
+                    </div>
+                    <div id="pos-day-drawer-list" class="list"></div>
+                  </div>
+                  <div id="pos-strava-fitness" class="pos-section hidden" data-pos-view="training" data-importance="9" data-group="fitness" data-related="fitness,fatigue,form">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Fitness & form (Strava)</div>
+                      <div class="meta" id="pos-strava-note">—</div>
+                    </div>
+                    <div id="pos-strava-list" class="list"></div>
+                    <div id="pos-strava-chart" class="chart"></div>
+                    <div class="chart-caption" id="pos-strava-chart-caption"></div>
+                  </div>
+                  <div id="pos-load-capacity" class="pos-section hidden" data-pos-view="training" data-importance="8" data-group="load_capacity" data-related="training_load,capacity">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Load vs capacity</div>
+                      <div class="meta" id="pos-load-capacity-note">—</div>
+                    </div>
+                    <div id="pos-load-capacity-list" class="list"></div>
+                  </div>
+                  <div id="pos-weekly-load" class="pos-section hidden" data-pos-view="training" data-importance="7" data-group="weekly_load" data-related="training_load,weekly">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Weekly load</div>
+                      <div class="meta" id="pos-weekly-load-note">—</div>
+                    </div>
+                    <div id="pos-weekly-load-chart" class="chart"></div>
+                    <div class="chart-caption" id="pos-weekly-load-caption"></div>
+                  </div>
+                  <div id="pos-relations" class="pos-section hidden" data-pos-view="training" data-importance="8" data-group="relationships" data-related="load,sleep,nutrition,strength_quality">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Load, sleep & nutrition signals</div>
+                      <div class="meta" id="pos-relations-note">—</div>
+                    </div>
+                    <div id="pos-relations-list" class="list"></div>
+                    <div id="pos-load-sleep-chart" class="chart"></div>
+                    <div id="pos-fuel-load-chart" class="chart"></div>
+                  </div>
+                  <div id="pos-trends" class="pos-section hidden" data-pos-view="training" data-importance="7" data-group="momentum" data-related="training_load,endurance_distance,strength_sessions">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Trend signals</div>
+                      <div class="meta" id="pos-trends-note">—</div>
+                    </div>
+                    <div id="pos-trends-list" class="list"></div>
+                  </div>
+                  <div id="pos-data-health" class="pos-panel hidden" data-pos-view="training data" data-importance="9" data-group="data_health" data-related="coverage,stale,confidence">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Data health</div>
+                      <div class="meta" id="pos-data-health-note">—</div>
+                    </div>
+                    <div id="pos-data-health-list" class="list"></div>
+                  </div>
+                  <div id="pos-apple-health" class="pos-panel hidden" data-pos-view="training data" data-importance="6" data-group="activity" data-related="steps,active_calories,resting_calories,exercise_minutes">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Apple Health signals</div>
+                      <div class="meta" id="pos-apple-health-note">—</div>
+                    </div>
+                    <div id="pos-apple-health-list" class="list"></div>
+                  </div>
+                  <div id="pos-stats" class="pos-panel hidden" data-pos-view="training nutrition data" data-importance="6" data-group="weekly_totals" data-related="miles,yards,steps,calories,exercise_hours,macros">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Weekly averages</div>
+                      <div class="meta" id="pos-stats-range">—</div>
+                    </div>
+                    <div id="pos-stats-list" class="list"></div>
+                    <div class="meta" id="pos-stats-note"></div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="pos-domain" id="pos-domain-weight" data-pos-view="overview strength" data-importance="8" data-group="strength" data-related="strength,quality,asymmetry">
+                <div class="pos-domain-hero">
+                  <div class="pos-domain-hero-main">
+                    <div class="plan-hero-label">Weight training</div>
+                    <div class="pos-domain-plan" id="pos-domain-weight-plan" data-importance="8">Plan: —</div>
+                    <div class="pos-domain-plan-sub" id="pos-domain-weight-plan-sub">Inputs used below</div>
+                  </div>
+                  <div class="meta">Speediance metrics</div>
+                </div>
+                <div class="pos-domain-body">
+                  <div id="pos-domain-weight-metrics" class="pos-domain-metrics list" data-pos-view="overview strength" data-importance="7" data-group="strength_metrics" data-related="quality,asymmetry,volume"></div>
+                  <div id="pos-baselines" class="pos-panel hidden" data-pos-view="strength" data-importance="8" data-group="baselines" data-related="baselines,1rm">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Power baselines</div>
+                      <div class="meta" id="pos-baselines-note">—</div>
+                    </div>
+                    <div id="pos-baselines-list" class="list"></div>
+                  </div>
+                  <div id="pos-quality" class="pos-panel hidden" data-pos-view="strength" data-importance="8" data-group="quality" data-related="quality,completion">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Session quality</div>
+                      <div class="meta" id="pos-quality-note">—</div>
+                    </div>
+                    <div id="pos-quality-list" class="list"></div>
+                  </div>
+                  <div id="pos-last-session" class="pos-panel hidden" data-pos-view="strength" data-importance="8" data-group="last_session" data-related="sets,reps,load">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Last session breakdown</div>
+                      <div class="meta" id="pos-last-session-note">—</div>
+                    </div>
+                    <div id="pos-last-session-list" class="list"></div>
+                  </div>
+                  <div id="pos-strength-scatter" class="pos-panel hidden" data-pos-view="strength" data-importance="7" data-group="scatter" data-related="quality,asymmetry">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Quality vs asymmetry</div>
+                      <div class="meta" id="pos-strength-scatter-note">—</div>
+                    </div>
+                    <div id="pos-strength-scatter-chart" class="chart"></div>
+                  </div>
+                  <div id="pos-strength-matrix" class="pos-panel hidden" data-pos-view="strength" data-importance="7" data-group="matrix" data-related="quality,asymmetry,volume">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Strength matrix</div>
+                      <div class="meta" id="pos-strength-matrix-note">—</div>
+                    </div>
+                    <div id="pos-strength-matrix-table" class="list"></div>
+                  </div>
+                  <div id="pos-quality-trends" class="pos-panel hidden" data-pos-view="strength" data-importance="7" data-group="quality_trends" data-related="quality,trend">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Exercise trends</div>
+                      <div class="meta" id="pos-quality-trends-note">—</div>
+                    </div>
+                    <div id="pos-quality-trends-list" class="list"></div>
+                  </div>
+                  <div id="pos-weakness" class="pos-panel hidden" data-pos-view="strength" data-importance="7" data-group="weakness" data-related="quality,asymmetry">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">What to fix next</div>
+                      <div class="meta" id="pos-weakness-note">—</div>
+                    </div>
+                    <div id="pos-weakness-list" class="list"></div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="pos-domain" id="pos-domain-cycling" data-pos-view="overview training" data-importance="8" data-group="cycling" data-related="cycling,form,fitness">
+                <div class="pos-domain-hero">
+                  <div class="pos-domain-hero-main">
+                    <div class="plan-hero-label">Cycling</div>
+                    <div class="pos-domain-plan" id="pos-domain-cycling-plan" data-importance="8">Plan: —</div>
+                    <div class="pos-domain-plan-sub" id="pos-domain-cycling-plan-sub">Inputs used below</div>
+                  </div>
+                  <div class="meta">Strava metrics</div>
+                </div>
+                <div class="pos-domain-body">
+                  <div id="pos-domain-cycling-metrics" class="pos-domain-metrics list" data-pos-view="overview training" data-importance="7" data-group="cycling_metrics" data-related="minutes,distance,form"></div>
+                  <div id="pos-cycling-summary" class="pos-panel hidden" data-pos-view="training" data-importance="8" data-group="cycling" data-related="fitness,fatigue,form">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Cycling metrics</div>
+                      <div class="meta" id="pos-cycling-note">—</div>
+                    </div>
+                    <div id="pos-cycling-list" class="list"></div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="pos-domain" id="pos-domain-running" data-pos-view="overview training" data-importance="8" data-group="running" data-related="running,form,fitness">
+                <div class="pos-domain-hero">
+                  <div class="pos-domain-hero-main">
+                    <div class="plan-hero-label">Running</div>
+                    <div class="pos-domain-plan" id="pos-domain-running-plan" data-importance="8">Plan: —</div>
+                    <div class="pos-domain-plan-sub" id="pos-domain-running-plan-sub">Inputs used below</div>
+                  </div>
+                  <div class="meta">Strava metrics</div>
+                </div>
+                <div class="pos-domain-body">
+                  <div id="pos-domain-running-metrics" class="pos-domain-metrics list" data-pos-view="overview training" data-importance="7" data-group="run_metrics" data-related="minutes,distance,form"></div>
+                  <div id="pos-running-summary" class="pos-panel hidden" data-pos-view="training" data-importance="8" data-group="running" data-related="fitness,fatigue,form">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Running metrics</div>
+                      <div class="meta" id="pos-running-note">—</div>
+                    </div>
+                    <div id="pos-running-list" class="list"></div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="pos-domain" id="pos-domain-swimming" data-pos-view="overview training" data-importance="8" data-group="swimming" data-related="swimming,form,fitness">
+                <div class="pos-domain-hero">
+                  <div class="pos-domain-hero-main">
+                    <div class="plan-hero-label">Swimming</div>
+                    <div class="pos-domain-plan" id="pos-domain-swimming-plan" data-importance="8">Plan: —</div>
+                    <div class="pos-domain-plan-sub" id="pos-domain-swimming-plan-sub">Inputs used below</div>
+                  </div>
+                  <div class="meta">Strava metrics</div>
+                </div>
+                <div class="pos-domain-body">
+                  <div id="pos-domain-swimming-metrics" class="pos-domain-metrics list" data-pos-view="overview training" data-importance="7" data-group="swim_metrics" data-related="minutes,distance,form"></div>
+                  <div id="pos-swimming-summary" class="pos-panel hidden" data-pos-view="training" data-importance="8" data-group="swimming" data-related="fitness,fatigue,form">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Swimming metrics</div>
+                      <div class="meta" id="pos-swimming-note">—</div>
+                    </div>
+                    <div id="pos-swimming-list" class="list"></div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="pos-domain" id="pos-domain-facial" data-pos-view="overview" data-importance="5" data-group="facial" data-related="facial,posture">
+                <div class="pos-domain-hero">
+                  <div class="pos-domain-hero-main">
+                    <div class="plan-hero-label">Facial exercises</div>
+                    <div class="pos-domain-plan" id="pos-domain-facial-plan" data-importance="4">Plan: —</div>
+                    <div class="pos-domain-plan-sub" id="pos-domain-facial-plan-sub">Inputs used below</div>
+                  </div>
+                  <div class="meta">Tracking source</div>
+                </div>
+                <div class="pos-domain-body">
+                  <div id="pos-domain-facial-metrics" class="pos-domain-metrics list" data-pos-view="overview" data-importance="4" data-group="facial_metrics" data-related="facial">
+                  </div>
+                  <div id="pos-facial-summary" class="pos-panel hidden" data-pos-view="overview" data-importance="5" data-group="facial" data-related="facial">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Facial tracking</div>
+                      <div class="meta" id="pos-facial-note">—</div>
+                    </div>
+                    <div id="pos-facial-list" class="list"></div>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div class="pos-body" data-pos-view="race">
+              <div class="pos-left">
+                <div id="pos-race-summary" class="pos-section hidden" data-pos-view="race" data-importance="10" data-group="race_readiness" data-related="sleep,swim,bike,run,confidence">
+                  <div class="row-inline">
+                    <div style="font-weight:600;">Escape from Alcatraz 2026</div>
+                    <div class="meta" id="pos-race-countdown">—</div>
+                  </div>
+                  <div class="meta" id="pos-race-note">Race window: June 6–7, 2026.</div>
+                  <div id="pos-race-pillars" class="pillar-grid"></div>
+                </div>
+              </div>
+              <div class="pos-right">
+                <div class="pos-right-stack">
+                  <div id="pos-race-limiters" class="pos-panel hidden" data-pos-view="race" data-importance="9" data-group="race_limiters" data-related="limiters,risks">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Top limiters</div>
+                      <div class="meta" id="pos-race-limiters-note">—</div>
+                    </div>
+                    <div id="pos-race-limiters-list" class="list"></div>
+                  </div>
+                  <div id="pos-race-phase" class="pos-panel hidden" data-pos-view="race" data-importance="8" data-group="race_phase" data-related="phase,countdown">
+                    <div class="row-inline">
+                      <div style="font-weight:600;">Phase & focus</div>
+                      <div class="meta" id="pos-race-phase-note">—</div>
+                    </div>
+                    <div id="pos-race-phase-list" class="list"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="report-footer">
+            <button data-action="logout" class="btn secondary">Sign out</button>
+          </div>
+          <div id="toast" class="toast"></div>
+        </section>
       </main>
     </div>
 
@@ -380,10 +1337,15 @@
       const SUPABASE_URL = "https://tbrnarytcojngpbzzwcn.supabase.co";
       const SUPABASE_ANON_KEY = "sb_publishable_E8-dvNNh5V3VQLAcK-xqiQ_dLEu1Bsh";
       const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      window.supabaseClient = supabase;
+      window.__posUseStandaloneAuth = false;
 
       const authEl = document.getElementById("auth");
       const authStatusEl = document.getElementById("auth-status");
       const contentEl = document.getElementById("content");
+      const reportViewEl = document.getElementById("report-view");
+      const dashboardViewEl = document.getElementById("dashboard-view");
+      const viewTabsEl = document.getElementById("view-tabs");
       const emailEl = document.getElementById("email");
       const passwordEl = document.getElementById("password");
       const reportUpdatedEl = document.getElementById("report-updated");
@@ -810,12 +1772,43 @@
         ], { emptyMessage: "No body metrics yet.", hideIfEmpty: false });
       }
 
+      let activeView = "dashboard";
+
+      function setView(view) {
+        activeView = view;
+        if (reportViewEl) {
+          reportViewEl.classList.toggle("hidden", view !== "report");
+        }
+        if (dashboardViewEl) {
+          dashboardViewEl.classList.toggle("hidden", view !== "dashboard");
+        }
+        if (viewTabsEl) {
+          const buttons = viewTabsEl.querySelectorAll("button");
+          buttons.forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.view === view);
+          });
+        }
+        if (view === "dashboard") {
+          window.posInit?.();
+        } else if (view === "report") {
+          loadReport();
+        }
+      }
+
+      if (viewTabsEl) {
+        viewTabsEl.querySelectorAll("button").forEach((btn) => {
+          btn.addEventListener("click", () => setView(btn.dataset.view));
+        });
+      }
+
       async function init() {
         const { data } = await supabase.auth.getSession();
         if (data?.session) {
           authEl.classList.add("hidden");
           contentEl.classList.remove("hidden");
           await loadReport();
+          window.posInit?.();
+          setView(activeView);
         }
       }
 
@@ -831,15 +1824,20 @@
         authEl.classList.add("hidden");
         contentEl.classList.remove("hidden");
         await loadReport();
+        window.posInit?.();
+        setView(activeView);
       });
 
-      document.getElementById("logout").addEventListener("click", async () => {
-        await supabase.auth.signOut();
-        contentEl.classList.add("hidden");
-        authEl.classList.remove("hidden");
+      document.querySelectorAll('[data-action="logout"]').forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          await supabase.auth.signOut();
+          contentEl.classList.add("hidden");
+          authEl.classList.remove("hidden");
+        });
       });
 
       init();
     </script>
+    <script type="module" src="pos.js"></script>
   </body>
 </html>

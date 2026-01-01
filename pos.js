@@ -186,6 +186,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       let currentRangeDays = 7;
       let currentWeekSport = "swim";
       let posInitialized = false;
+      const metricGoals = new Map();
       const RANGE_OPTIONS = [
         { label: "Today", days: 1 },
         { label: "7d", days: 7 },
@@ -194,6 +195,33 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       ];
       const POS_VIEW_OPTIONS = [];
       const DOORS = ["Left", "Middle", "Right"];
+      const METRIC_GOAL_TITLE_MAP = {
+        "sleep": "sleep_hours",
+        "sleep duration": "sleep_hours",
+        "sleep last night": "sleep_hours",
+        "sleep last": "sleep_hours",
+        "sleep delta": "sleep_delta_hours",
+        "weight": "weight_kg",
+        "body fat": "body_fat_pct",
+        "ffm": "ffm_kg",
+        "workouts (7d)": "workouts_7d",
+        "workouts": "workouts_7d",
+        "endurance sessions": "endurance_sessions_7d",
+        "strength sessions": "strength_sessions_7d",
+        "training minutes": "training_minutes_7d",
+        "training load": "training_load_7d",
+        "strength load": "strength_load_7d",
+        "exercise energy": "exercise_kcal_7d",
+        "calories": "calories_kcal_day",
+        "protein": "protein_g_day",
+        "protein g/kg": "protein_g_per_kg",
+        "carbs": "carbs_g_day",
+        "fat": "fat_g_day",
+        "energy availability": "energy_availability_kcal_per_kg",
+        "carb under days": "carb_under_days_7d",
+        "protein meal hit": "protein_meal_hit_rate",
+        "fat floor ok": "fat_floor_days_7d",
+      };
 
       async function refreshSession() {
         const { data } = await supabase.auth.getSession();
@@ -514,6 +542,46 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         const diffMs = Date.now() - date.getTime();
         if (diffMs < 0) return null;
         return diffMs / (24 * 60 * 60 * 1000);
+      }
+
+      async function loadMetricGoals() {
+        metricGoals.clear();
+        try {
+          const { data, error } = await supabase
+            .schema("health_core")
+            .from("metric_goals")
+            .select("metric_key,metric_label,unit,window_key,target_value,min_value,max_value,goal_basis,set_by,updated_at")
+            .eq("athlete_id", "global");
+          if (error) return;
+          (data || []).forEach((row) => {
+            if (!row?.metric_key) return;
+            metricGoals.set(row.metric_key, row);
+          });
+        } catch (err) {
+          // Keep dashboard usable even if goals are unavailable.
+        }
+      }
+
+      function goalKeyForTitle(title) {
+        if (!title) return null;
+        const key = title.trim().toLowerCase();
+        return METRIC_GOAL_TITLE_MAP[key] || null;
+      }
+
+      function formatGoalLine(goalKey) {
+        const goal = metricGoals.get(goalKey);
+        if (!goal) return "Goal not set";
+        const unit = goal.unit ? ` ${goal.unit}` : "";
+        const windowLabel = goal.window_key ? ` (${goal.window_key})` : "";
+        if (goal.target_value !== null && goal.target_value !== undefined) {
+          return `Goal${windowLabel}: ${formatNumber(goal.target_value, 1)}${unit}`;
+        }
+        if (goal.min_value !== null || goal.max_value !== null) {
+          const minVal = goal.min_value ?? "—";
+          const maxVal = goal.max_value ?? "—";
+          return `Goal${windowLabel}: ${formatNumber(minVal, 1)}–${formatNumber(maxVal, 1)}${unit}`;
+        }
+        return "Goal not set";
       }
 
       function staleLabel(label, ageDays, threshold) {
@@ -3002,6 +3070,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       function renderKpiCard({ label, value, tone = "good", icon = "•", sub = "", progress = null, meta = null }) {
         const card = document.createElement("div");
         card.className = "kpi-card";
+        const goalKey = meta?.goalKey || goalKeyForTitle(label);
+        const goalLine = goalKey ? formatGoalLine(goalKey) : "";
         card.innerHTML = `
           <div class="row-inline">
             <div class="kpi-title">${label}</div>
@@ -3009,6 +3079,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           </div>
           <div class="kpi-value">${value}</div>
           <div class="kpi-sub">${sub}</div>
+          ${goalLine ? `<div class="kpi-goal">${goalLine}</div>` : ""}
         `;
         attachMeta(card, meta);
         if (progress !== null && progress !== undefined && !Number.isNaN(progress)) {
@@ -3026,7 +3097,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       function renderStatusItem(title, status, tone = "good", meta = "", metricMeta = null) {
         const item = document.createElement("div");
         item.className = "list-item";
-        const metaHtml = meta ? `<div class="list-meta">${meta}</div>` : "";
+        const metaLines = [];
+        if (meta) metaLines.push(meta);
+        const goalKey = metricMeta?.goalKey || goalKeyForTitle(title);
+        if (goalKey) {
+          const goalLine = formatGoalLine(goalKey);
+          if (goalLine) metaLines.push(goalLine);
+          item.dataset.goalKey = goalKey;
+        }
+        const metaHtml = metaLines.length
+          ? metaLines.map((line) => `<div class="list-meta">${line}</div>`).join("")
+          : "";
         item.innerHTML = `<div class="list-title">${title}</div>${metaHtml}`;
         const chip = document.createElement("div");
         chip.className = `status-chip ${tone}`;
@@ -5085,6 +5166,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         if (!posDashboardEl) return;
         renderRangeTabs();
         renderPosNav();
+        await loadMetricGoals();
         setPosSubview(currentPosView);
         await loadPosViewData(currentPosView);
       }

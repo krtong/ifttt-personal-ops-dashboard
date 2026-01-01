@@ -162,10 +162,10 @@
         display: inline-flex;
         gap: 6px;
         align-items: baseline;
-        padding: 2px 6px;
-        border-radius: 10px;
+        padding: 3px 7px;
+        border-radius: 8px;
         font-size: 11px;
-        line-height: 1.1;
+        line-height: 1.2;
         border: 1px solid rgba(148, 163, 184, 0.35);
         color: var(--muted);
         background: rgba(15, 23, 42, 0.6);
@@ -215,6 +215,15 @@
       }
       .pos-body.pos-domains {
         grid-template-columns: 1fr;
+      }
+      .pos-race-grid {
+        display: grid;
+        gap: 20px;
+      }
+      @media (min-width: 960px) {
+        .pos-race-grid {
+          grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
+        }
       }
       .pos-report {
         display: grid;
@@ -339,19 +348,19 @@
       .pos-domain-metrics {
         display: grid;
         gap: 10px;
-        font-size: 12px;
+        font-size: 11px;
       }
       .plan-hero-label {
-        font-size: 12px;
+        font-size: 11px;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         color: var(--muted);
       }
       .pos-domain-plan {
-        font-size: 16px;
+        font-size: 24px;
         line-height: 1.35;
         color: #f1f5ff;
-        font-weight: 700;
+        font-weight: 750;
       }
       .pos-domain-plan-sub {
         font-size: 12px;
@@ -1268,47 +1277,6 @@
 
       <section id="data" class="hidden" data-testid="data-section">
         <div id="pos-dashboard" class="pos-layout hidden" data-importance="10" data-group="personal_ops">
-          <div id="pos-report" class="pos-report">
-            <div class="pos-report-header">
-              <div>
-                <div class="pos-report-title">Personal Ops — Operational Report</div>
-                <div id="pos-report-updated" class="meta">Updated —</div>
-              </div>
-              <div id="pos-report-coverage" class="report-chip">Coverage —</div>
-            </div>
-            <div class="pos-report-grid">
-              <section id="report-training" class="report-card" data-importance="10" data-group="report_training" data-related="workouts,load,form">
-                <div class="report-card-title">Training / Exercise</div>
-                <div id="report-training-assessment" class="report-assessment">—</div>
-                <div id="report-training-action" class="report-action">—</div>
-                <div id="report-training-metrics" class="report-metrics"></div>
-              </section>
-              <section id="report-sleep" class="report-card" data-importance="10" data-group="report_sleep" data-related="sleep,baseline,stale">
-                <div class="report-card-title">Sleep</div>
-                <div id="report-sleep-assessment" class="report-assessment">—</div>
-                <div id="report-sleep-action" class="report-action">—</div>
-                <div id="report-sleep-metrics" class="report-metrics"></div>
-              </section>
-              <section id="report-nutrition" class="report-card" data-importance="9" data-group="report_nutrition" data-related="calories,protein,coverage">
-                <div class="report-card-title">Nutrition</div>
-                <div id="report-nutrition-assessment" class="report-assessment">—</div>
-                <div id="report-nutrition-action" class="report-action">—</div>
-                <div id="report-nutrition-metrics" class="report-metrics"></div>
-              </section>
-              <section id="report-body" class="report-card" data-importance="8" data-group="report_body" data-related="weight,recovery">
-                <div class="report-card-title">Body composition / recovery</div>
-                <div id="report-body-assessment" class="report-assessment">—</div>
-                <div id="report-body-action" class="report-action">—</div>
-                <div id="report-body-metrics" class="report-metrics"></div>
-              </section>
-              <section id="report-risk" class="report-card" data-importance="8" data-group="report_risk" data-related="form,stale,coverage">
-                <div class="report-card-title">Readiness / risk</div>
-                <div id="report-risk-assessment" class="report-assessment">—</div>
-                <div id="report-risk-action" class="report-action">—</div>
-                <div id="report-risk-metrics" class="report-metrics"></div>
-              </section>
-            </div>
-          </div>
           <div class="pos-hero">
             <div class="pos-summary-header">
               <div style="font-weight:600;">Personal Ops · Today</div>
@@ -1319,10 +1287,6 @@
               <div id="pos-range" class="segmented"></div>
               <div id="pos-summary-freshness" class="pill unknown">Data status</div>
               <div id="pos-run-status" class="pill unknown">Last run</div>
-            </div>
-            <div class="pos-summary-meta">
-              <div class="meta">View</div>
-              <div id="pos-nav" class="segmented"></div>
             </div>
             <div class="pos-hero-grid">
               <div id="pos-summary" class="pos-summary" data-pos-view="overview" data-importance="10" data-group="summary" data-related="sleep,adherence,workouts,load,race">
@@ -1345,7 +1309,7 @@
               </div>
               <div class="pos-domain-body">
                 <div id="pos-domain-sleep-metrics" class="pos-domain-metrics list" data-pos-view="overview sleep" data-importance="8" data-group="sleep_metrics" data-related="sleep,baseline,delta,stale"></div>
-                <div class="pos-sleep-grid hidden" data-pos-view="sleep" data-importance="9" data-group="sleep_overview" data-related="sleep,score,breathing">
+                <div class="pos-sleep-grid" data-pos-view="sleep" data-importance="9" data-group="sleep_overview" data-related="sleep,score,breathing">
                   <div id="pos-sleep-quality" class="sleep-card" data-importance="9" data-group="sleep_quality" data-related="duration,score,trend">
                     <div class="sleep-quality-card">
                       <div class="sleep-quality-main">
@@ -1375,14 +1339,14 @@
                     </div>
                     <div id="pos-sleep-heart-chart" class="chart"></div>
                   </div>
-                  <div id="pos-recovery" class="pos-panel hidden" data-pos-view="sleep" data-importance="8" data-group="recovery" data-related="sleep,weight,hrv,rhr">
+                  <div id="pos-recovery" class="pos-panel" data-pos-view="sleep" data-importance="8" data-group="recovery" data-related="sleep,weight,hrv,rhr">
                     <div class="row-inline">
                       <div style="font-weight:600;">Withings recovery</div>
                       <div class="meta" id="pos-recovery-note">—</div>
                     </div>
                     <div id="pos-recovery-list" class="list"></div>
                   </div>
-                  <div id="pos-sleep-trend" class="pos-panel hidden" data-pos-view="sleep" data-importance="8" data-group="sleep_trend" data-related="sleep,consistency,debt">
+                  <div id="pos-sleep-trend" class="pos-panel" data-pos-view="sleep" data-importance="8" data-group="sleep_trend" data-related="sleep,consistency,debt">
                     <div class="row-inline">
                       <div style="font-weight:600;">Sleep trend</div>
                       <div class="meta" id="pos-sleep-trend-note">—</div>
@@ -1391,7 +1355,7 @@
                     <div class="chart-caption" id="pos-sleep-trend-caption"></div>
                     <div id="pos-sleep-trend-list" class="list"></div>
                   </div>
-                  <div id="pos-sleep-plan" class="pos-panel hidden" data-pos-view="sleep" data-importance="7" data-group="sleep_plan" data-related="sleep,baseline,targets">
+                  <div id="pos-sleep-plan" class="pos-panel" data-pos-view="sleep" data-importance="7" data-group="sleep_plan" data-related="sleep,baseline,targets">
                     <div class="row-inline">
                       <div style="font-weight:600;">Sleep plan</div>
                       <div class="meta" id="pos-sleep-plan-note">—</div>
@@ -1413,7 +1377,7 @@
               </div>
               <div class="pos-domain-body">
                 <div id="pos-domain-diet-metrics" class="pos-domain-metrics list" data-pos-view="overview nutrition" data-importance="8" data-group="diet_metrics" data-related="calories,protein,carbs,fat,coverage"></div>
-                <div id="pos-nutrition" class="pos-panel hidden" data-pos-view="nutrition" data-importance="7" data-group="fuel" data-related="calories,protein,carbs,fat">
+                <div id="pos-nutrition" class="pos-panel" data-pos-view="nutrition" data-importance="7" data-group="fuel" data-related="calories,protein,carbs,fat">
                   <div class="row-inline">
                     <div style="font-weight:600;">Nutrition budget</div>
                     <div class="meta" id="pos-nutrition-note">—</div>
@@ -1434,7 +1398,7 @@
               </div>
               <div class="pos-domain-body">
                 <div id="pos-domain-progress-metrics" class="pos-domain-metrics list" data-pos-view="overview training" data-importance="8" data-group="progress_metrics" data-related="adherence,load,form,coverage"></div>
-                <div class="pos-training-grid hidden" data-pos-view="training" data-importance="9" data-group="training_overview" data-related="weekly,fitness,streak">
+                <div class="pos-training-grid" data-pos-view="training" data-importance="9" data-group="training_overview" data-related="weekly,fitness,streak">
                   <div id="pos-week-sport" class="training-card" data-importance="9" data-group="weekly_sport" data-related="distance,time,weekly">
                     <div class="row-inline">
                       <div style="font-weight:600;">This week</div>
@@ -1466,7 +1430,7 @@
                     <div id="pos-power-skills-chart" class="chart"></div>
                   </div>
                 </div>
-                <div id="pos-heatmap" class="pos-section hidden" data-pos-view="training" data-importance="8" data-group="consistency" data-related="sleep,training,nutrition">
+                <div id="pos-heatmap" class="pos-section" data-pos-view="training" data-importance="8" data-group="consistency" data-related="sleep,training,nutrition">
                   <div class="row-inline">
                     <div style="font-weight:600;">Week heatmap</div>
                     <div class="meta" id="pos-heatmap-note">—</div>
@@ -1480,7 +1444,7 @@
                   </div>
                   <div id="pos-day-drawer-list" class="list"></div>
                 </div>
-                <div id="pos-strava-fitness" class="pos-section hidden" data-pos-view="training" data-importance="9" data-group="fitness" data-related="fitness,fatigue,form">
+                <div id="pos-strava-fitness" class="pos-section" data-pos-view="training" data-importance="9" data-group="fitness" data-related="fitness,fatigue,form">
                   <div class="row-inline">
                     <div style="font-weight:600;">Fitness & form (Strava)</div>
                     <div class="meta" id="pos-strava-note">—</div>
@@ -1489,14 +1453,14 @@
                   <div id="pos-strava-chart" class="chart"></div>
                   <div class="chart-caption" id="pos-strava-chart-caption"></div>
                 </div>
-                <div id="pos-load-capacity" class="pos-section hidden" data-pos-view="training" data-importance="8" data-group="load_capacity" data-related="training_load,capacity">
+                <div id="pos-load-capacity" class="pos-section" data-pos-view="training" data-importance="8" data-group="load_capacity" data-related="training_load,capacity">
                   <div class="row-inline">
                     <div style="font-weight:600;">Load vs capacity</div>
                     <div class="meta" id="pos-load-capacity-note">—</div>
                   </div>
                   <div id="pos-load-capacity-list" class="list"></div>
                 </div>
-                <div id="pos-weekly-load" class="pos-section hidden" data-pos-view="training" data-importance="7" data-group="weekly_load" data-related="training_load,weekly">
+                <div id="pos-weekly-load" class="pos-section" data-pos-view="training" data-importance="7" data-group="weekly_load" data-related="training_load,weekly">
                   <div class="row-inline">
                     <div style="font-weight:600;">Weekly load</div>
                     <div class="meta" id="pos-weekly-load-note">—</div>
@@ -1504,7 +1468,7 @@
                   <div id="pos-weekly-load-chart" class="chart"></div>
                   <div class="chart-caption" id="pos-weekly-load-caption"></div>
                 </div>
-                <div id="pos-relations" class="pos-section hidden" data-pos-view="training" data-importance="8" data-group="relationships" data-related="load,sleep,nutrition,strength_quality">
+                <div id="pos-relations" class="pos-section" data-pos-view="training" data-importance="8" data-group="relationships" data-related="load,sleep,nutrition,strength_quality">
                   <div class="row-inline">
                     <div style="font-weight:600;">Load, sleep & nutrition signals</div>
                     <div class="meta" id="pos-relations-note">—</div>
@@ -1513,28 +1477,28 @@
                   <div id="pos-load-sleep-chart" class="chart"></div>
                   <div id="pos-fuel-load-chart" class="chart"></div>
                 </div>
-                <div id="pos-trends" class="pos-section hidden" data-pos-view="training" data-importance="7" data-group="momentum" data-related="training_load,endurance_distance,strength_sessions">
+                <div id="pos-trends" class="pos-section" data-pos-view="training" data-importance="7" data-group="momentum" data-related="training_load,endurance_distance,strength_sessions">
                   <div class="row-inline">
                     <div style="font-weight:600;">Trend signals</div>
                     <div class="meta" id="pos-trends-note">—</div>
                   </div>
                   <div id="pos-trends-list" class="list"></div>
                 </div>
-                <div id="pos-data-health" class="pos-panel hidden" data-pos-view="training data" data-importance="9" data-group="data_health" data-related="coverage,stale,confidence">
+                <div id="pos-data-health" class="pos-panel" data-pos-view="training data" data-importance="9" data-group="data_health" data-related="coverage,stale,confidence">
                   <div class="row-inline">
                     <div style="font-weight:600;">Data health</div>
                     <div class="meta" id="pos-data-health-note">—</div>
                   </div>
                   <div id="pos-data-health-list" class="list"></div>
                 </div>
-                <div id="pos-apple-health" class="pos-panel hidden" data-pos-view="training data" data-importance="6" data-group="activity" data-related="steps,active_calories,resting_calories,exercise_minutes">
+                <div id="pos-apple-health" class="pos-panel" data-pos-view="training data" data-importance="6" data-group="activity" data-related="steps,active_calories,resting_calories,exercise_minutes">
                   <div class="row-inline">
                     <div style="font-weight:600;">Apple Health signals</div>
                     <div class="meta" id="pos-apple-health-note">—</div>
                   </div>
                   <div id="pos-apple-health-list" class="list"></div>
                 </div>
-                <div id="pos-stats" class="pos-panel hidden" data-pos-view="training nutrition data" data-importance="6" data-group="weekly_totals" data-related="miles,yards,steps,calories,exercise_hours,macros">
+                <div id="pos-stats" class="pos-panel" data-pos-view="training nutrition data" data-importance="6" data-group="weekly_totals" data-related="miles,yards,steps,calories,exercise_hours,macros">
                   <div class="row-inline">
                     <div style="font-weight:600;">Weekly averages</div>
                     <div class="meta" id="pos-stats-range">—</div>
@@ -1557,49 +1521,49 @@
               <div class="pos-domain-body">
                 <div id="pos-domain-weight-metrics" class="pos-domain-metrics list" data-pos-view="overview strength" data-importance="7" data-group="strength_metrics" data-related="sessions,quality,load"></div>
                 <div class="pos-domain-detail grid-2" data-pos-view="strength">
-                  <div id="pos-strength-scatter" class="pos-panel hidden" data-pos-view="strength" data-importance="8" data-group="strength_quality" data-related="quality,asymmetry">
+                  <div id="pos-strength-scatter" class="pos-panel" data-pos-view="strength" data-importance="8" data-group="strength_quality" data-related="quality,asymmetry">
                   <div class="row-inline">
                     <div style="font-weight:600;">Quality vs asymmetry</div>
                     <div class="meta" id="pos-strength-scatter-note">—</div>
                   </div>
                   <div id="pos-strength-scatter-chart" class="chart"></div>
                 </div>
-                  <div id="pos-baselines" class="pos-panel hidden" data-pos-view="strength" data-importance="7" data-group="strength_power" data-related="max_watts,max_weight,one_rm">
+                  <div id="pos-baselines" class="pos-panel" data-pos-view="strength" data-importance="7" data-group="strength_power" data-related="max_watts,max_weight,one_rm">
                   <div class="row-inline">
                     <div style="font-weight:600;">Power baselines</div>
                     <div class="meta" id="pos-baselines-note">—</div>
                   </div>
                   <div id="pos-baselines-list" class="list"></div>
                 </div>
-                  <div id="pos-strength-matrix" class="pos-panel hidden" data-pos-view="strength" data-importance="8" data-group="strength_matrix" data-related="quality,asymmetry,completion,power">
+                  <div id="pos-strength-matrix" class="pos-panel" data-pos-view="strength" data-importance="8" data-group="strength_matrix" data-related="quality,asymmetry,completion,power">
                   <div class="row-inline">
                     <div style="font-weight:600;">Strength matrix</div>
                     <div class="meta" id="pos-strength-matrix-note">—</div>
                   </div>
                   <div id="pos-strength-matrix-table" class="matrix"></div>
                 </div>
-                  <div id="pos-quality" class="pos-panel hidden" data-pos-view="strength" data-importance="7" data-group="session_quality" data-related="quality_score,completion,rep_consistency">
+                  <div id="pos-quality" class="pos-panel" data-pos-view="strength" data-importance="7" data-group="session_quality" data-related="quality_score,completion,rep_consistency">
                   <div class="row-inline">
                     <div style="font-weight:600;">Session quality</div>
                     <div class="meta" id="pos-quality-note">—</div>
                   </div>
                   <div id="pos-quality-list" class="list"></div>
                 </div>
-                  <div id="pos-last-session" class="pos-panel hidden" data-pos-view="strength" data-importance="6" data-group="session_detail" data-related="exercise_metrics,volume,watts,rom">
+                  <div id="pos-last-session" class="pos-panel" data-pos-view="strength" data-importance="6" data-group="session_detail" data-related="exercise_metrics,volume,watts,rom">
                   <div class="row-inline">
                     <div style="font-weight:600;">Last session breakdown</div>
                     <div class="meta" id="pos-last-session-note">—</div>
                   </div>
                   <div id="pos-last-session-list" class="list"></div>
                 </div>
-                  <div id="pos-quality-trends" class="pos-panel hidden" data-pos-view="strength" data-importance="6" data-group="exercise_trends" data-related="quality,watts,speed,rom">
+                  <div id="pos-quality-trends" class="pos-panel" data-pos-view="strength" data-importance="6" data-group="exercise_trends" data-related="quality,watts,speed,rom">
                   <div class="row-inline">
                     <div style="font-weight:600;">Exercise trends</div>
                     <div class="meta" id="pos-quality-trends-note">—</div>
                   </div>
                   <div id="pos-quality-trends-list" class="list"></div>
                 </div>
-                  <div id="pos-weakness" class="pos-panel hidden" data-pos-view="strength" data-importance="7" data-group="strength_fix" data-related="asymmetry,quality,completion,tempo">
+                  <div id="pos-weakness" class="pos-panel" data-pos-view="strength" data-importance="7" data-group="strength_fix" data-related="asymmetry,quality,completion,tempo">
                   <div class="row-inline">
                     <div style="font-weight:600;">What to fix next</div>
                     <div class="meta" id="pos-weakness-note">—</div>
@@ -1621,7 +1585,7 @@
               </div>
               <div class="pos-domain-body">
                 <div id="pos-domain-cycling-metrics" class="pos-domain-metrics list" data-pos-view="overview training" data-importance="7" data-group="cycling_metrics" data-related="minutes,distance,form"></div>
-                <div id="pos-cycling-summary" class="pos-panel hidden" data-pos-view="training" data-importance="8" data-group="cycling" data-related="fitness,fatigue,form">
+                <div id="pos-cycling-summary" class="pos-panel" data-pos-view="training" data-importance="8" data-group="cycling" data-related="fitness,fatigue,form">
                   <div class="row-inline">
                     <div style="font-weight:600;">Cycling metrics</div>
                     <div class="meta" id="pos-cycling-note">—</div>
@@ -1642,7 +1606,7 @@
               </div>
               <div class="pos-domain-body">
                 <div id="pos-domain-running-metrics" class="pos-domain-metrics list" data-pos-view="overview training" data-importance="7" data-group="running_metrics" data-related="minutes,distance,form"></div>
-                <div id="pos-running-summary" class="pos-panel hidden" data-pos-view="training" data-importance="8" data-group="running" data-related="fitness,fatigue,form">
+                <div id="pos-running-summary" class="pos-panel" data-pos-view="training" data-importance="8" data-group="running" data-related="fitness,fatigue,form">
                   <div class="row-inline">
                     <div style="font-weight:600;">Running metrics</div>
                     <div class="meta" id="pos-running-note">—</div>
@@ -1663,7 +1627,7 @@
               </div>
               <div class="pos-domain-body">
                 <div id="pos-domain-swimming-metrics" class="pos-domain-metrics list" data-pos-view="overview training" data-importance="7" data-group="swim_metrics" data-related="minutes,distance,form"></div>
-                <div id="pos-swimming-summary" class="pos-panel hidden" data-pos-view="training" data-importance="8" data-group="swimming" data-related="fitness,fatigue,form">
+                <div id="pos-swimming-summary" class="pos-panel" data-pos-view="training" data-importance="8" data-group="swimming" data-related="fitness,fatigue,form">
                   <div class="row-inline">
                     <div style="font-weight:600;">Swimming metrics</div>
                     <div class="meta" id="pos-swimming-note">—</div>
@@ -1685,7 +1649,7 @@
               <div class="pos-domain-body">
                 <div id="pos-domain-facial-metrics" class="pos-domain-metrics list" data-pos-view="overview" data-importance="4" data-group="facial_metrics" data-related="facial">
                 </div>
-                <div id="pos-facial-summary" class="pos-panel hidden" data-pos-view="overview" data-importance="5" data-group="facial" data-related="facial">
+                <div id="pos-facial-summary" class="pos-panel" data-pos-view="overview" data-importance="5" data-group="facial" data-related="facial">
                   <div class="row-inline">
                     <div style="font-weight:600;">Facial tracking</div>
                     <div class="meta" id="pos-facial-note">—</div>
@@ -1694,39 +1658,50 @@
                 </div>
               </div>
             </section>
-          </div>
 
-          <div class="pos-body" data-pos-view="race">
-            <div class="pos-left">
-              <div id="pos-race-summary" class="pos-section hidden" data-pos-view="race" data-importance="10" data-group="race_readiness" data-related="sleep,swim,bike,run,confidence">
-                <div class="row-inline">
-                  <div style="font-weight:600;">Escape from Alcatraz 2026</div>
-                  <div class="meta" id="pos-race-countdown">—</div>
+            <section class="pos-domain" id="pos-domain-race" data-pos-view="overview race" data-importance="9" data-group="race" data-related="race_readiness,phase,limiters">
+              <div class="pos-domain-hero">
+                <div class="pos-domain-hero-main">
+                  <div class="plan-hero-label">Race readiness</div>
+                  <div class="pos-domain-plan" id="pos-domain-race-plan" data-importance="9">Plan: —</div>
+                  <div class="pos-domain-plan-sub" id="pos-domain-race-plan-sub">Inputs used below</div>
                 </div>
-                <div class="meta" id="pos-race-note">Race window: June 6–7, 2026.</div>
-                <div id="pos-race-pillars" class="pillar-grid"></div>
+                <div class="meta">Escape from Alcatraz 2026</div>
               </div>
-            </div>
-            <div class="pos-right">
-              <div class="pos-right-stack">
-                <div id="pos-race-limiters" class="pos-panel hidden" data-pos-view="race" data-importance="9" data-group="race_limiters" data-related="limiters,risks">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Top limiters</div>
-                    <div class="meta" id="pos-race-limiters-note">—</div>
+              <div class="pos-domain-body">
+                <div class="pos-race-grid">
+                  <div class="pos-left">
+                    <div id="pos-race-summary" class="pos-section" data-pos-view="race" data-importance="10" data-group="race_readiness" data-related="sleep,swim,bike,run,confidence">
+                      <div class="row-inline">
+                        <div style="font-weight:600;">Escape from Alcatraz 2026</div>
+                        <div class="meta" id="pos-race-countdown">—</div>
+                      </div>
+                      <div class="meta" id="pos-race-note">Race window: June 6–7, 2026.</div>
+                      <div id="pos-race-pillars" class="pillar-grid"></div>
+                    </div>
                   </div>
-                  <div id="pos-race-limiters-list" class="list"></div>
-                </div>
-                <div id="pos-race-phase" class="pos-panel hidden" data-pos-view="race" data-importance="8" data-group="race_phase" data-related="phase,countdown">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Phase & focus</div>
-                    <div class="meta" id="pos-race-phase-note">—</div>
+                  <div class="pos-right">
+                    <div class="pos-right-stack">
+                      <div id="pos-race-limiters" class="pos-panel" data-pos-view="race" data-importance="9" data-group="race_limiters" data-related="limiters,risks">
+                        <div class="row-inline">
+                          <div style="font-weight:600;">Top limiters</div>
+                          <div class="meta" id="pos-race-limiters-note">—</div>
+                        </div>
+                        <div id="pos-race-limiters-list" class="list"></div>
+                      </div>
+                      <div id="pos-race-phase" class="pos-panel" data-pos-view="race" data-importance="8" data-group="race_phase" data-related="phase,countdown">
+                        <div class="row-inline">
+                          <div style="font-weight:600;">Phase & focus</div>
+                          <div class="meta" id="pos-race-phase-note">—</div>
+                        </div>
+                        <div id="pos-race-phase-list" class="list"></div>
+                      </div>
+                    </div>
                   </div>
-                  <div id="pos-race-phase-list" class="list"></div>
                 </div>
               </div>
-            </div>
+            </section>
           </div>
-
         </div>
         <div class="actions">
           <button id="logout" class="secondary">Sign out</button>

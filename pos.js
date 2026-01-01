@@ -58,6 +58,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       const posWeekSportCaptionEl = document.getElementById("pos-week-sport-caption");
       const posFitnessCardChartEl = document.getElementById("pos-fitness-card-chart");
       const posFitnessCardNoteEl = document.getElementById("pos-fitness-card-note");
+      const posFitnessCardCaptionEl = document.getElementById("pos-fitness-card-caption");
       const posStreakGridEl = document.getElementById("pos-streak-grid");
       const posStreakLabelsEl = document.getElementById("pos-streak-labels");
       const posStreakNoteEl = document.getElementById("pos-streak-note");
@@ -71,6 +72,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       const posDomainRunningPlanEl = document.getElementById("pos-domain-running-plan");
       const posDomainSwimmingPlanEl = document.getElementById("pos-domain-swimming-plan");
       const posDomainFacialPlanEl = document.getElementById("pos-domain-facial-plan");
+      const posDomainRacePlanEl = document.getElementById("pos-domain-race-plan");
+      const posDomainSleepPlanSubEl = document.getElementById("pos-domain-sleep-plan-sub");
+      const posDomainDietPlanSubEl = document.getElementById("pos-domain-diet-plan-sub");
+      const posDomainProgressPlanSubEl = document.getElementById("pos-domain-progress-plan-sub");
+      const posDomainWeightPlanSubEl = document.getElementById("pos-domain-weight-plan-sub");
+      const posDomainCyclingPlanSubEl = document.getElementById("pos-domain-cycling-plan-sub");
+      const posDomainRunningPlanSubEl = document.getElementById("pos-domain-running-plan-sub");
+      const posDomainSwimmingPlanSubEl = document.getElementById("pos-domain-swimming-plan-sub");
+      const posDomainFacialPlanSubEl = document.getElementById("pos-domain-facial-plan-sub");
+      const posDomainRacePlanSubEl = document.getElementById("pos-domain-race-plan-sub");
       const posRangeEl = document.getElementById("pos-range");
       const posRecoveryEl = document.getElementById("pos-recovery");
       const posRecoveryListEl = document.getElementById("pos-recovery-list");
@@ -174,6 +185,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       let currentPosView = "all";
       let currentRangeDays = 7;
       let currentWeekSport = "swim";
+      let posInitialized = false;
       const RANGE_OPTIONS = [
         { label: "Today", days: 1 },
         { label: "7d", days: 7 },
@@ -189,15 +201,19 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         if (session) {
           authEl.classList.add("hidden");
           if (settingsEl) settingsEl.classList.add("hidden");
-          if (dataEl) dataEl.classList.remove("hidden");
           if (authStatusEl) authStatusEl.textContent = "";
-          if (posDashboardEl) posDashboardEl.classList.remove("hidden");
-          await initPos();
         } else {
           authEl.classList.remove("hidden");
           if (settingsEl) settingsEl.classList.add("hidden");
-          if (dataEl) dataEl.classList.add("hidden");
-          if (authStatusEl) authStatusEl.textContent = "";
+          if (authStatusEl) {
+            authStatusEl.textContent = "Signed out (read-only).";
+          }
+        }
+        if (dataEl) dataEl.classList.remove("hidden");
+        if (posDashboardEl) posDashboardEl.classList.remove("hidden");
+        if (!posInitialized) {
+          posInitialized = true;
+          await initPos();
         }
       }
 
@@ -347,7 +363,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           return { value: "—", meta: `${label} (min)` };
         }
         const minutes = Math.round(value / 60);
-        const meta = minutes > 180 ? `${label} (check source)` : `${label} (min)`;
+        if (minutes > 240) {
+          return { value: `${minutes} min`, meta: `${label} (raw >240 min; check units)` };
+        }
+        const meta = minutes > 180 ? `${label} (high; verify)` : `${label} (min)`;
         return { value: `${minutes} min`, meta };
       }
 
@@ -370,6 +389,98 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           return raw;
         }
         return null;
+      }
+
+      function extractCronometerChunk(response) {
+        const extract = (values) => {
+          if (!Array.isArray(values) || values.length < 12) return null;
+          const chunk = values.slice(0, 14);
+          const head = chunk.slice(0, 12);
+          if (!head.every((value) => typeof value === "number" && Number.isFinite(value))) return null;
+          return chunk.map((value) => Number(value));
+        };
+
+        if (Array.isArray(response)) {
+          if (response.length && Array.isArray(response[0])) {
+            const nested = extract(response[0]);
+            if (nested) return nested;
+          }
+          return extract(response);
+        }
+
+        if (response && typeof response === "object") {
+          const obj = response;
+          const keys = ["chunk", "chunks", "data", "values", "response"];
+          for (const key of keys) {
+            const candidate = obj[key];
+            if (Array.isArray(candidate)) {
+              if (candidate.length && Array.isArray(candidate[0])) {
+                const nested = extract(candidate[0]);
+                if (nested) return nested;
+              }
+              const chunk = extract(candidate);
+              if (chunk) return chunk;
+            }
+          }
+        }
+        return null;
+      }
+
+      function parseCronometerCalories(response) {
+        const chunk = extractCronometerChunk(response);
+        if (!chunk) {
+          return {
+            calories_kcal: null,
+            protein_g: null,
+            carbs_g: null,
+            fat_g: null,
+            active_energy_kcal: null,
+            resting_energy_kcal: null,
+          };
+        }
+        const netKcal = chunk[0];
+        const fatKcal = chunk[4];
+        const carbsKcal = chunk[5];
+        const proteinKcal = chunk[6];
+        const restingKcal = chunk[8];
+        const consumedKcal = chunk[11];
+        const activeEnergy = (Number.isFinite(netKcal) && Number.isFinite(consumedKcal) && Number.isFinite(restingKcal))
+          ? consumedKcal - netKcal - restingKcal
+          : null;
+        const toGrams = (kcal, divisor) => (Number.isFinite(kcal) ? kcal / divisor : null);
+        return {
+          calories_kcal: Number.isFinite(consumedKcal) ? consumedKcal : null,
+          protein_g: toGrams(proteinKcal, 4),
+          carbs_g: toGrams(carbsKcal, 4),
+          fat_g: toGrams(fatKcal, 9),
+          active_energy_kcal: Number.isFinite(activeEnergy) ? activeEnergy : null,
+          resting_energy_kcal: Number.isFinite(restingKcal) ? restingKcal : null,
+        };
+      }
+
+      async function fetchCronometerTotals(startKey, endKey = null) {
+        const query = supabase
+          .from("cronometer_day_raw")
+          .select("day,method,response")
+          .eq("method", "getCaloriesConsumedAndBurned")
+          .gte("day", startKey);
+        const resp = endKey ? await query.lte("day", endKey) : await query;
+        const totalsByDay = new Map();
+        (resp.data || []).forEach((row) => {
+          if (!row.day) return;
+          const totals = parseCronometerCalories(row.response);
+          const hasTotals = [
+            totals.calories_kcal,
+            totals.protein_g,
+            totals.carbs_g,
+            totals.fat_g,
+            totals.active_energy_kcal,
+            totals.resting_energy_kcal,
+          ].some((value) => value != null && value !== 0);
+          if (!hasTotals) return;
+          totalsByDay.set(row.day, totals);
+        });
+        return totalsByDay;
       }
 
       function renderMiniBars(values) {
@@ -421,14 +532,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           .maybeSingle();
         const metricsReq = supabase
           .from("pos_day_metrics")
-          .select("adherence_7d,training_load_7d,nutrition_entries_7d,sleep_seconds,sleep_baseline_7d,updated_at")
+          .select("adherence_7d,training_load_7d,nutrition_entries_7d,nutrition_source,sleep_seconds,sleep_baseline_7d,updated_at")
           .order("date", { ascending: false })
           .limit(1);
-        const nutritionDaysReq = supabase
-          .from("pos_events")
-          .select("event_timestamp")
-          .eq("source", "nutrition")
-          .gte("event_timestamp", rangeStartDate(7).toISOString());
         const stravaFormReq = supabase
           .from("strava_fitness_daily")
           .select("form")
@@ -440,26 +546,24 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           .select("ran_at,ok")
           .order("ran_at", { ascending: false })
           .limit(1);
+        const nutritionRangeKey = rangeStartDate(7).toISOString().slice(0, 10);
 
         const [
           { data: training, error: trainingError },
           { data: readiness },
           { data: metricsRows },
-          { data: nutritionEvents },
           { data: formRows },
           { data: runData },
-        ] = await Promise.all([trainingReq, readinessReq, metricsReq, nutritionDaysReq, stravaFormReq, runReq]);
+          cronoTotals,
+        ] = await Promise.all([trainingReq, readinessReq, metricsReq, stravaFormReq, runReq, fetchCronometerTotals(nutritionRangeKey)]);
         const runRow = Array.isArray(runData) && runData.length ? runData[0] : null;
         const metrics = metricsRows?.[0] ?? null;
         const latestForm = Array.isArray(formRows) && formRows.length ? Number(formRows[0].form ?? 0) : null;
-        const nutritionDays = new Set();
-        const nutritionEntries = (nutritionEvents || []).length;
-        (nutritionEvents || []).forEach((row) => {
-          const key = dateKeyFromIso(row.event_timestamp);
-          if (key) nutritionDays.add(key);
-        });
-        const nutritionDaysCount = nutritionDays.size;
-        const nutritionDaysDisplay = Math.min(nutritionDaysCount, 7);
+        let nutritionEntries = metrics?.nutrition_entries_7d ?? 0;
+        if ((!nutritionEntries || nutritionEntries === 0) && cronoTotals && cronoTotals.size) {
+          nutritionEntries = cronoTotals.size;
+        }
+        const nutritionDaysDisplay = Math.min(Number(nutritionEntries) || 0, 7);
 
         if (trainingError) {
           if (posSummaryNoteEl) posSummaryNoteEl.textContent = "Training summary unavailable.";
@@ -480,12 +584,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         let confidence = 100;
         if (sleepAge == null || sleepAge >= 2) confidence -= 25;
         if (weightAge == null || weightAge >= 7) confidence -= 15;
-        if (nutritionDaysCount === 0) confidence -= 15;
+        if ((nutritionEntries ?? 0) === 0) confidence -= 15;
         if (latestForm == null) confidence -= 10;
         if (!training?.updated_at) confidence -= 10;
         confidence = Math.max(0, Math.min(100, confidence));
-        let confidenceTone = "neutral";
-
         posSummaryMetricsEl.appendChild(
           renderKpiCard({
             label: "Days to race",
@@ -533,10 +635,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         posSummaryMetricsEl.appendChild(
           renderKpiCard({
             label: "Strength load",
-            value: training?.strength_capacity_7d ? `${formatNumber(training.strength_capacity_7d, 0)}` : "—",
+            value: training?.strength_capacity_7d ? `${formatNumber(training.strength_capacity_7d, 0)} load` : "—",
             tone: training?.strength_capacity_7d ? "good" : "bad",
             icon: "🏋️",
-            sub: training?.strength_capacity_7d ? "7d capacity (load)" : "No strength load data",
+            sub: training?.strength_capacity_7d ? "7d capacity (load units)" : "No strength load data",
             meta: { importance: 7, group: "strength_load", related: "capacity,volume" },
           }),
         );
@@ -547,37 +649,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         }
 
         if (posSummaryNoteEl) {
-          const notes = [];
-          const sleepStale = staleLabel("Sleep", sleepAge, 2);
-          const weightStale = staleLabel("Weight", weightAge, 7);
-          if (readiness?.sleep_source === "none") {
-            notes.push("Sleep source missing");
-          } else if (sleepStale) {
-            notes.push(sleepStale);
-          }
-          if (readiness?.weight_source === "none") {
-            notes.push("Weight source missing");
-          } else if (weightStale) {
-            notes.push(weightStale);
-          }
-          posSummaryNoteEl.textContent = notes.length ? notes.join(" · ") : "Inputs current";
+          const sleepNote = sleepAge != null ? `Sleep updated ${formatNumber(sleepAge, sleepAge >= 10 ? 0 : 1)}d ago` : "Sleep missing";
+          const weightNote = weightAge != null ? `Weight updated ${formatNumber(weightAge, weightAge >= 10 ? 0 : 1)}d ago` : "Weight missing";
+          const nutritionNote = `Nutrition coverage ${nutritionDaysDisplay}/7 days (logged)`;
+          posSummaryNoteEl.textContent = `Inputs: ${sleepNote} · ${weightNote} · ${nutritionNote}`;
           if (posSummaryFreshnessEl) {
-            const staleItems = [];
-            if (readiness?.sleep_source === "none") {
-              staleItems.push("Sleep missing");
-            } else if (sleepAge != null && sleepAge >= 2) {
-              staleItems.push(`Sleep ${sleepAge.toFixed(1)}d`);
-            }
-            if (readiness?.weight_source === "none") {
-              staleItems.push("Weight missing");
-            } else if (weightAge != null && weightAge >= 7) {
-              staleItems.push(`Weight ${weightAge.toFixed(1)}d`);
-            }
-            const hasStale = staleItems.length > 0;
-            posSummaryFreshnessEl.textContent = hasStale ? `Stale: ${staleItems.join(" · ")}` : "Data current";
-            posSummaryFreshnessEl.title = hasStale ? notes.join(" · ") : "All tracked inputs are current";
+            posSummaryFreshnessEl.textContent = `Coverage ${confidence}%`;
+            posSummaryFreshnessEl.title = `Coverage ${confidence}% (sleep/weight/nutrition freshness + form)`;
             posSummaryFreshnessEl.classList.remove("unknown", "ontrack", "soon", "overdue");
-            posSummaryFreshnessEl.classList.add(hasStale ? "overdue" : "ontrack");
+            posSummaryFreshnessEl.classList.add(confidence >= 70 ? "ontrack" : confidence >= 50 ? "soon" : "overdue");
           }
         }
 
@@ -620,12 +700,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
               meta: { importance: 8, group: "drivers", related: "form" },
             });
           }
-          const nutritionCoverageLabel = `Nutrition logs ${nutritionEntries} entries · coverage ${nutritionDaysDisplay}/7 days`;
-          drivers.push({
-            label: nutritionCoverageLabel,
-            tone: nutritionDaysCount < 4 ? "warn" : "neutral",
-            meta: { importance: 7, group: "drivers", related: "nutrition" },
-          });
+            drivers.push({
+              label: `Nutrition coverage ${nutritionDaysDisplay}/7 days (${nutritionEntries} entries, logged)`,
+              tone: nutritionDaysDisplay >= 5 ? "good" : nutritionDaysDisplay >= 2 ? "warn" : "bad",
+              meta: { importance: 8, group: "drivers", related: "nutrition,coverage" },
+            });
           if (weightAge != null && weightAge >= 7) {
             drivers.push({
               label: `Weight updated ${weightAgeLabel}d ago`,
@@ -641,8 +720,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
             posSummaryDriversEl.appendChild(chip);
           });
           const confidenceChip = document.createElement("span");
-          confidenceChip.className = `stale-chip ${confidenceTone || "neutral"}`;
-          confidenceChip.innerHTML = `Data coverage <b>${confidence}%</b>`;
+          confidenceChip.className = "stale-chip neutral";
+          confidenceChip.innerHTML = `Coverage <b>${confidence}%</b>`;
           attachMeta(confidenceChip, { importance: 9, group: "coverage", related: "coverage,stale" });
           posSummaryDriversEl.appendChild(confidenceChip);
         }
@@ -769,7 +848,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         if (posDataHealthNoteEl) posDataHealthNoteEl.textContent = "";
 
         const startIso = rangeStartDate(7).toISOString();
-        const [readinessResp, trainingResp, stravaResp, strengthResp, nutritionResp, appleResp] = await Promise.all([
+        const [readinessResp, trainingResp, stravaResp, strengthResp, metricsResp, cronoTotals] = await Promise.all([
           supabase
             .from("readiness_state")
             .select("sleep_updated_at,weight_updated_at,sleep_source,weight_source")
@@ -791,19 +870,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
             .order("session_date", { ascending: false })
             .limit(1),
           supabase
-            .from("pos_events")
-            .select("event_timestamp")
-            .eq("source", "nutrition")
-            .gte("event_timestamp", startIso),
-          supabase
-            .from("pos_events")
-            .select("event_timestamp")
-            .eq("source", "apple_health")
-            .gte("event_timestamp", startIso),
+            .from("pos_day_metrics")
+            .select("date,nutrition_entries_7d,nutrition_source,active_energy_kcal_7d,resting_energy_kcal_7d,active_energy_avg_day,resting_energy_avg_day,updated_at")
+            .order("date", { ascending: false })
+            .limit(1),
+          fetchCronometerTotals(rangeStartDate(7).toISOString().slice(0, 10)),
         ]);
 
         const readiness = readinessResp.data ?? {};
         const training = trainingResp.data ?? {};
+        const metrics = metricsResp.data?.[0] ?? {};
         const sleepAge = formatAgeDays(readiness.sleep_updated_at);
         const weightAge = formatAgeDays(readiness.weight_updated_at);
         const sleepStatus = sleepAge != null ? `Updated ${formatNumber(sleepAge, sleepAge >= 10 ? 0 : 1)}d ago` : "No update";
@@ -811,19 +887,24 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         const weightStatus = weightAge != null ? `Updated ${formatNumber(weightAge, weightAge >= 10 ? 0 : 1)}d ago` : "No update";
         const weightTone = weightAge != null && weightAge < 7 ? "good" : "warn";
 
-        const nutritionDays = new Set();
-        (nutritionResp.data || []).forEach((row) => {
-          const key = dateKeyFromIso(row.event_timestamp);
-          if (key) nutritionDays.add(key);
-        });
-        const nutritionDaysCount = nutritionDays.size;
-        const nutritionDaysDisplay = Math.min(nutritionDaysCount, 7);
-        const nutritionTone = nutritionDaysCount >= 4 ? "good" : nutritionDaysCount >= 1 ? "warn" : "bad";
+        let nutritionEntries = Number(metrics.nutrition_entries_7d ?? 0);
+        if ((!nutritionEntries || nutritionEntries === 0) && cronoTotals && cronoTotals.size) {
+          nutritionEntries = cronoTotals.size;
+        }
+        const nutritionDaysDisplay = Math.min(nutritionEntries || 0, 7);
+        const nutritionTone = nutritionDaysDisplay >= 4 ? "good" : nutritionDaysDisplay >= 1 ? "warn" : "bad";
         const nutritionStatus = `Logs ${nutritionDaysDisplay}/7 days`;
+        const nutritionSource = metrics.nutrition_source || "unknown";
 
-        const appleLogs = appleResp.data?.length ?? 0;
-        const appleTone = appleLogs >= 4 ? "good" : appleLogs >= 1 ? "warn" : "bad";
-        const appleStatus = appleLogs ? `${appleLogs} logs (7d)` : "No logs";
+        const activeEnergy7d = metrics.active_energy_kcal_7d ?? null;
+        const restingEnergy7d = metrics.resting_energy_kcal_7d ?? null;
+        const activeEnergyAvg = metrics.active_energy_avg_day ?? null;
+        const restingEnergyAvg = metrics.resting_energy_avg_day ?? null;
+        const energyTone = activeEnergy7d != null || restingEnergy7d != null ? "good" : "warn";
+        const energyStatus = activeEnergy7d != null ? `${formatNumber(activeEnergy7d, 0)} kcal (7d)` : "No energy data";
+        const energyMetaParts = [];
+        if (activeEnergyAvg != null) energyMetaParts.push(`Active avg ${formatNumber(activeEnergyAvg, 0)} kcal/day`);
+        if (restingEnergyAvg != null) energyMetaParts.push(`Resting avg ${formatNumber(restingEnergyAvg, 0)} kcal/day`);
 
         const stravaDate = stravaResp.data?.[0]?.date ?? null;
         const stravaAge = stravaDate ? formatAgeDays(`${stravaDate}T00:00:00`) : null;
@@ -858,17 +939,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
             "Nutrition",
             nutritionStatus,
             nutritionTone,
-            `${nutritionDaysDisplay}/7 days logged (last 7d)`,
+            `${nutritionDaysDisplay}/7 days logged · Source ${nutritionSource}`,
             { importance: 8, group: "data_health", related: "nutrition" },
           ),
         );
         posDataHealthListEl.appendChild(
           renderStatusItem(
-            "Apple Health",
-            appleStatus,
-            appleTone,
-            `${appleLogs} logs in 7d`,
-            { importance: 6, group: "data_health", related: "apple_health" },
+            "Activity energy",
+            energyStatus,
+            energyTone,
+            energyMetaParts.join(" · ") || "No energy averages",
+            { importance: 6, group: "data_health", related: "energy,activity" },
           ),
         );
         posDataHealthListEl.appendChild(
@@ -1089,12 +1170,21 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         if (posRacePhaseListEl) {
           posRacePhaseListEl.innerHTML = "";
           const phase = daysToRace > 180 ? "Base" : daysToRace > 90 ? "Build" : daysToRace > 30 ? "Specific" : "Taper";
+          const focus = "Cold swim exposure, hills, run durability";
           posRacePhaseListEl.appendChild(
             renderPlanList("Phase", phase, { importance: 7, group: "race_phase", related: "phase" }),
           );
           posRacePhaseListEl.appendChild(
-            renderPlanList("Focus", "Cold swim exposure, hills, run durability", { importance: 8, group: "race_phase", related: "focus" }),
+            renderPlanList("Focus", focus, { importance: 8, group: "race_phase", related: "focus" }),
           );
+          if (posDomainRacePlanEl) {
+            posDomainRacePlanEl.textContent = `Plan: ${phase} phase · ${focus}`;
+            attachMeta(posDomainRacePlanEl, { importance: 9, group: "plan_race", related: "phase,focus" });
+          }
+          if (posDomainRacePlanSubEl) {
+            posDomainRacePlanSubEl.textContent = `${daysToRace} days to race · Endurance ${enduranceCount} sessions · Strength ${strengthCount} sessions`;
+            attachMeta(posDomainRacePlanSubEl, { importance: 6, group: "plan_race", related: "inputs" });
+          }
         }
         if (posRacePhaseNoteEl) {
           posRacePhaseNoteEl.textContent = `${daysToRace} days to race · phase strategy.`;
@@ -1190,7 +1280,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
               { importance: importance - 1, group: label.toLowerCase(), related: "fatigue" },
             ),
           );
-          if (noteEl) noteEl.textContent = `Interval: daily · Range: ${rangeLabel(currentRangeDays)} · ${label}`;
+          if (noteEl) noteEl.textContent = `Interval: daily (Strava) · Range: ${rangeLabel(currentRangeDays)} · ${label}`;
         };
 
         const order = ["all", "running", "cycling", "swimming"];
@@ -1224,11 +1314,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           ];
           posStravaChartEl.innerHTML = renderLineChart({ labels, series, yLabel: "Score" });
           if (posStravaChartCaptionEl) {
-            posStravaChartCaptionEl.textContent = `Interval: daily · Range: ${rangeLabel(currentRangeDays)}`;
+            posStravaChartCaptionEl.textContent = `Interval: daily (Strava) · Range: ${rangeLabel(currentRangeDays)}`;
           }
         }
 
-        if (posStravaNoteEl) posStravaNoteEl.textContent = `Interval: daily · Range: ${rangeLabel(currentRangeDays)}.`;
+        if (posStravaNoteEl) posStravaNoteEl.textContent = `Interval: daily (Strava) · Range: ${rangeLabel(currentRangeDays)}.`;
 
         renderSportPanel(posCyclingListEl, posCyclingNoteEl, bySport.cycling, "Cycling", 8);
         renderSportPanel(posRunningListEl, posRunningNoteEl, bySport.running, "Running", 8);
@@ -1377,7 +1467,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         posTrendsListEl.appendChild(strengthEntry);
 
         if (posTrendsNoteEl) {
-          posTrendsNoteEl.textContent = `Trend signals for ${rangeLabel(currentRangeDays).toLowerCase()}.`;
+          posTrendsNoteEl.textContent = `Interval: daily totals · Range: ${rangeLabel(currentRangeDays)}.`;
         }
       }
 
@@ -1418,8 +1508,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           posLoadCapacityListEl.appendChild(
             renderStatusItem(
               "Training load (7d)",
-              "Tracked",
-              "warn",
+              `${formatNumber(load, 0)} load`,
+              "neutral",
               `${formatNumber(load, 0)} load · Capacity missing`,
               { importance: 8, group: "load_capacity", related: "training_load" },
             ),
@@ -1428,8 +1518,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           posLoadCapacityListEl.appendChild(
             renderStatusItem(
               "Training load (7d)",
-              "Missing",
-              "bad",
+              "No data",
+              "warn",
               "No load data yet",
               { importance: 8, group: "load_capacity", related: "training_load" },
             ),
@@ -1731,17 +1821,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
             labels.push(dateKeyFromIso(d.toISOString()));
           }
 
-          const [metricsResp, nutritionResp] = await Promise.all([
+          const [metricsResp, cronoTotals] = await Promise.all([
             supabase
               .from("pos_day_metrics")
               .select("date,training_load_today,sleep_seconds")
               .gte("date", startKey)
               .order("date", { ascending: true }),
-            supabase
-              .from("pos_events")
-              .select("event_timestamp,payload")
-              .eq("source", "nutrition")
-              .gte("event_timestamp", startIso),
+            fetchCronometerTotals(startKey),
           ]);
 
           const loadByDay = new Map();
@@ -1756,15 +1842,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
           const caloriesByDay = new Map();
           const proteinByDay = new Map();
-          (nutritionResp.data || []).forEach((row) => {
-            const key = dateKeyFromIso(row.event_timestamp);
-            if (!key) return;
-            const payload = row.payload || {};
-            const calories = Number(payload.calories ?? payload.kcal ?? payload.energy_kcal ?? 0);
-            const protein = Number(payload.protein_g ?? payload.protein ?? 0);
-            if (!Number.isNaN(calories)) caloriesByDay.set(key, (caloriesByDay.get(key) || 0) + calories);
-            if (!Number.isNaN(protein)) proteinByDay.set(key, (proteinByDay.get(key) || 0) + protein);
-          });
+          if (cronoTotals && cronoTotals.size) {
+            cronoTotals.forEach((totals, day) => {
+              if (totals.calories_kcal != null) {
+                caloriesByDay.set(day, (caloriesByDay.get(day) || 0) + totals.calories_kcal);
+              }
+              if (totals.protein_g != null) {
+                proteinByDay.set(day, (proteinByDay.get(day) || 0) + totals.protein_g);
+              }
+            });
+          }
 
           loadSeries = labels.map((d) => loadByDay.get(d) || 0);
           sleepSeries = labels.map((d) => sleepByDay.get(d) || 0);
@@ -1781,7 +1868,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         const caloriesLabel = resolution === "hour" ? "Calories (today)" : "Calories avg";
         const proteinLabel = resolution === "hour" ? "Protein (today)" : "Protein avg";
 
-        const intervalLabel = resolution === "hour" ? "Hourly (events)" : "Daily (rollup)";
+        const intervalLabel = resolution === "hour" ? "Hourly (event timestamps)" : "Daily (day totals)";
         const rangeText = rangeLabel(currentRangeDays);
         const intervalStatus = `${intervalLabel} · ${rangeText}`;
         const loadUnit = resolution === "hour" ? "min" : "load";
@@ -1798,16 +1885,19 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           );
           posRelationsListEl.appendChild(
             renderStatusItem(
-              "Calories/protein vs training load",
+              "Calories + protein vs training minutes",
               intervalStatus,
               "neutral",
-              `${caloriesLabel} ${formatNumber(caloriesStat, 0)} kcal · ${proteinLabel} ${formatNumber(proteinStat, 0)} g · Load ${formatNumber(loadStat, 0)} ${loadUnit}`,
+              `${caloriesLabel} ${formatNumber(caloriesStat, 0)} kcal · ${proteinLabel} ${formatNumber(proteinStat, 0)} g · ${loadLabel} ${formatNumber(loadStat, 0)} ${loadUnit}`,
               { importance: 7, group: "relationships", related: "calories,protein,load" },
             ),
           );
         }
 
         const caption = `Interval: ${intervalLabel} · Range: ${rangeText}`;
+        if (posRelationsNoteEl) {
+          posRelationsNoteEl.textContent = caption;
+        }
 
         if (posLoadSleepChartEl) {
           const loadChart = renderLineChart({
@@ -1844,9 +1934,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         }
 
         if (posRelationsNoteEl) {
-          const sourceLoad = resolution === "hour" ? "Strava activity minutes" : "pos_day_metrics training_load_today";
-          const intervalNote = resolution === "hour" ? "hourly (event time)" : "daily (source rollup)";
-          posRelationsNoteEl.textContent = `Range: ${rangeText} · Interval: ${intervalNote} · Load from ${sourceLoad} · Sleep from pos_day_metrics · Calories/protein from nutrition logs.`;
+          const sourceLoad = resolution === "hour" ? "Strava activity minutes (event time)" : "pos_day_metrics training_load_today";
+          const intervalNote = resolution === "hour" ? "hourly (0–23)" : "daily (one point per day)";
+          const fuelSource = resolution === "hour" ? "nutrition event timestamps (logged time)" : "Cronometer day totals";
+          posRelationsNoteEl.textContent =
+            `Range: ${rangeText} · Interval: ${intervalNote} · Load from ${sourceLoad} · Sleep from pos_day_metrics · Fuel from ${fuelSource}.`;
         }
       }
 
@@ -1955,11 +2047,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         const deep = pickNumber(summary, ["deep_sleep_duration", "deepsleepduration", "deep_duration"]);
         const regularity = pickNumber(summary, ["regularity", "sleep_regularity_score"]);
         const interruptions = pickNumber(summary, ["wakeupcount", "wakeup_count", "interruptions"]);
-        let timeToSleep = pickNumber(summary, ["time_to_sleep", "sleep_latency", "time_to_sleep_s"]);
-        let timeToGetUp = pickNumber(summary, ["time_to_getup", "time_to_getup_s", "time_to_wakeup"]);
+        const timeToSleepSeconds = pickNumber(summary, ["time_to_sleep_s"]);
+        const timeToGetUpSeconds = pickNumber(summary, ["time_to_getup_s"]);
+        let timeToSleep = timeToSleepSeconds ?? pickNumber(summary, ["time_to_sleep", "sleep_latency"]);
+        let timeToGetUp = timeToGetUpSeconds ?? pickNumber(summary, ["time_to_getup", "time_to_wakeup"]);
 
-        if (timeToSleep != null && timeToSleep < 1000) timeToSleep *= 60;
-        if (timeToGetUp != null && timeToGetUp < 1000) timeToGetUp *= 60;
+        if (timeToSleep != null && timeToSleepSeconds == null && timeToSleep <= 240) {
+          timeToSleep *= 60;
+        }
+        if (timeToGetUp != null && timeToGetUpSeconds == null && timeToGetUp <= 240) {
+          timeToGetUp *= 60;
+        }
 
         const sleepLatency = formatLatency(timeToSleep, "Sleep latency");
         const wakeLatency = formatLatency(timeToGetUp, "Wake latency");
@@ -1970,8 +2068,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           { label: "Deep sleep", value: deep != null ? formatDurationHM(deep) : "—", meta: "Deep stage" },
           { label: "Regularity", value: regularity != null ? `${formatNumber(regularity, 0)}/100` : "—", meta: "Consistency score" },
           { label: "Interruptions", value: interruptions != null ? `${formatNumber(interruptions, 0)}` : "—", meta: "Wake ups" },
-          { label: "Sleep latency", value: sleepLatency.value, meta: sleepLatency.meta },
-          { label: "Wake latency", value: wakeLatency.value, meta: wakeLatency.meta },
+          { label: "Time to sleep", value: sleepLatency.value, meta: sleepLatency.meta },
+          { label: "Time to get up", value: wakeLatency.value, meta: wakeLatency.meta },
         ];
 
         entries.forEach((entry) => {
@@ -2126,7 +2224,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           });
         }
         if (posWeekSportCaptionEl) {
-          posWeekSportCaptionEl.textContent = "Interval: daily · Range: Last 7 days";
+          posWeekSportCaptionEl.textContent = "Interval: daily (Strava activities) · Range: Last 7 days";
         }
       }
 
@@ -2160,7 +2258,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           yLabel: "Score",
         });
         if (posFitnessCardNoteEl) {
-          posFitnessCardNoteEl.textContent = `Interval: daily · Range: ${rangeLabel(days)}`;
+          posFitnessCardNoteEl.textContent = `Interval: daily (Strava) · Range: ${rangeLabel(days)}`;
+        }
+        if (posFitnessCardCaptionEl) {
+          posFitnessCardCaptionEl.textContent = `Interval: daily (Strava) · Range: ${rangeLabel(days)}`;
         }
       }
 
@@ -2796,7 +2897,41 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       }
 
       async function loadPosViewData(viewId) {
-        await Promise.all([loadPosReport(), loadPosPlan(), loadPosSummary()]);
+        const tasks = [
+          loadPosPlan(),
+          loadPosSummary(),
+          loadPosSleepQuality(),
+          loadPosSleepScoreGrid(),
+          loadPosSleepHeartRate(),
+          loadPosRecovery(),
+          loadPosSleepTrend(),
+          loadPosSleepPlan(),
+          loadPosNutrition(),
+          loadPosTrainingWeek(),
+          loadPosFitnessCard(),
+          loadPosStreakCalendar(),
+          loadPosPowerSkills(),
+          loadPosHeatmap(),
+          loadPosStravaFitness(),
+          loadPosLoadCapacity(),
+          loadPosWeeklyLoad(),
+          loadPosRelations(),
+          loadPosTrends(),
+          loadPosDataHealth(),
+          loadPosAppleHealth(),
+          loadPosStats(),
+          loadPosBaselines(),
+          loadPosQuality(),
+          loadPosLastSession(),
+          loadPosStrengthScatter(),
+          loadPosStrengthMatrix(),
+          loadPosQualityTrends(),
+          loadPosWeakness(),
+          loadPosFacial(),
+          loadPosRaceReadiness(),
+        ];
+        if (posReportUpdatedEl) tasks.push(loadPosReport());
+        await Promise.all(tasks);
       }
 
       function attachMeta(el, meta) {
@@ -2811,7 +2946,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       function renderPlanList(title, value, metricMeta = null) {
         const item = document.createElement("div");
         item.className = "list-item";
-        item.innerHTML = `<div class="list-title">${title}</div><div class="list-meta">${value}</div>`;
+        const displayValue = value === "—" || value === "" || value == null ? "No data" : value;
+        item.innerHTML = `<div class="list-title">${title}</div><div class="list-meta">${displayValue}</div>`;
         attachMeta(item, metricMeta);
         return item;
       }
@@ -2819,9 +2955,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       function renderStatList(title, value, meta, metricMeta = null) {
         const item = document.createElement("div");
         item.className = "list-item";
+        const displayValue = value === "—" || value === "" || value == null ? "No data" : value;
         item.innerHTML = `
           <div class="list-title">${title}</div>
-          <div class="list-meta">${value}</div>
+          <div class="list-meta">${displayValue}</div>
           ${meta ? `<div class="list-row">${meta}</div>` : ""}
         `;
         attachMeta(item, metricMeta);
@@ -2901,7 +3038,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       function renderGoalBar({ label, actual, target, unit, meta = null }) {
         const ratio = target ? actual / target : 0;
         const percent = Math.round(ratio * 100);
-        const status = ratio >= 1.1 ? "≥110% target" : ratio >= 0.9 ? "90–110% target" : ratio >= 0.6 ? "60–90% target" : "<60% target";
+        const status = Number.isFinite(percent) ? `${percent}% of target` : "Target missing";
         const tone = ratio >= 0.9 && ratio <= 1.1 ? "good" : ratio >= 0.6 ? "warn" : "bad";
         const metaText = `${formatNumber(actual, 1)} ${unit} / ${formatNumber(target, 0)} ${unit} (${percent}%)`;
 
@@ -2938,7 +3075,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         const safeActual = Number(actual ?? 0);
         const ratio = safeTarget > 0 ? safeActual / safeTarget : 0;
         const percent = Math.round(ratio * 100);
-        const status = ratio >= 1.1 ? "≥110% target" : ratio >= 0.9 ? "90–110% target" : ratio >= 0.6 ? "60–90% target" : "<60% target";
+        const status = Number.isFinite(percent) ? `${percent}% of target` : "Target missing";
         const tone = ratio >= 0.9 && ratio <= 1.1 ? "good" : ratio >= 0.6 ? "warn" : "bad";
         const decimals = unit === "kcal" ? 0 : 1;
         const metaText = `Avg logged day ${formatNumber(safeActual, decimals)} ${unit} · Target ${formatNumber(safeTarget, 0)} ${unit} (${Number.isFinite(percent) ? percent : 0}%)`;
@@ -3310,7 +3447,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           posStatsRangeEl.textContent = `${rangeLabel(currentRangeDays)} (${daysElapsed} day${daysElapsed === 1 ? "" : "s"})`;
         }
 
-        const [stravaResp, healthResp, nutritionResp] = await Promise.all([
+        const [stravaResp, healthResp, cronoTotals] = await Promise.all([
           supabase
             .from("pos_events")
             .select("event_timestamp,payload")
@@ -3323,11 +3460,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
             .eq("source", "apple_health")
             .eq("event_type", "health_metric")
             .gte("event_timestamp", weekStartIso),
-          supabase
-            .from("pos_events")
-            .select("event_timestamp,payload")
-            .eq("source", "nutrition")
-            .gte("event_timestamp", weekStartIso),
+          fetchCronometerTotals(weekStartIso.slice(0, 10)),
         ]);
 
         let rideMeters = 0;
@@ -3383,19 +3516,20 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         let proteinG = 0;
         let carbsG = 0;
         let fatG = 0;
-        if (nutritionResp.data) {
-          nutritionResp.data.forEach((row) => {
-            const payload = row.payload || {};
-            const calories = Number(payload.calories ?? payload.kcal ?? payload.energy_kcal ?? payload.value1 ?? 0);
-            const protein = Number(payload.protein_g ?? payload.protein ?? 0);
-            const carbs = Number(payload.carbs_g ?? payload.carbs ?? 0);
-            const fat = Number(payload.fat_g ?? payload.fat ?? 0);
-            if (!Number.isNaN(calories) && calories > 0) caloriesEaten += calories;
-            if (!Number.isNaN(protein) && protein > 0) proteinG += protein;
-            if (!Number.isNaN(carbs) && carbs > 0) carbsG += carbs;
-            if (!Number.isNaN(fat) && fat > 0) fatG += fat;
+        let activeCaloriesCrono = 0;
+        let restingCaloriesCrono = 0;
+        if (cronoTotals && cronoTotals.size) {
+          cronoTotals.forEach((totals) => {
+            if (totals.calories_kcal != null) caloriesEaten += totals.calories_kcal;
+            if (totals.protein_g != null) proteinG += totals.protein_g;
+            if (totals.carbs_g != null) carbsG += totals.carbs_g;
+            if (totals.fat_g != null) fatG += totals.fat_g;
+            if (totals.active_energy_kcal != null) activeCaloriesCrono += totals.active_energy_kcal;
+            if (totals.resting_energy_kcal != null) restingCaloriesCrono += totals.resting_energy_kcal;
           });
         }
+        if (activeCaloriesCrono > 0) activeCalories = activeCaloriesCrono;
+        if (restingCaloriesCrono > 0) restingCalories = restingCaloriesCrono;
         if (caloriesEaten <= 0) caloriesEaten = null;
         if (proteinG <= 0) proteinG = null;
         if (carbsG <= 0) carbsG = null;
@@ -3477,11 +3611,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           const decimals = stat.unit === "steps" ? 0 : 1;
           const avgLabel = `${formatNumber(avg, decimals)} ${stat.unit}/day`;
           const totalLabel = `Total ${formatNumber(stat.total, decimals)} ${stat.unit}`;
-          posStatsListEl.appendChild(renderStatusItem(stat.label, "Tracked", "good", `${avgLabel} · ${totalLabel}`, meta));
+          posStatsListEl.appendChild(renderStatusItem(stat.label, avgLabel, "neutral", totalLabel, meta));
         });
 
-        if (!nutritionResp.data?.length && posStatsNoteEl) {
+        if ((!cronoTotals || cronoTotals.size === 0) && posStatsNoteEl) {
           posStatsNoteEl.textContent = "Nutrition not connected yet.";
+        } else if (posStatsNoteEl) {
+          posStatsNoteEl.textContent = `Interval: daily totals · Range: ${rangeLabel(currentRangeDays)}`;
         }
       }
 
@@ -3556,7 +3692,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           const avg = entry.total / daysElapsed;
           const decimals = entry.unit === "steps" ? 0 : 1;
           const meta = `Avg ${formatNumber(avg, decimals)} ${entry.unit}/day · Total ${formatNumber(entry.total, decimals)} ${entry.unit}`;
-          posAppleHealthListEl.appendChild(renderStatusItem(entry.label, "Tracked", "good", meta, entry.meta));
+          posAppleHealthListEl.appendChild(renderStatusItem(entry.label, `${formatNumber(avg, decimals)} ${entry.unit}/day`, "neutral", meta, entry.meta));
         });
 
         if (posAppleHealthNoteEl) {
@@ -3571,12 +3707,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         if (posNutritionNoteEl) posNutritionNoteEl.textContent = "";
 
         const dateKey = localDateKey();
-        const rangeStart = rangeStartDate(currentRangeDays);
-        const rangeIso = rangeStart.toISOString();
-        const [metricsResp, planResp, nutritionResp] = await Promise.all([
+        const [metricsResp, planResp] = await Promise.all([
           supabase
             .from("pos_day_metrics")
-            .select("date,nutrition_entries_7d,calories_avg_day,protein_avg_day,carbs_avg_day,fat_avg_day")
+            .select("date,nutrition_entries_7d,calories_avg_day,protein_avg_day,carbs_avg_day,fat_avg_day,calories_today_kcal,protein_today_g,carbs_today_g,fat_today_g,nutrition_source")
             .order("date", { ascending: false })
             .limit(1),
           supabase
@@ -3585,38 +3719,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
             .lte("date", dateKey)
             .order("date", { ascending: false })
             .limit(1),
-          supabase
-            .from("pos_events")
-            .select("event_timestamp,payload")
-            .eq("source", "nutrition")
-            .gte("event_timestamp", rangeIso),
         ]);
 
         const metrics = metricsResp.data?.[0] ?? null;
         const plan = planResp.data?.[0] ?? null;
         const targets = plan?.plan_json?.nutrition_targets ?? {};
-        let totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
-        let hasTotals = false;
-        const nutritionDays = new Set();
-        if (nutritionResp.data?.length) {
-          nutritionResp.data.forEach((row) => {
-            const payload = row.payload || {};
-            const calories = Number(payload.calories ?? payload.kcal ?? payload.energy_kcal ?? payload.value1 ?? 0);
-            const protein = Number(payload.protein_g ?? payload.protein ?? 0);
-            const carbs = Number(payload.carbs_g ?? payload.carbs ?? 0);
-            const fat = Number(payload.fat_g ?? payload.fat ?? 0);
-            if (!Number.isNaN(calories) && calories > 0) totals.calories += calories;
-            if (!Number.isNaN(protein) && protein > 0) totals.protein += protein;
-            if (!Number.isNaN(carbs) && carbs > 0) totals.carbs += carbs;
-            if (!Number.isNaN(fat) && fat > 0) totals.fat += fat;
-            const key = dateKeyFromIso(row.event_timestamp);
-            if (key) nutritionDays.add(key);
-          });
-          hasTotals = totals.calories + totals.protein + totals.carbs + totals.fat > 0;
-        }
-        const nutritionDaysCount = nutritionDays.size;
-        const nutritionDaysDisplay = Math.min(nutritionDaysCount, 7);
-        const avgDivisor = nutritionDaysCount > 0 ? nutritionDaysCount : Math.max(1, currentRangeDays);
+        const nutritionDaysDisplay = Math.min(Number(metrics?.nutrition_entries_7d ?? 0), 7);
 
         if (!metrics && !targets) {
           if (posNutritionNoteEl) posNutritionNoteEl.textContent = "No nutrition data yet.";
@@ -3624,9 +3732,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         }
 
         if (posNutritionNoteEl) {
-          const entries = nutritionResp.data?.length ?? 0;
           const noteParts = [];
-          noteParts.push(entries ? `${entries} logs in ${currentRangeDays}d · coverage ${nutritionDaysDisplay}/7 days (last 7d)` : "No logs yet.");
+          noteParts.push(`Coverage ${nutritionDaysDisplay}/7 days logged (last 7d)`);
           if (!targets?.calories_target) {
             noteParts.push("Targets missing");
           } else {
@@ -3636,17 +3743,25 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         }
 
         const rows = [
-          { label: "Calories", actual: hasTotals ? totals.calories / avgDivisor : metrics?.calories_avg_day, target: targets.calories_target, unit: "kcal", meta: { importance: 8, group: "nutrition", related: "calories" } },
-          { label: "Protein", actual: hasTotals ? totals.protein / avgDivisor : metrics?.protein_avg_day, target: targets.protein_target_g, unit: "g", meta: { importance: 8, group: "nutrition", related: "protein" } },
-          { label: "Carbs", actual: hasTotals ? totals.carbs / avgDivisor : metrics?.carbs_avg_day, target: targets.carbs_target_g, unit: "g", meta: { importance: 6, group: "nutrition", related: "carbs" } },
-          { label: "Fat", actual: hasTotals ? totals.fat / avgDivisor : metrics?.fat_avg_day, target: targets.fat_target_g, unit: "g", meta: { importance: 6, group: "nutrition", related: "fat" } },
+          { label: "Calories", actual: metrics?.calories_avg_day, target: targets.calories_target, unit: "kcal", meta: { importance: 8, group: "nutrition", related: "calories" } },
+          { label: "Protein", actual: metrics?.protein_avg_day, target: targets.protein_target_g, unit: "g", meta: { importance: 8, group: "nutrition", related: "protein" } },
+          { label: "Carbs", actual: metrics?.carbs_avg_day, target: targets.carbs_target_g, unit: "g", meta: { importance: 6, group: "nutrition", related: "carbs" } },
+          { label: "Fat", actual: metrics?.fat_avg_day, target: targets.fat_target_g, unit: "g", meta: { importance: 6, group: "nutrition", related: "fat" } },
         ];
 
         rows.forEach((row) => {
           const actualVal = row.actual;
           const targetVal = row.target;
           if (actualVal == null || Number.isNaN(actualVal)) {
-            posNutritionListEl.appendChild(renderStatusItem(row.label, "No data", "warn", "Needs logging", row.meta));
+            posNutritionListEl.appendChild(
+              renderStatusItem(
+                row.label,
+                "No data",
+                "warn",
+                `Coverage ${nutritionDaysDisplay}/7 days logged`,
+                row.meta,
+              ),
+            );
             return;
           }
           if (!targetVal || Number.isNaN(Number(targetVal))) {
@@ -4146,6 +4261,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           el.textContent = text;
           attachMeta(el, meta);
         };
+        const setPlanSubLine = (el, text, meta) => {
+          if (!el) return;
+          el.textContent = text;
+          attachMeta(el, meta);
+        };
 
         setPlanLine(posDomainSleepPlanEl, "Plan: —", { importance: 9, group: "plan_sleep", related: "sleep,baseline,delta" });
         setPlanLine(posDomainDietPlanEl, "Plan: —", { importance: 9, group: "plan_diet", related: "calories,protein,coverage" });
@@ -4155,11 +4275,18 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         setPlanLine(posDomainRunningPlanEl, "Plan: —", { importance: 7, group: "plan_running", related: "running,volume" });
         setPlanLine(posDomainSwimmingPlanEl, "Plan: —", { importance: 7, group: "plan_swimming", related: "swimming,volume" });
         setPlanLine(posDomainFacialPlanEl, "Plan: —", { importance: 4, group: "plan_facial", related: "facial" });
+        setPlanSubLine(posDomainSleepPlanSubEl, "Inputs used below", { importance: 6, group: "plan_sleep", related: "inputs" });
+        setPlanSubLine(posDomainDietPlanSubEl, "Inputs used below", { importance: 6, group: "plan_diet", related: "inputs" });
+        setPlanSubLine(posDomainProgressPlanSubEl, "Inputs used below", { importance: 6, group: "plan_progress", related: "inputs" });
+        setPlanSubLine(posDomainWeightPlanSubEl, "Inputs used below", { importance: 6, group: "plan_strength", related: "inputs" });
+        setPlanSubLine(posDomainCyclingPlanSubEl, "Inputs used below", { importance: 6, group: "plan_cycling", related: "inputs" });
+        setPlanSubLine(posDomainRunningPlanSubEl, "Inputs used below", { importance: 6, group: "plan_running", related: "inputs" });
+        setPlanSubLine(posDomainSwimmingPlanSubEl, "Inputs used below", { importance: 6, group: "plan_swimming", related: "inputs" });
+        setPlanSubLine(posDomainFacialPlanSubEl, "Inputs used below", { importance: 5, group: "plan_facial", related: "inputs" });
         const dateKey = localDateKey();
         const { startIso, endIso } = dayBounds(dateKey);
 
-        const nutritionRangeStart = rangeStartDate(7).toISOString();
-        const [planResp, metricsResp, readinessResp, settingsResp, stravaResp, strengthResp, nutritionResp, formResp] = await Promise.all([
+        const [planResp, metricsResp, readinessResp, settingsResp, stravaResp, strengthResp, formResp, cronoTotals] = await Promise.all([
           supabase
             .from("coach_plan_daily")
             .select("date,summary_text,plan_json,created_at")
@@ -4168,7 +4295,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
             .limit(1),
           supabase
             .from("pos_day_metrics")
-            .select("sleep_seconds,sleep_baseline_7d,adherence_7d,training_load_7d,workout_count_7d,endurance_sessions_7d,strength_sessions_7d,strength_time_s_7d,strength_capacity_7d")
+            .select("sleep_seconds,sleep_baseline_7d,adherence_7d,training_load_7d,workout_count_7d,endurance_sessions_7d,strength_sessions_7d,strength_time_s_7d,strength_capacity_7d,nutrition_entries_7d,calories_today_kcal,protein_today_g,carbs_today_g,fat_today_g,nutrition_source")
             .order("date", { ascending: false })
             .limit(1),
           supabase
@@ -4193,16 +4320,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
             .select("training_id,session_date,quality_score,exercise_count,total_reps")
             .eq("session_date", dateKey),
           supabase
-            .from("pos_events")
-            .select("event_timestamp,payload")
-            .eq("source", "nutrition")
-            .gte("event_timestamp", nutritionRangeStart),
-          supabase
             .from("strava_fitness_daily")
             .select("form")
             .eq("sport_type", "all")
             .order("date", { ascending: false })
             .limit(1),
+          fetchCronometerTotals(dateKey),
         ]);
 
         const { data, error } = planResp;
@@ -4270,22 +4393,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           .reduce((acc, val) => acc + val, 0);
         const strengthPrograms = Array.from(new Set(strengthSessions.map((session) => session.training_id).filter(Boolean)));
         const strengthProgramLabel = strengthPrograms.length ? strengthPrograms.join(", ") : null;
-        const nutritionDays = new Set();
-        let todayNutritionCalories = 0;
-        let todayNutritionProtein = 0;
-        (nutritionResp.data || []).forEach((row) => {
-          const key = dateKeyFromIso(row.event_timestamp);
-          if (key) nutritionDays.add(key);
-          if (key === dateKey) {
-            const payload = row.payload || {};
-            const calories = Number(payload.calories ?? payload.kcal ?? payload.energy_kcal ?? payload.value1 ?? 0);
-            const protein = Number(payload.protein_g ?? payload.protein ?? 0);
-            if (!Number.isNaN(calories) && calories > 0) todayNutritionCalories += calories;
-            if (!Number.isNaN(protein) && protein > 0) todayNutritionProtein += protein;
-          }
-        });
-        const nutritionDaysCount = nutritionDays.size;
-        const nutritionDaysDisplay = Math.min(nutritionDaysCount, 7);
+        const nutritionDaysDisplay = Math.min(Number(metrics.nutrition_entries_7d ?? 0), 7);
+        const cronoToday = cronoTotals && cronoTotals.size ? cronoTotals.get(dateKey) : null;
+        const todayNutritionCalories = metrics.calories_today_kcal ?? cronoToday?.calories_kcal ?? 0;
+        const todayNutritionProtein = metrics.protein_today_g ?? cronoToday?.protein_g ?? 0;
 
         const setMetrics = (el, items) => {
           if (!el) return;
@@ -4308,6 +4419,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           if (sleepAge != null && sleepAge >= 2) sleepPlanLine += ` · Updated ${formatNumber(sleepAge, 1)}d ago`;
         }
         setPlanLine(posDomainSleepPlanEl, sleepPlanLine, { importance: 9, group: "plan_sleep", related: "sleep,baseline,delta" });
+        const sleepInputs = [
+          sleepHours != null ? `Last ${formatNumber(sleepHours, 1)}h` : "Last —",
+          sleepBaseline != null ? `Baseline ${formatNumber(sleepBaseline, 1)}h` : "Baseline —",
+          sleepDelta != null ? `Δ ${formatNumber(sleepDelta, 1)}h` : "Δ —",
+          sleepAge != null ? `Updated ${formatNumber(sleepAge, 1)}d ago` : "Updated —",
+        ];
+        setPlanSubLine(posDomainSleepPlanSubEl, sleepInputs.join(" · "), { importance: 6, group: "plan_sleep", related: "inputs" });
 
         const dietTargets = [];
         if (targets.calories_target) dietTargets.push(`${formatNumber(targets.calories_target, 0)} kcal`);
@@ -4316,6 +4434,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           ? `Plan: ${dietTargets.join(" · ")} · Logged ${formatNumber(todayNutritionCalories, 0) || 0} kcal`
           : `Plan: Set nutrition targets · Logged ${formatNumber(todayNutritionCalories, 0) || 0} kcal`;
         setPlanLine(posDomainDietPlanEl, dietPlanLine, { importance: 9, group: "plan_diet", related: "calories,protein,coverage" });
+        const dietInputs = [
+          `Today ${formatNumber(todayNutritionCalories, 0) || 0} kcal`,
+          `Protein ${formatNumber(todayNutritionProtein, 0) || 0} g`,
+          `Coverage ${nutritionDaysDisplay}/7 days`,
+        ];
+        setPlanSubLine(posDomainDietPlanSubEl, dietInputs.join(" · "), { importance: 6, group: "plan_diet", related: "inputs" });
 
         const stripReadinessText = (text) => {
           if (!text) return "";
@@ -4347,6 +4471,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         const windowLabel = rec?.window_start && rec?.window_end ? ` · Window ${rec.window_start}-${rec.window_end}` : "";
         const progressPlanLine = planText ? `Plan: ${planText}${windowLabel}` : "Plan: No training prescription yet";
         setPlanLine(posDomainProgressPlanEl, progressPlanLine, { importance: 9, group: "plan_progress", related: "recommendation,intensity,duration" });
+        const progressInputs = [
+          metrics.workout_count_7d != null ? `Workouts 7d ${formatNumber(metrics.workout_count_7d, 0)}` : "Workouts 7d —",
+          metrics.training_load_7d != null ? `Load 7d ${formatNumber(metrics.training_load_7d, 0)}` : "Load 7d —",
+          formValue != null ? `Form ${formatNumber(formValue, 0)}` : "Form —",
+        ];
+        setPlanSubLine(posDomainProgressPlanSubEl, progressInputs.join(" · "), { importance: 6, group: "plan_progress", related: "inputs" });
 
         const planLower = planText.toLowerCase();
         const hasStrengthPlan = !!planText && /(strength|lift|weights|speediance|kettlebell)/.test(planLower);
@@ -4356,17 +4486,39 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
         const strengthPlanLine = hasStrengthPlan ? `Plan: ${planText}` : "Plan: Schedule strength session";
         setPlanLine(posDomainWeightPlanEl, strengthPlanLine, { importance: 8, group: "plan_strength", related: "strength,quality,volume" });
+        const strengthInputs = [
+          metrics.strength_sessions_7d != null ? `Strength 7d ${formatNumber(metrics.strength_sessions_7d, 0)} sessions` : "Strength 7d —",
+          strengthAvgQuality != null ? `Avg quality ${formatScore(strengthAvgQuality)}` : "Avg quality —",
+          strengthProgramLabel ? `Program ${strengthProgramLabel}` : "Program —",
+        ];
+        setPlanSubLine(posDomainWeightPlanSubEl, strengthInputs.join(" · "), { importance: 6, group: "plan_strength", related: "inputs" });
 
         const cyclingPlanLine = hasCyclingPlan ? `Plan: ${planText}` : "Plan: Schedule cycling session";
         setPlanLine(posDomainCyclingPlanEl, cyclingPlanLine, { importance: 7, group: "plan_cycling", related: "cycling,volume" });
+        const cyclingInputs = [
+          cyclingMinutes ? `Today ${formatNumber(cyclingMinutes, 0)} min` : "Today —",
+          cyclingDistance ? `${formatNumber(formatMiles(cyclingDistance) ?? 0, 1)} mi` : "Distance —",
+        ];
+        setPlanSubLine(posDomainCyclingPlanSubEl, cyclingInputs.join(" · "), { importance: 6, group: "plan_cycling", related: "inputs" });
 
         const runningPlanLine = hasRunningPlan ? `Plan: ${planText}` : "Plan: Schedule run/walk session";
         setPlanLine(posDomainRunningPlanEl, runningPlanLine, { importance: 7, group: "plan_running", related: "running,volume" });
+        const runningInputs = [
+          runningMinutes ? `Today ${formatNumber(runningMinutes, 0)} min` : "Today —",
+          runningDistance ? `${formatNumber(formatMiles(runningDistance) ?? 0, 1)} mi` : "Distance —",
+        ];
+        setPlanSubLine(posDomainRunningPlanSubEl, runningInputs.join(" · "), { importance: 6, group: "plan_running", related: "inputs" });
 
         const swimmingPlanLine = hasSwimmingPlan ? `Plan: ${planText}` : "Plan: Schedule swim session";
         setPlanLine(posDomainSwimmingPlanEl, swimmingPlanLine, { importance: 7, group: "plan_swimming", related: "swimming,volume" });
+        const swimInputs = [
+          swimmingMinutes ? `Today ${formatNumber(swimmingMinutes, 0)} min` : "Today —",
+          swimmingDistance ? `${formatNumber(swimmingDistance * 1.09361, 0)} yd` : "Distance —",
+        ];
+        setPlanSubLine(posDomainSwimmingPlanSubEl, swimInputs.join(" · "), { importance: 6, group: "plan_swimming", related: "inputs" });
 
         setPlanLine(posDomainFacialPlanEl, "Plan: Manual routine (not tracked)", { importance: 4, group: "plan_facial", related: "facial" });
+        setPlanSubLine(posDomainFacialPlanSubEl, "Tracking source missing · manual routine only", { importance: 5, group: "plan_facial", related: "inputs" });
 
         setMetrics(posDomainSleepMetricsEl, [
           {
@@ -4547,15 +4699,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       async function loadPosReport() {
         const dateKey = localDateKey();
         const { startIso, endIso } = dayBounds(dateKey);
-        const nutritionRangeStart = rangeStartDate(7).toISOString();
-
         const [
           planResp,
           metricsResp,
           readinessResp,
           settingsResp,
           stravaResp,
-          nutritionResp,
           formResp,
         ] = await Promise.all([
           supabase
@@ -4566,7 +4715,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
             .limit(1),
           supabase
             .from("pos_day_metrics")
-            .select("sleep_seconds,sleep_baseline_7d,adherence_7d,training_load_7d,workout_count_7d,endurance_sessions_7d,strength_sessions_7d,weight_kg,weight_baseline_7d")
+            .select("sleep_seconds,sleep_baseline_7d,adherence_7d,training_load_7d,workout_count_7d,endurance_sessions_7d,strength_sessions_7d,weight_kg,weight_baseline_7d,nutrition_entries_7d,calories_today_kcal,protein_today_g")
             .order("date", { ascending: false })
             .limit(1),
           supabase
@@ -4586,11 +4735,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
             .eq("event_type", "activity")
             .gte("event_timestamp", startIso)
             .lte("event_timestamp", endIso),
-          supabase
-            .from("pos_events")
-            .select("event_timestamp,payload")
-            .eq("source", "nutrition")
-            .gte("event_timestamp", nutritionRangeStart),
           supabase
             .from("strava_fitness_daily")
             .select("form")
@@ -4628,22 +4772,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         const sleepBaseline = metrics.sleep_baseline_7d ? metrics.sleep_baseline_7d / 3600 : null;
         const sleepDelta = sleepHours != null && sleepBaseline != null ? sleepHours - sleepBaseline : null;
 
-        let todayCalories = 0;
-        let todayProtein = 0;
-        const nutritionDays = new Set();
-        (nutritionResp.data || []).forEach((row) => {
-          const key = dateKeyFromIso(row.event_timestamp);
-          if (key) nutritionDays.add(key);
-          if (key === dateKey) {
-            const payload = row.payload || {};
-            const calories = Number(payload.calories ?? payload.kcal ?? payload.energy_kcal ?? payload.value1 ?? 0);
-            const protein = Number(payload.protein_g ?? payload.protein ?? 0);
-            if (!Number.isNaN(calories) && calories > 0) todayCalories += calories;
-            if (!Number.isNaN(protein) && protein > 0) todayProtein += protein;
-          }
-        });
-        const nutritionDaysCount = nutritionDays.size;
-        const nutritionDaysDisplay = Math.min(nutritionDaysCount, 7);
+        const todayCalories = metrics.calories_today_kcal ?? 0;
+        const todayProtein = metrics.protein_today_g ?? 0;
+        const nutritionDaysDisplay = Math.min(Number(metrics.nutrition_entries_7d ?? 0), 7);
 
         const workoutGoal = Number(settings.min_weekly_workouts ?? 0) || null;
         const workoutCount = metrics.workout_count_7d ?? null;
@@ -4738,7 +4869,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         ]);
 
         if (reportNutritionAssessmentEl) {
-          reportNutritionAssessmentEl.textContent = `Logged ${formatNumber(todayCalories, 0) || 0} kcal and ${formatNumber(todayProtein, 0) || 0} g protein today. Coverage ${nutritionDaysDisplay}/7 days.`;
+          reportNutritionAssessmentEl.textContent =
+            `Logged ${formatNumber(todayCalories, 0) || 0} kcal and ${formatNumber(todayProtein, 0) || 0} g protein today. ` +
+            `Coverage ${nutritionDaysDisplay}/7 days logged (missing logs ≠ no intake).`;
         }
         if (reportNutritionActionEl) {
           const calorieTarget = targets.calories_target ? formatNumber(targets.calories_target, 0) : "—";
@@ -4763,7 +4896,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           {
             name: "Nutrition coverage",
             current: `${nutritionDaysDisplay}/7 days`,
-            target: "7/7 days",
+            target: "≥6/7 days",
             window: "7d",
             direction: "Higher = more confidence",
           },
@@ -4830,8 +4963,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
       async function initPos() {
         if (!posDashboardEl) return;
-        const { data } = await supabase.auth.getSession();
-        if (!data?.session) return;
         renderRangeTabs();
         renderPosNav();
         setPosSubview(currentPosView);

@@ -48,6 +48,9 @@ const reportRangeEl = document.getElementById("report-range");
 const reportSummaryEl = document.getElementById("report-summary");
 const reportSectionsEl = document.getElementById("report-sections");
 const debugPanelEl = document.getElementById("debug-panel");
+const buildStampEl = document.getElementById("build-stamp");
+
+const BUILD_STAMP = "2026-01-01.8";
 
 const RANGE_OPTIONS = [
   { label: "1d", days: 1 },
@@ -274,6 +277,7 @@ async function loadReport() {
   if (error || !data || !data.length) {
     reportUpdatedEl.textContent = "Updated —";
     reportNoteEl.textContent = "No report data available yet.";
+    renderEmptySection("No report rows found. Run pos-scheduler to generate a report.");
     if (DEBUG_MODE && debugPanelEl) {
       debugPanelEl.textContent = `Report query failed.\nError: ${error?.message || "no rows"}\nSupabase URL: ${SUPABASE_URL}\nBuild: 2026-01-01.6`;
     }
@@ -290,7 +294,12 @@ async function loadReport() {
   buildSummaryCards(report);
 
   const seriesBySection = mapSeriesToSections(report.series || [], currentRange);
-  (report.sections || []).forEach((section) => renderSection(section, seriesBySection));
+  const sections = report.sections || [];
+  if (!sections.length) {
+    renderEmptySection("Report loaded but contains no sections. Check pos-scheduler output.");
+  } else {
+    sections.forEach((section) => renderSection(section, seriesBySection));
+  }
 
   if (DEBUG_MODE && debugPanelEl) {
     debugPanelEl.textContent = [
@@ -304,6 +313,19 @@ async function loadReport() {
       "Build: 2026-01-01.6",
     ].join("\n");
   }
+}
+
+function renderEmptySection(message) {
+  if (!reportSectionsEl) return;
+  const wrapper = document.createElement("section");
+  wrapper.className = "section";
+  wrapper.innerHTML = `
+    <div class="section-hero">
+      <div class="section-title">Report unavailable</div>
+      <div class="section-plan">${message}</div>
+    </div>
+  `;
+  reportSectionsEl.appendChild(wrapper);
 }
 
 async function refreshAuth() {
@@ -421,3 +443,6 @@ supabase.auth.onAuthStateChange((_event, session) => {
 });
 renderRangeTabs();
 hydrateSession().finally(() => refreshAuth());
+if (buildStampEl) {
+  buildStampEl.textContent = `Build ${BUILD_STAMP}`;
+}

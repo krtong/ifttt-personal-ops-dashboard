@@ -1,46 +1,77 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <title>Personal Ops Dashboard</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Personal Ops Report</title>
     <style>
       :root {
         color-scheme: dark;
         --bg: #0a0f1f;
         --panel: #141b2f;
-        --panel-2: #111725;
-        --border: #2a3352;
+        --panel-2: #101827;
+        --border: rgba(59, 73, 114, 0.45);
         --text: #e8ecf7;
         --muted: #9aa3bd;
         --accent: #38bdf8;
         --accent-2: #22d3ee;
         --danger: #f87171;
         --success: #34d399;
+        --warning: #fbbf24;
       }
+
       * { box-sizing: border-box; }
+
       body {
-        font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         margin: 0;
         padding: 24px;
+        font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         background: radial-gradient(circle at 20% 20%, #1a2547 0%, #0a0f1f 45%, #070b16 100%);
         color: var(--text);
         min-height: 100vh;
       }
+
       .wrap {
-        max-width: 1100px;
+        max-width: 1200px;
         margin: 0 auto;
         background: linear-gradient(160deg, rgba(20,27,47,0.95), rgba(12,16,32,0.98));
         border-radius: 20px;
-        padding: 20px;
         border: 1px solid rgba(42, 51, 82, 0.7);
+        padding: 20px;
         box-shadow: 0 24px 60px rgba(5, 8, 20, 0.6);
       }
-      h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.2px; }
-      h2 { margin: 18px 0 8px; font-size: 16px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; }
+
+      h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1.4px;
+        color: var(--muted);
+      }
+
+      .meta {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
       .row { margin: 14px 0; }
-      label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; color: var(--muted); }
-      input[type="email"], input[type="password"], input[type="number"], input[type="text"], select {
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      input[type="email"], input[type="password"] {
         width: 100%;
         padding: 14px 14px;
         border: 1px solid var(--border);
@@ -49,10 +80,9 @@
         color: var(--text);
         font-size: 16px;
       }
-      input:focus, select:focus {
-        outline: 2px solid rgba(56, 189, 248, 0.6);
-        border-color: transparent;
-      }
+
+      input:focus { outline: 2px solid rgba(56, 189, 248, 0.6); border-color: transparent; }
+
       button {
         padding: 14px 18px;
         border: none;
@@ -64,1718 +94,261 @@
         font-size: 16px;
         min-height: 48px;
       }
+
       button.secondary {
         background: transparent;
         border: 1px solid var(--border);
         color: var(--text);
       }
-      button.danger {
-        background: transparent;
-        border: 1px solid rgba(248, 113, 113, 0.6);
-        color: var(--danger);
-      }
+
       .hidden { display: none !important; }
-      .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
       .auth-status { margin-top: 12px; color: #fca5a5; font-size: 13px; }
-      .status {
-        margin-top: 12px;
-        padding: 12px 14px;
-        border-radius: 12px;
-        background: rgba(17, 23, 37, 0.7);
-        border: 1px solid rgba(42, 51, 82, 0.7);
-        font-size: 14px;
-        color: var(--muted);
-      }
-      .meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
-      .topbar { display: flex; flex-direction: column; gap: 10px; }
-      .switch {
-        position: relative;
-        width: 56px;
-        height: 32px;
-        display: inline-block;
-      }
-      .switch input { opacity: 0; width: 0; height: 0; }
-      .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: #2b334f;
-        border-radius: 999px;
-        transition: .2s ease;
-        border: 1px solid var(--border);
-      }
-      .slider:before {
-        position: absolute;
-        content: "";
-        height: 24px;
-        width: 24px;
-        left: 4px;
-        bottom: 3px;
-        background: white;
-        border-radius: 50%;
-        transition: .2s ease;
-      }
-      input:checked + .slider { background: rgba(52, 211, 153, 0.6); border-color: rgba(52, 211, 153, 0.7); }
-      input:checked + .slider:before { transform: translateX(24px); }
-      .grid { display: grid; gap: 12px; }
-      .card {
-        border: 1px solid rgba(42, 51, 82, 0.6);
-        border-radius: 16px;
-        padding: 14px;
-        background: rgba(10, 15, 31, 0.6);
-      }
-      .pos-layout {
+
+      .report-header {
         display: grid;
-        gap: 22px;
-      }
-      .pos-hero {
-        border-radius: 22px;
-        border: 1px solid rgba(42, 51, 82, 0.6);
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(12, 18, 34, 0.92));
-        padding: 18px;
-        display: grid;
-        gap: 18px;
-      }
-      .pos-hero-grid {
-        display: grid;
-        gap: 18px;
-      }
-      @media (min-width: 900px) {
-        .pos-hero-grid {
-          grid-template-columns: minmax(0, 1fr);
-        }
-      }
-      .pos-summary {
-        display: grid;
-        gap: 12px;
-      }
-      .stale-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
-      }
-      .stale-chip {
-        display: inline-flex;
-        gap: 6px;
-        align-items: baseline;
-        padding: 3px 7px;
-        border-radius: 8px;
-        font-size: 11px;
-        line-height: 1.2;
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        color: var(--muted);
-        background: rgba(15, 23, 42, 0.6);
-        white-space: nowrap;
-      }
-      .stale-chip b { font-weight: 700; }
-      .stale-chip.good {
-        border-color: rgba(52, 211, 153, 0.6);
-        color: #86efac;
-        background: rgba(52, 211, 153, 0.14);
-      }
-      .stale-chip.warn {
-        border-color: rgba(248, 171, 111, 0.55);
-        color: #fdba74;
-        background: rgba(249, 115, 22, 0.14);
-      }
-      .stale-chip.bad {
-        border-color: rgba(248, 113, 113, 0.55);
-        color: #fda4af;
-        background: rgba(244, 63, 94, 0.14);
-      }
-      .stale-chip.neutral {
-        border-color: rgba(148, 163, 184, 0.45);
-        color: #e2e8f0;
-        background: rgba(148, 163, 184, 0.16);
-      }
-      .pos-summary-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-      }
-      .pos-summary-meta {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
         gap: 10px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid rgba(42, 51, 82, 0.5);
       }
-      .pos-body {
-        display: grid;
-        gap: 20px;
-      }
-      @media (min-width: 960px) {
-        .pos-body {
-          grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
-        }
-      }
-      .pos-body.pos-domains {
-        grid-template-columns: 1fr;
-      }
-      .pos-race-grid {
-        display: grid;
-        gap: 20px;
-      }
-      @media (min-width: 960px) {
-        .pos-race-grid {
-          grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
-        }
-      }
-      .pos-report {
-        display: grid;
-        gap: 18px;
-      }
-      .pos-report-header {
+
+      .report-top {
         display: flex;
         flex-wrap: wrap;
-        align-items: flex-end;
+        align-items: center;
         justify-content: space-between;
         gap: 12px;
-        padding: 16px 18px;
-        border: 1px solid rgba(30, 41, 59, 0.6);
-        border-radius: 16px;
-        background: rgba(9, 13, 26, 0.78);
       }
-      .pos-report-title {
-        font-size: 18px;
-        font-weight: 700;
+
+      .range-tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
       }
-      .report-chip {
-        display: inline-flex;
-        align-items: center;
+
+      .range-tab {
         padding: 6px 12px;
         border-radius: 999px;
-        border: 1px solid rgba(148, 163, 184, 0.5);
-        color: var(--text);
-        font-size: 12px;
-        letter-spacing: 0.04em;
-        background: rgba(15, 23, 42, 0.65);
-      }
-      .pos-report-grid {
-        display: grid;
-        gap: 14px;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      }
-      .report-card {
-        border: 1px solid rgba(30, 41, 59, 0.6);
-        border-radius: 16px;
-        padding: 16px;
-        background: rgba(10, 14, 28, 0.76);
-        display: grid;
-        gap: 10px;
-      }
-      .report-card-title {
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
+        border: 1px solid var(--border);
+        background: rgba(15, 23, 42, 0.6);
         color: var(--muted);
-      }
-      .report-assessment {
-        font-size: 14px;
-        font-weight: 600;
-        color: #e5e7f8;
-      }
-      .report-action {
-        font-size: 13px;
-        color: var(--text);
-      }
-      .report-metrics {
-        display: grid;
-        gap: 6px;
         font-size: 12px;
+        cursor: pointer;
       }
-      .report-metric-row {
-        display: grid;
-        grid-template-columns: 1.2fr 0.9fr 1fr 0.6fr 1fr;
-        gap: 8px;
-        padding: 6px 0;
-        border-top: 1px solid rgba(30, 41, 59, 0.5);
-      }
-      .report-metric-row:first-child {
-        border-top: none;
-      }
-      .report-metric-name {
-        font-weight: 600;
+
+      .range-tab.active {
+        border-color: rgba(56, 189, 248, 0.6);
         color: var(--text);
+        background: rgba(56, 189, 248, 0.15);
       }
-      .report-metric-cell {
-        color: var(--muted);
-      }
-      .pos-domains {
-        display: grid;
-        gap: 22px;
-      }
-      .pos-domain {
-        border: 1px solid rgba(30, 41, 59, 0.6);
-        border-radius: 18px;
-        padding: 14px;
-        background: rgba(9, 13, 26, 0.72);
-      }
-      .pos-domain-hero {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 10px;
-        padding: 18px 18px;
-        border-radius: 16px;
-        background: linear-gradient(120deg, rgba(17, 27, 55, 0.92), rgba(10, 16, 34, 0.98));
-        box-shadow: 0 14px 32px rgba(4, 10, 24, 0.5);
-        font-weight: 600;
-      }
-      .pos-domain-hero-main {
-        display: grid;
-        gap: 6px;
-      }
-      .pos-domain-hero .meta {
-        font-size: 13px;
-        color: var(--muted);
-        font-weight: 500;
-        text-align: right;
-      }
-      .pos-domain-body {
-        display: grid;
-        gap: 12px;
+
+      .summary-grid {
         margin-top: 16px;
-      }
-      .pos-domain-detail {
         display: grid;
         gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       }
-      .pos-domain-metrics {
-        display: grid;
-        gap: 10px;
-        font-size: 11px;
-      }
-      .plan-hero-label {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--muted);
-      }
-      .pos-domain-plan {
-        font-size: 24px;
-        line-height: 1.35;
-        color: #f1f5ff;
-        font-weight: 750;
-      }
-      .pos-domain-plan-sub {
-        font-size: 12px;
-        color: var(--muted);
-        line-height: 1.4;
-      }
-      .pos-sleep-grid {
-        display: grid;
-        gap: 16px;
-      }
-      @media (min-width: 900px) {
-        .pos-sleep-grid {
-          grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-        }
-      }
-      .sleep-card {
-        border-radius: 20px;
-        padding: 16px;
-        border: 1px solid rgba(42, 51, 82, 0.7);
-        background: rgba(12, 16, 28, 0.88);
-        display: grid;
-        gap: 12px;
-      }
-      .sleep-card.compact {
+
+      .summary-card {
         padding: 14px;
-      }
-      .sleep-quality-card {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-      }
-      .sleep-quality-main {
-        display: grid;
-        gap: 6px;
-      }
-      .sleep-quality-time {
-        font-size: 34px;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-      }
-      .sleep-quality-sub {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        color: var(--muted);
-      }
-      .mini-bars {
-        display: flex;
-        align-items: flex-end;
-        gap: 4px;
-        height: 52px;
-      }
-      .mini-bar {
-        width: 10px;
-        border-radius: 6px;
-        background: rgba(148, 163, 184, 0.35);
-      }
-      .mini-bar.active {
-        background: rgba(148, 163, 184, 0.85);
-      }
-      .sleep-score-grid {
-        display: grid;
-        gap: 10px;
-      }
-      @media (min-width: 720px) {
-        .sleep-score-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-      }
-      .sleep-metric-card {
-        border-radius: 14px;
-        padding: 12px;
-        border: 1px solid rgba(42, 51, 82, 0.6);
-        background: rgba(8, 12, 22, 0.7);
-        display: grid;
-        gap: 6px;
-        font-size: 12px;
-      }
-      .sleep-metric-card strong {
-        font-size: 16px;
-        color: #e2e8f0;
-      }
-      .sleep-metric-card .meta {
-        font-size: 11px;
-      }
-      .pos-training-grid {
-        display: grid;
-        gap: 16px;
-      }
-      @media (min-width: 900px) {
-        .pos-training-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-      }
-      .training-card {
-        border-radius: 20px;
-        padding: 16px;
-        border: 1px solid rgba(42, 51, 82, 0.7);
-        background: rgba(8, 12, 22, 0.88);
-        display: grid;
-        gap: 12px;
-      }
-      .sport-tabs {
-        display: inline-flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      .sport-tab {
-        padding: 6px 12px;
-        border-radius: 999px;
-        border: 1px solid rgba(148, 163, 184, 0.4);
-        background: rgba(15, 23, 42, 0.6);
-        color: var(--muted);
-        font-size: 12px;
-        cursor: pointer;
-      }
-      .sport-tab.active {
-        border-color: rgba(249, 115, 22, 0.7);
-        color: #fdba74;
-        background: rgba(249, 115, 22, 0.12);
-      }
-      .streak-grid {
-        display: grid;
-        grid-template-columns: repeat(7, minmax(0, 1fr));
-        gap: 6px;
-      }
-      .streak-cell {
-        height: 32px;
-        border-radius: 10px;
-        border: 1px solid rgba(42, 51, 82, 0.6);
-        display: grid;
-        place-items: center;
-        font-size: 11px;
-        color: var(--muted);
-        background: rgba(9, 13, 26, 0.7);
-      }
-      .streak-cell.active {
-        background: rgba(56, 189, 248, 0.25);
-        color: #e2e8f0;
-      }
-      .streak-row-labels {
-        display: grid;
-        grid-template-columns: repeat(7, minmax(0, 1fr));
-        gap: 6px;
-        font-size: 10px;
-        color: var(--muted);
-        margin-bottom: 6px;
-      }
-      .pos-domain-body.grid-2 {
-        grid-template-columns: 1fr;
-      }
-      @media (min-width: 960px) {
-        .pos-domain-body.grid-2 {
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        }
-      }
-      .pos-section {
-        padding: 12px 0;
-        border-bottom: 1px solid rgba(30, 41, 59, 0.6);
-        display: grid;
-        gap: 12px;
-      }
-      .pos-section:last-child {
-        border-bottom: none;
-      }
-      .pos-panel {
         border-radius: 16px;
-        border: 1px solid rgba(42, 51, 82, 0.6);
-        background: rgba(9, 13, 26, 0.75);
-        padding: 14px;
-        display: grid;
-        gap: 10px;
-      }
-      .pillar-grid {
-        display: grid;
-        gap: 10px;
-      }
-      .pillar-item {
-        padding: 12px;
-        border-radius: 14px;
-        border: 1px solid rgba(42, 51, 82, 0.6);
         background: rgba(10, 15, 31, 0.6);
+        border: 1px solid rgba(42, 51, 82, 0.6);
         display: grid;
         gap: 8px;
       }
-      .pillar-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-      }
-      .pillar-title {
-        font-weight: 600;
-        font-size: 13px;
-      }
-      .pillar-meta {
-        color: var(--muted);
+
+      .summary-card .label {
         font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
       }
-      .pos-day-drawer {
+
+      .summary-card .value {
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .section {
+        margin-top: 22px;
         border-radius: 18px;
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        background: rgba(12, 18, 34, 0.8);
-        padding: 14px;
-        display: grid;
-        gap: 10px;
-      }
-      .pos-right-stack {
+        border: 1px solid rgba(42, 51, 82, 0.6);
+        background: rgba(10, 15, 31, 0.55);
+        padding: 16px;
         display: grid;
         gap: 14px;
       }
-      .pos-lab {
-        border-radius: 20px;
-        border: 1px solid rgba(42, 51, 82, 0.7);
-        background: rgba(7, 10, 22, 0.8);
-        padding: 18px;
-        display: grid;
-        gap: 16px;
-      }
-      .pos-lab-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-      }
-      .pos-lab-grid {
-        display: grid;
-        gap: 16px;
-      }
-      @media (min-width: 900px) {
-        .pos-lab-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-      }
-      .matrix {
+
+      .section-hero {
+        border-radius: 16px;
+        padding: 14px;
+        background: linear-gradient(135deg, rgba(19, 28, 52, 0.9), rgba(13, 18, 33, 0.9));
+        border: 1px solid rgba(56, 189, 248, 0.25);
         display: grid;
         gap: 8px;
+      }
+
+      .section-title {
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+
+      .section-plan {
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .section-actions {
+        display: grid;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .section-actions .action {
+        padding-left: 12px;
+        position: relative;
+      }
+
+      .section-actions .action::before {
+        content: "•";
+        position: absolute;
+        left: 0;
+        color: var(--accent);
+      }
+
+      .section-notes {
         font-size: 12px;
         color: var(--muted);
       }
-      .matrix-row {
+
+      .evidence-grid {
         display: grid;
-        grid-template-columns: 1.3fr repeat(4, minmax(0, 1fr));
-        gap: 8px;
-        align-items: center;
-      }
-      .matrix-header {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--muted);
-      }
-      .matrix-name {
-        font-weight: 600;
-        color: var(--text);
-      }
-      .matrix-bar {
-        height: 6px;
-        border-radius: 999px;
-        background: rgba(30, 41, 59, 0.7);
-        position: relative;
-        overflow: hidden;
-      }
-      .matrix-bar > span {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        border-radius: inherit;
-        background: rgba(56, 189, 248, 0.8);
-      }
-      .matrix-value {
-        font-size: 11px;
-        color: var(--muted);
-        margin-top: 4px;
-      }
-      .row-inline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-      .process-tabs {
-        display: flex;
         gap: 10px;
-        flex-wrap: wrap;
-        overflow-x: visible;
-        padding-bottom: 2px;
       }
-      .process-tab {
-        flex: 0 0 auto;
-        padding: 12px 16px;
-        border-radius: 999px;
-        border: 1px solid var(--border);
-        background: rgba(10, 15, 31, 0.4);
-        color: var(--text);
-        font-weight: 600;
-        font-size: 14px;
+
+      .evidence-row {
+        display: grid;
+        grid-template-columns: minmax(160px, 1.2fr) repeat(4, minmax(90px, 1fr));
+        gap: 10px;
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(42, 51, 82, 0.4);
+        background: rgba(8, 12, 26, 0.5);
+        font-size: 13px;
       }
-      .process-tab.active {
-        background: linear-gradient(135deg, rgba(14, 165, 233, 0.7), rgba(34, 211, 238, 0.7));
-        color: #03121f;
-        border-color: transparent;
-      }
-      .segmented {
-        display: inline-flex;
-        border-radius: 999px;
-        border: 1px solid var(--border);
-        overflow: hidden;
-      }
-      .segmented button {
-        border-radius: 0;
-        border: none;
+
+      .evidence-row.header {
         background: transparent;
-        color: var(--text);
-        padding: 10px 14px;
-        font-size: 14px;
-        min-height: 40px;
-      }
-      .segmented button.active {
-        background: rgba(34, 211, 238, 0.2);
-        color: var(--accent-2);
-      }
-      .status-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        border-radius: 999px;
+        border: none;
+        color: var(--muted);
         font-size: 11px;
-        letter-spacing: 0.08em;
         text-transform: uppercase;
-        border: 1px solid rgba(56, 189, 248, 0.35);
-        color: var(--accent);
-        background: rgba(14, 165, 233, 0.1);
+        letter-spacing: 1px;
       }
-      .status-chip.good {
-        border-color: rgba(52, 211, 153, 0.5);
-        color: #86efac;
-        background: rgba(52, 211, 153, 0.12);
-      }
-      .status-chip.warn {
-        border-color: rgba(248, 171, 111, 0.55);
-        color: #fdba74;
-        background: rgba(249, 115, 22, 0.15);
-      }
-      .status-chip.bad {
-        border-color: rgba(248, 113, 113, 0.55);
-        color: #fda4af;
-        background: rgba(244, 63, 94, 0.15);
-      }
-      .status-chip.neutral {
-        border-color: rgba(148, 163, 184, 0.45);
-        color: #e2e8f0;
-        background: rgba(148, 163, 184, 0.12);
-      }
-      .bar {
-        width: 100%;
-        height: 6px;
-        border-radius: 999px;
-        background: rgba(30, 41, 59, 0.8);
-        overflow: hidden;
-        margin-top: 8px;
-      }
-      .bar-fill {
-        height: 100%;
-        border-radius: inherit;
-        background: var(--accent);
-      }
-      .bar-fill.good { background: var(--success); }
-      .bar-fill.warn { background: #f59e0b; }
-      .bar-fill.bad { background: var(--danger); }
-      .goal-bar {
-        position: relative;
-      }
-      .goal-bar .bar-tick {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 1px;
-        background: rgba(148, 163, 184, 0.4);
-      }
-      .goal-legend {
-        font-size: 11px;
-        color: var(--muted);
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      .goal-legend span {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .legend-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: var(--muted);
-      }
-      .legend-dot.good { background: var(--success); }
-      .legend-dot.warn { background: #f59e0b; }
-      .legend-dot.bad { background: var(--danger); }
-      .bullet {
-        position: relative;
-        height: 12px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, rgba(248,113,113,0.2) 0%, rgba(249,115,22,0.2) 60%, rgba(34,197,94,0.25) 90%, rgba(249,115,22,0.2) 110%);
-        overflow: hidden;
-      }
-      .bullet-fill {
-        height: 100%;
-        border-radius: inherit;
-        background: rgba(56, 189, 248, 0.65);
-      }
-      .bullet-target {
-        position: absolute;
-        top: -4px;
-        width: 2px;
-        height: 20px;
-        background: #e2e8f0;
-      }
-      .bullet-scale {
-        display: flex;
-        justify-content: space-between;
-        font-size: 10px;
-        color: var(--muted);
-        margin-top: 4px;
-      }
-      .heatmap-day {
+
+      .evidence-row .metric {
         font-weight: 600;
-        color: #e2e8f0;
       }
-      .heatmap-meta {
-        font-size: 10px;
+
+      .evidence-row .value {
+        font-weight: 600;
+      }
+
+      .evidence-row .muted {
         color: var(--muted);
       }
-      .heatmap {
-        display: grid;
-        gap: 6px;
-      }
-      .heatmap-row {
-        display: grid;
-        grid-template-columns: repeat(7, minmax(0, 1fr));
-        gap: 6px;
-      }
-      .heatmap-cell {
-        border-radius: 10px;
-        border: 1px solid rgba(42, 51, 82, 0.6);
-        padding: 8px 6px;
-        text-align: center;
-        background: rgba(9, 13, 26, 0.7);
-        font-size: 11px;
-        color: var(--muted);
-        display: grid;
-        gap: 6px;
-      }
-      .heatmap-cell.active-low { background: rgba(249,115,22,0.18); }
-      .heatmap-cell.active-high { background: rgba(34,197,94,0.2); }
-      .heatmap-cell.active-mid { background: rgba(56,189,248,0.2); }
-      .heatmap-dots {
-        display: inline-flex;
-        justify-content: center;
-        gap: 4px;
-      }
-      .heatmap-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 999px;
-      }
-      .dot-sleep { background: #38bdf8; }
-      .dot-food { background: #f59e0b; }
-      .dot-train { background: #22c55e; }
-      .chart {
-        width: 100%;
-        overflow-x: auto;
-      }
+
       .chart-block {
-        display: grid;
-        gap: 4px;
+        border-radius: 14px;
+        padding: 12px;
+        border: 1px solid rgba(42, 51, 82, 0.4);
+        background: rgba(12, 18, 34, 0.6);
       }
+
       .chart-caption {
+        margin-top: 6px;
         font-size: 11px;
         color: var(--muted);
       }
-      .chart svg {
-        width: 100%;
-        height: 220px;
-      }
+
       .chart-legend {
         display: flex;
+        gap: 12px;
         flex-wrap: wrap;
-        gap: 10px;
         font-size: 11px;
         color: var(--muted);
         margin-bottom: 6px;
       }
-      .trend-inline {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-      }
-      .trend-spark {
-        width: 140px;
-      }
-      .list {
-        display: grid;
-        gap: 10px;
-      }
-      .state-grid {
-        display: grid;
-        gap: 12px;
-      }
-      @media (min-width: 680px) {
-        .state-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-      }
-      .state-card {
-        padding: 14px;
-        border-radius: 14px;
-        border: 1px solid rgba(42, 51, 82, 0.6);
-        background: rgba(9, 13, 26, 0.7);
-        display: grid;
-        gap: 10px;
-      }
-      .state-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-      }
-      .state-door {
-        font-weight: 700;
-        font-size: 16px;
-      }
-      .state-badge {
-        padding: 6px 12px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 0.4px;
-        text-transform: uppercase;
-        border: 1px solid transparent;
-      }
-      .state-badge.open {
-        background: rgba(248, 113, 113, 0.16);
-        border-color: rgba(248, 113, 113, 0.45);
-        color: #fca5a5;
-      }
-      .state-badge.closed {
-        background: rgba(52, 211, 153, 0.16);
-        border-color: rgba(52, 211, 153, 0.45);
-        color: #86efac;
-      }
-      .state-badge.unknown {
-        background: rgba(148, 163, 184, 0.16);
-        border-color: rgba(148, 163, 184, 0.3);
-        color: var(--muted);
-      }
-      .state-metrics {
-        display: grid;
-        gap: 8px;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .kpi-grid {
-        display: grid;
-        gap: 12px;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      }
-      .kpi-card {
-        border-radius: 16px;
-        border: 1px solid rgba(42, 51, 82, 0.6);
-        padding: 12px 14px;
-        background: rgba(9, 13, 26, 0.75);
-        display: grid;
-        gap: 8px;
-      }
-      .kpi-title {
-        font-size: 11px;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        color: var(--muted);
-      }
-      .kpi-value {
-        font-size: 26px;
-        font-weight: 700;
-        color: var(--text);
-      }
-      .kpi-sub {
-        font-size: 12px;
-        color: var(--muted);
-      }
-      .kpi-goal {
-        font-size: 11px;
-        color: #cbd5f5;
-        opacity: 0.8;
-      }
-      .kpi-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 10px;
+
+      .legend-item {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        background: rgba(14, 165, 233, 0.15);
-        color: var(--accent);
-        font-size: 18px;
-      }
-      .gauge-grid {
-        display: grid;
-        gap: 16px;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      }
-      .gauge-card {
-        border-radius: 16px;
-        border: 1px solid rgba(42, 51, 82, 0.6);
-        background: rgba(9, 13, 26, 0.75);
-        padding: 12px;
-        display: grid;
-        gap: 8px;
-        align-items: center;
-        justify-items: center;
-        text-align: center;
-      }
-      .gauge-title {
-        font-size: 11px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--muted);
-      }
-      .gauge-value {
-        font-size: 13px;
-        color: var(--muted);
-      }
-      .gauge-svg {
-        width: 110px;
-        height: 110px;
-      }
-      .donut-card {
-        border-radius: 16px;
-        border: 1px solid rgba(42, 51, 82, 0.6);
-        background: rgba(9, 13, 26, 0.75);
-        padding: 14px;
-        display: grid;
-        gap: 12px;
-      }
-      .donut-chart {
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        margin: 0 auto;
-        display: grid;
-        place-items: center;
-        background: conic-gradient(#38bdf8 0% 33%, #22c55e 33% 66%, #f59e0b 66% 100%);
-      }
-      .donut-hole {
-        width: 90px;
-        height: 90px;
-        border-radius: 50%;
-        background: rgba(9, 13, 26, 0.9);
-        display: grid;
-        place-items: center;
-        font-size: 12px;
-        color: var(--muted);
-      }
-      .legend {
-        display: grid;
         gap: 6px;
-        font-size: 12px;
-        color: var(--muted);
       }
-      .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
+
       .legend-swatch {
         width: 10px;
         height: 10px;
         border-radius: 999px;
       }
-      .swatch-protein { background: #38bdf8; }
-      .swatch-carbs { background: #22c55e; }
-      .swatch-fat { background: #f59e0b; }
-      .stars {
-        display: inline-flex;
-        gap: 4px;
-        font-size: 14px;
-        color: #facc15;
+
+      .signout {
+        margin-top: 20px;
       }
-      .star-off {
-        color: rgba(148, 163, 184, 0.5);
-      }
-      .trend-meta {
-        font-size: 12px;
-        color: var(--muted);
-        margin-top: 6px;
-      }
-      .threshold-bar {
-        position: relative;
-        height: 10px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, rgba(248,113,113,0.25) 0%, rgba(249,115,22,0.25) 45%, rgba(34,197,94,0.25) 75%);
-        overflow: hidden;
-        margin-top: 8px;
-      }
-      .threshold-wrap {
-        display: grid;
-        gap: 4px;
-      }
-      .threshold-marker {
-        position: absolute;
-        top: -4px;
-        width: 2px;
-        height: 18px;
-        background: #e2e8f0;
-      }
-      .bar-scale {
-        display: flex;
-        justify-content: space-between;
-        font-size: 10px;
-        color: var(--muted);
-      }
-      .threshold-bar {
-        position: relative;
-        height: 10px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, rgba(248,113,113,0.25) 0%, rgba(249,115,22,0.25) 45%, rgba(34,197,94,0.25) 75%);
-        overflow: hidden;
-        margin-top: 8px;
-      }
-      .threshold-marker {
-        position: absolute;
-        top: -4px;
-        width: 2px;
-        height: 18px;
-        background: #e2e8f0;
-      }
-      .state-metric {
-        background: rgba(12, 18, 34, 0.7);
-        border: 1px solid rgba(42, 51, 82, 0.5);
-        border-radius: 12px;
-        padding: 8px 10px;
-      }
-      .state-metric span {
-        display: block;
-        font-size: 11px;
-        color: var(--muted);
-        letter-spacing: 0.6px;
-        text-transform: uppercase;
-      }
-      .state-metric strong {
-        display: block;
-        margin-top: 4px;
-        font-size: 13px;
-        color: var(--text);
-        font-weight: 600;
-      }
-      .state-actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-      .state-actions button {
-        padding: 10px 14px;
-        font-size: 13px;
-        min-height: 40px;
-      }
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.4px;
-        text-transform: uppercase;
-        border: 1px solid rgba(42, 51, 82, 0.6);
-        color: var(--muted);
-        background: rgba(12, 18, 34, 0.7);
-      }
-      .pill.overdue {
-        border-color: rgba(248, 113, 113, 0.6);
-        color: #fca5a5;
-        background: rgba(248, 113, 113, 0.12);
-      }
-      .pill.soon {
-        border-color: rgba(251, 191, 36, 0.5);
-        color: #fde68a;
-        background: rgba(251, 191, 36, 0.12);
-      }
-      .pill.ontrack {
-        border-color: rgba(52, 211, 153, 0.45);
-        color: #86efac;
-        background: rgba(52, 211, 153, 0.12);
-      }
-      .warning {
-        color: #fca5a5;
-        font-size: 12px;
-        font-weight: 600;
-      }
-      .list-item {
-        padding: 12px;
-        border-radius: 12px;
-        border: 1px solid rgba(42, 51, 82, 0.6);
-        background: rgba(9, 13, 26, 0.6);
-      }
-      .baseline-item {
-        display: grid;
-        gap: 10px;
-      }
-      .baseline-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-      }
-      .baseline-title {
-        font-weight: 600;
-        font-size: 14px;
-      }
-      .baseline-value {
-        font-size: 12px;
-        color: var(--muted);
-      }
-      .goal-editor {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
-      }
-      .goal-editor input {
-        flex: 1 1 140px;
-        min-width: 120px;
-        padding: 8px 10px;
-        border-radius: 10px;
-        border: 1px solid rgba(42, 51, 82, 0.8);
-        background: rgba(8, 12, 24, 0.9);
-        color: var(--text);
-        font-size: 12px;
-      }
-      .goal-editor button {
-        padding: 8px 12px;
-        border-radius: 10px;
-        font-size: 12px;
-        min-height: 36px;
-      }
-      .goal-meta {
-        font-size: 11px;
-        color: var(--muted);
-      }
-      .list-row {
-        display: grid;
-        grid-template-columns: 1.2fr 1fr 1fr;
-        gap: 8px;
-        font-size: 13px;
-        color: var(--muted);
-        margin-top: 6px;
-      }
-      .trend-block {
-        grid-column: 1 / -1;
-        display: grid;
-        gap: 6px;
-      }
-      .trend-lines {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 8px;
-        align-items: center;
-      }
-      .trend-item {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .trend-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: rgba(148, 163, 184, 0.9);
-      }
-      .trend-stats {
-        font-size: 12px;
-        color: var(--muted);
-        line-height: 1.4;
-      }
-      .weakness-note {
-        font-size: 12px;
-        color: rgba(248, 250, 252, 0.9);
-      }
-      .list-row strong {
-        display: block;
-        color: var(--text);
-        font-weight: 600;
-        font-size: 14px;
-      }
-      .list-title {
-        font-weight: 600;
-        margin-bottom: 4px;
-      }
-      .list-meta {
-        font-size: 13px;
-        color: var(--muted);
-        line-height: 1.4;
-      }
-      .toast {
-        position: fixed;
-        left: 50%;
-        bottom: 24px;
-        transform: translateX(-50%) translateY(24px);
-        background: rgba(12, 18, 34, 0.95);
-        border: 1px solid rgba(42, 51, 82, 0.8);
-        color: var(--text);
-        padding: 12px 18px;
-        border-radius: 14px;
-        font-size: 14px;
-        box-shadow: 0 16px 32px rgba(2, 6, 20, 0.6);
-        opacity: 0;
-        transition: opacity 0.2s ease, transform 0.2s ease;
-        z-index: 999;
-      }
-      .toast.show {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-      }
-      .toast.success { border-color: rgba(52, 211, 153, 0.7); color: var(--success); }
-      .toast.error { border-color: rgba(248, 113, 113, 0.7); color: var(--danger); }
-      .pulse {
-        animation: pulse 0.6s ease;
-      }
-      @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.4); }
-        100% { box-shadow: 0 0 0 12px rgba(34, 211, 238, 0); }
-      }
-      @media (max-width: 640px) {
-        body { padding: 16px; }
-        .wrap { padding: 16px; }
-        h1 { font-size: 20px; }
-        button { width: 100%; }
-        .actions { flex-direction: column; }
+
+      @media (max-width: 900px) {
+        .evidence-row {
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+        }
+        .evidence-row.header {
+          display: none;
+        }
       }
     </style>
   </head>
   <body>
     <div class="wrap">
-      <section id="auth" class="card" data-testid="auth-section">
-        <h2>Sign in</h2>
+      <div id="auth">
+        <h1>Sign in</h1>
         <div class="row">
           <label>Email</label>
-          <input id="email" data-testid="auth-email" type="email" placeholder="you@example.com" autocomplete="username"/>
+          <input type="email" id="email" placeholder="you@example.com" />
         </div>
         <div class="row">
           <label>Password</label>
-          <input id="password" data-testid="auth-password" type="password" placeholder="••••••••" autocomplete="current-password"/>
+          <input type="password" id="password" placeholder="••••••••" />
         </div>
-        <div class="actions">
-          <button id="login" data-testid="auth-login">Sign in</button>
+        <div class="row">
+          <button id="sign-in">Sign in</button>
         </div>
-        <div id="auth-status" class="auth-status"></div>
-      </section>
+        <div class="auth-status" id="auth-status"></div>
+      </div>
 
-      <section id="settings" class="hidden" data-testid="settings-section"></section>
-
-      <section id="data" class="hidden" data-testid="data-section">
-        <div id="pos-dashboard" class="pos-layout hidden" data-importance="10" data-group="personal_ops">
-          <div class="pos-hero">
-            <div class="pos-summary-header">
-              <div style="font-weight:600;">Personal Ops · Today</div>
-              <div class="meta" id="pos-summary-updated">—</div>
+      <div id="report" class="hidden">
+        <div class="report-header">
+          <div class="report-top">
+            <div>
+              <h1>Personal Ops Report</h1>
+              <div class="meta" id="report-updated">Updated —</div>
             </div>
-            <div class="pos-summary-meta">
-              <div class="meta">Range</div>
-              <div id="pos-range" class="segmented"></div>
-              <div id="pos-summary-freshness" class="pill unknown">Data status</div>
-              <div id="pos-run-status" class="pill unknown">Last run</div>
-            </div>
-            <div class="pos-hero-grid">
-              <div id="pos-summary" class="pos-summary" data-pos-view="overview" data-importance="10" data-group="summary" data-related="sleep,adherence,workouts,load,race">
-                <div id="pos-summary-metrics" class="kpi-grid"></div>
-                <div class="meta" id="pos-summary-note"></div>
-                <div id="pos-summary-drivers" class="stale-row"></div>
-              </div>
-            </div>
+            <div class="range-tabs" id="report-range"></div>
           </div>
-
-          <div class="pos-body pos-domains" data-pos-view="overview training nutrition sleep data">
-            <section class="pos-domain" id="pos-domain-sleep" data-pos-view="overview sleep" data-importance="9" data-group="sleep" data-related="sleep,recovery,plan">
-              <div class="pos-domain-hero">
-                <div class="pos-domain-hero-main">
-                  <div class="plan-hero-label">Sleep</div>
-                  <div class="pos-domain-plan" id="pos-domain-sleep-plan" data-importance="9">Plan: —</div>
-                  <div class="pos-domain-plan-sub" id="pos-domain-sleep-plan-sub">Inputs used below</div>
-                </div>
-                <div class="meta">Recovery drivers</div>
-              </div>
-              <div class="pos-domain-body">
-                <div id="pos-domain-sleep-metrics" class="pos-domain-metrics list" data-pos-view="overview sleep" data-importance="8" data-group="sleep_metrics" data-related="sleep,baseline,delta,stale"></div>
-                <div class="pos-sleep-grid" data-pos-view="sleep" data-importance="9" data-group="sleep_overview" data-related="sleep,score,breathing">
-                  <div id="pos-sleep-quality" class="sleep-card" data-importance="9" data-group="sleep_quality" data-related="duration,score,trend">
-                    <div class="sleep-quality-card">
-                      <div class="sleep-quality-main">
-                        <div class="plan-hero-label">Sleep quality</div>
-                        <div class="sleep-quality-time" id="pos-sleep-quality-duration">—</div>
-                        <div class="sleep-quality-sub" id="pos-sleep-quality-score">Score —</div>
-                      </div>
-                      <div id="pos-sleep-quality-bars" class="mini-bars"></div>
-                    </div>
-                  </div>
-                  <div id="pos-breathing-quality" class="sleep-card compact" data-importance="7" data-group="sleep_breathing" data-related="respiration">
-                    <div class="plan-hero-label">Breathing quality</div>
-                    <div id="pos-breathing-quality-value" style="font-size:18px;font-weight:600;">—</div>
-                    <div class="meta" id="pos-breathing-quality-note">Respiration assessment</div>
-                  </div>
-                  <div id="pos-sleep-score" class="sleep-card" data-importance="8" data-group="sleep_score" data-related="duration,hr,hrv,depth,regularity">
-                    <div class="row-inline">
-                      <div style="font-weight:600;">Sleep quality score</div>
-                      <div class="meta" id="pos-sleep-score-note">—</div>
-                    </div>
-                    <div id="pos-sleep-score-grid" class="sleep-score-grid"></div>
-                  </div>
-                  <div id="pos-sleep-heart" class="sleep-card" data-importance="7" data-group="sleep_hr" data-related="heart_rate">
-                    <div class="row-inline">
-                      <div style="font-weight:600;">Heart rate during sleep</div>
-                      <div class="meta" id="pos-sleep-heart-note">—</div>
-                    </div>
-                    <div id="pos-sleep-heart-chart" class="chart"></div>
-                  </div>
-                  <div id="pos-recovery" class="pos-panel" data-pos-view="sleep" data-importance="8" data-group="recovery" data-related="sleep,weight,hrv,rhr">
-                    <div class="row-inline">
-                      <div style="font-weight:600;">Withings recovery</div>
-                      <div class="meta" id="pos-recovery-note">—</div>
-                    </div>
-                    <div id="pos-recovery-list" class="list"></div>
-                  </div>
-                  <div id="pos-sleep-trend" class="pos-panel" data-pos-view="sleep" data-importance="8" data-group="sleep_trend" data-related="sleep,consistency,debt">
-                    <div class="row-inline">
-                      <div style="font-weight:600;">Sleep trend</div>
-                      <div class="meta" id="pos-sleep-trend-note">—</div>
-                    </div>
-                    <div id="pos-sleep-trend-chart" class="chart"></div>
-                    <div class="chart-caption" id="pos-sleep-trend-caption"></div>
-                    <div id="pos-sleep-trend-list" class="list"></div>
-                  </div>
-                  <div id="pos-sleep-plan" class="pos-panel" data-pos-view="sleep" data-importance="7" data-group="sleep_plan" data-related="sleep,baseline,targets">
-                    <div class="row-inline">
-                      <div style="font-weight:600;">Sleep plan</div>
-                      <div class="meta" id="pos-sleep-plan-note">—</div>
-                    </div>
-                    <div id="pos-sleep-plan-list" class="list"></div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section class="pos-domain" id="pos-domain-diet" data-pos-view="overview nutrition" data-importance="9" data-group="diet" data-related="calories,protein,carbs,fat">
-              <div class="pos-domain-hero">
-                <div class="pos-domain-hero-main">
-                  <div class="plan-hero-label">Diet</div>
-                  <div class="pos-domain-plan" id="pos-domain-diet-plan" data-importance="9">Plan: —</div>
-                  <div class="pos-domain-plan-sub" id="pos-domain-diet-plan-sub">Inputs used below</div>
-                </div>
-                <div class="meta">Fuel coverage & targets</div>
-              </div>
-              <div class="pos-domain-body">
-                <div id="pos-domain-diet-metrics" class="pos-domain-metrics list" data-pos-view="overview nutrition" data-importance="8" data-group="diet_metrics" data-related="calories,protein,carbs,fat,coverage"></div>
-                <div id="pos-nutrition" class="pos-panel" data-pos-view="nutrition" data-importance="7" data-group="fuel" data-related="calories,protein,carbs,fat">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Nutrition budget</div>
-                    <div class="meta" id="pos-nutrition-note">—</div>
-                  </div>
-                  <div id="pos-nutrition-list" class="list"></div>
-                </div>
-              </div>
-            </section>
-
-            <section class="pos-domain" id="pos-domain-progress" data-pos-view="overview training" data-importance="9" data-group="progress" data-related="heatmap,load,form,relationships">
-              <div class="pos-domain-hero">
-                <div class="pos-domain-hero-main">
-                  <div class="plan-hero-label">Progress report</div>
-                  <div class="pos-domain-plan" id="pos-domain-progress-plan" data-importance="9">Plan: —</div>
-                  <div class="pos-domain-plan-sub" id="pos-domain-progress-plan-sub">Inputs used below</div>
-                </div>
-                <div class="meta">Form, load, adherence</div>
-              </div>
-              <div class="pos-domain-body">
-                <div id="pos-domain-progress-metrics" class="pos-domain-metrics list" data-pos-view="overview training" data-importance="8" data-group="progress_metrics" data-related="adherence,load,form,coverage"></div>
-                <div class="pos-training-grid" data-pos-view="training" data-importance="9" data-group="training_overview" data-related="weekly,fitness,streak">
-                  <div id="pos-week-sport" class="training-card" data-importance="9" data-group="weekly_sport" data-related="distance,time,weekly">
-                    <div class="row-inline">
-                      <div style="font-weight:600;">This week</div>
-                      <div class="sport-tabs" id="pos-week-sport-tabs"></div>
-                    </div>
-                    <div id="pos-week-sport-summary" class="meta">—</div>
-                    <div id="pos-week-sport-chart" class="chart"></div>
-                    <div class="chart-caption" id="pos-week-sport-caption">Interval: daily · Range: Last 7 days</div>
-                  </div>
-                  <div id="pos-fitness-card" class="training-card" data-importance="9" data-group="fitness_trend" data-related="fitness,form">
-                    <div class="row-inline">
-                      <div style="font-weight:600;">Fitness trend</div>
-                      <div class="meta" id="pos-fitness-card-note">—</div>
-                    </div>
-                    <div id="pos-fitness-card-chart" class="chart"></div>
-                    <div class="chart-caption" id="pos-fitness-card-caption">Interval: daily</div>
-                  </div>
-                  <div id="pos-streak-card" class="training-card" data-importance="8" data-group="streak" data-related="streak,consistency">
-                    <div class="row-inline">
-                      <div style="font-weight:600;">Monthly streak</div>
-                      <div class="meta" id="pos-streak-note">—</div>
-                    </div>
-                    <div class="streak-row-labels" id="pos-streak-labels"></div>
-                    <div class="streak-grid" id="pos-streak-grid"></div>
-                  </div>
-                  <div id="pos-power-skills" class="training-card" data-importance="6" data-group="power_profile" data-related="power,skills">
-                    <div style="font-weight:600;">Power skills</div>
-                    <div class="meta" id="pos-power-skills-note">No power profile data yet.</div>
-                    <div id="pos-power-skills-chart" class="chart"></div>
-                  </div>
-                </div>
-                <div id="pos-heatmap" class="pos-section" data-pos-view="training" data-importance="8" data-group="consistency" data-related="sleep,training,nutrition">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Week heatmap</div>
-                    <div class="meta" id="pos-heatmap-note">—</div>
-                  </div>
-                  <div id="pos-heatmap-grid" class="heatmap"></div>
-                </div>
-                <div id="pos-day-drawer" class="pos-day-drawer hidden" data-pos-view="training" data-importance="8" data-group="day_detail" data-related="sleep,training,nutrition,load">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Day detail</div>
-                    <div class="meta" id="pos-day-drawer-date">—</div>
-                  </div>
-                  <div id="pos-day-drawer-list" class="list"></div>
-                </div>
-                <div id="pos-strava-fitness" class="pos-section" data-pos-view="training" data-importance="9" data-group="fitness" data-related="fitness,fatigue,form">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Fitness & form (Strava)</div>
-                    <div class="meta" id="pos-strava-note">—</div>
-                  </div>
-                  <div id="pos-strava-list" class="list"></div>
-                  <div id="pos-strava-chart" class="chart"></div>
-                  <div class="chart-caption" id="pos-strava-chart-caption"></div>
-                </div>
-                <div id="pos-load-capacity" class="pos-section" data-pos-view="training" data-importance="8" data-group="load_capacity" data-related="training_load,capacity">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Load vs capacity</div>
-                    <div class="meta" id="pos-load-capacity-note">—</div>
-                  </div>
-                  <div id="pos-load-capacity-list" class="list"></div>
-                </div>
-                <div id="pos-weekly-load" class="pos-section" data-pos-view="training" data-importance="7" data-group="weekly_load" data-related="training_load,weekly">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Weekly load</div>
-                    <div class="meta" id="pos-weekly-load-note">—</div>
-                  </div>
-                  <div id="pos-weekly-load-chart" class="chart"></div>
-                  <div class="chart-caption" id="pos-weekly-load-caption"></div>
-                </div>
-                <div id="pos-relations" class="pos-section" data-pos-view="training" data-importance="8" data-group="relationships" data-related="load,sleep,nutrition,strength_quality">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Load, sleep & nutrition signals</div>
-                    <div class="meta" id="pos-relations-note">—</div>
-                  </div>
-                  <div id="pos-relations-list" class="list"></div>
-                  <div id="pos-load-sleep-chart" class="chart"></div>
-                  <div id="pos-fuel-load-chart" class="chart"></div>
-                </div>
-                <div id="pos-trends" class="pos-section" data-pos-view="training" data-importance="7" data-group="momentum" data-related="training_load,endurance_distance,strength_sessions">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Trend signals</div>
-                    <div class="meta" id="pos-trends-note">—</div>
-                  </div>
-                  <div id="pos-trends-list" class="list"></div>
-                </div>
-                <div id="pos-data-health" class="pos-panel" data-pos-view="training data" data-importance="9" data-group="data_health" data-related="coverage,stale,confidence">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Data health</div>
-                    <div class="meta" id="pos-data-health-note">—</div>
-                  </div>
-                  <div id="pos-data-health-list" class="list"></div>
-                </div>
-                <div id="pos-goals" class="pos-panel" data-pos-view="training data" data-importance="8" data-group="metric_goals" data-related="goals,targets">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Metric goals</div>
-                    <div class="meta" id="pos-goals-note">—</div>
-                  </div>
-                  <div id="pos-goals-list" class="list"></div>
-                  <div class="goal-editor" style="margin-top:10px;">
-                    <input id="pos-goal-key" type="text" placeholder="metric key (e.g. sleep_hours)"/>
-                    <input id="pos-goal-target" type="number" step="0.1" placeholder="target"/>
-                    <input id="pos-goal-min" type="number" step="0.1" placeholder="min"/>
-                    <input id="pos-goal-max" type="number" step="0.1" placeholder="max"/>
-                    <input id="pos-goal-unit" type="text" placeholder="unit (h, kg, kcal)"/>
-                    <input id="pos-goal-window" type="text" placeholder="window (last, 7d, 28d)"/>
-                    <button id="pos-goal-save" type="button">Save goal</button>
-                  </div>
-                  <div class="goal-meta">Set per-metric targets; AI can also update via CLI.</div>
-                </div>
-                <div id="pos-apple-health" class="pos-panel" data-pos-view="training data" data-importance="6" data-group="activity" data-related="steps,active_calories,resting_calories,exercise_minutes">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Apple Health signals</div>
-                    <div class="meta" id="pos-apple-health-note">—</div>
-                  </div>
-                  <div id="pos-apple-health-list" class="list"></div>
-                </div>
-                <div id="pos-stats" class="pos-panel" data-pos-view="training nutrition data" data-importance="6" data-group="weekly_totals" data-related="miles,yards,steps,calories,exercise_hours,macros">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Weekly averages</div>
-                    <div class="meta" id="pos-stats-range">—</div>
-                  </div>
-                  <div id="pos-stats-list" class="list"></div>
-                  <div class="meta" id="pos-stats-note"></div>
-                </div>
-              </div>
-            </section>
-
-            <section class="pos-domain" id="pos-domain-weight" data-pos-view="overview strength" data-importance="8" data-group="strength" data-related="strength,quality,asymmetry">
-              <div class="pos-domain-hero">
-                <div class="pos-domain-hero-main">
-                  <div class="plan-hero-label">Weight training</div>
-                  <div class="pos-domain-plan" id="pos-domain-weight-plan" data-importance="8">Plan: —</div>
-                  <div class="pos-domain-plan-sub" id="pos-domain-weight-plan-sub">Inputs used below</div>
-                </div>
-                <div class="meta">Speediance metrics</div>
-              </div>
-              <div class="pos-domain-body">
-                <div id="pos-domain-weight-metrics" class="pos-domain-metrics list" data-pos-view="overview strength" data-importance="7" data-group="strength_metrics" data-related="sessions,quality,load"></div>
-                <div class="pos-domain-detail grid-2" data-pos-view="strength">
-                  <div id="pos-strength-scatter" class="pos-panel" data-pos-view="strength" data-importance="8" data-group="strength_quality" data-related="quality,asymmetry">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Quality vs asymmetry</div>
-                    <div class="meta" id="pos-strength-scatter-note">—</div>
-                  </div>
-                  <div id="pos-strength-scatter-chart" class="chart"></div>
-                </div>
-                  <div id="pos-baselines" class="pos-panel" data-pos-view="strength" data-importance="7" data-group="strength_power" data-related="max_watts,max_weight,one_rm">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Power baselines</div>
-                    <div class="meta" id="pos-baselines-note">—</div>
-                  </div>
-                  <div id="pos-baselines-list" class="list"></div>
-                </div>
-                  <div id="pos-strength-matrix" class="pos-panel" data-pos-view="strength" data-importance="8" data-group="strength_matrix" data-related="quality,asymmetry,completion,power">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Strength matrix</div>
-                    <div class="meta" id="pos-strength-matrix-note">—</div>
-                  </div>
-                  <div id="pos-strength-matrix-table" class="matrix"></div>
-                </div>
-                  <div id="pos-quality" class="pos-panel" data-pos-view="strength" data-importance="7" data-group="session_quality" data-related="quality_score,completion,rep_consistency">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Session quality</div>
-                    <div class="meta" id="pos-quality-note">—</div>
-                  </div>
-                  <div id="pos-quality-list" class="list"></div>
-                </div>
-                  <div id="pos-last-session" class="pos-panel" data-pos-view="strength" data-importance="6" data-group="session_detail" data-related="exercise_metrics,volume,watts,rom">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Last session breakdown</div>
-                    <div class="meta" id="pos-last-session-note">—</div>
-                  </div>
-                  <div id="pos-last-session-list" class="list"></div>
-                </div>
-                  <div id="pos-quality-trends" class="pos-panel" data-pos-view="strength" data-importance="6" data-group="exercise_trends" data-related="quality,watts,speed,rom">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Exercise trends</div>
-                    <div class="meta" id="pos-quality-trends-note">—</div>
-                  </div>
-                  <div id="pos-quality-trends-list" class="list"></div>
-                </div>
-                  <div id="pos-weakness" class="pos-panel" data-pos-view="strength" data-importance="7" data-group="strength_fix" data-related="asymmetry,quality,completion,tempo">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">What to fix next</div>
-                    <div class="meta" id="pos-weakness-note">—</div>
-                  </div>
-                  <div id="pos-weakness-list" class="list"></div>
-                </div>
-                </div>
-              </div>
-            </section>
-
-            <section class="pos-domain" id="pos-domain-cycling" data-pos-view="overview training" data-importance="8" data-group="cycling" data-related="cycling,form,fitness">
-              <div class="pos-domain-hero">
-                <div class="pos-domain-hero-main">
-                  <div class="plan-hero-label">Cycling</div>
-                  <div class="pos-domain-plan" id="pos-domain-cycling-plan" data-importance="8">Plan: —</div>
-                  <div class="pos-domain-plan-sub" id="pos-domain-cycling-plan-sub">Inputs used below</div>
-                </div>
-                <div class="meta">Strava metrics</div>
-              </div>
-              <div class="pos-domain-body">
-                <div id="pos-domain-cycling-metrics" class="pos-domain-metrics list" data-pos-view="overview training" data-importance="7" data-group="cycling_metrics" data-related="minutes,distance,form"></div>
-                <div id="pos-cycling-summary" class="pos-panel" data-pos-view="training" data-importance="8" data-group="cycling" data-related="fitness,fatigue,form">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Cycling metrics</div>
-                    <div class="meta" id="pos-cycling-note">—</div>
-                  </div>
-                  <div id="pos-cycling-list" class="list"></div>
-                </div>
-              </div>
-            </section>
-
-            <section class="pos-domain" id="pos-domain-running" data-pos-view="overview training" data-importance="8" data-group="running" data-related="running,form,fitness">
-              <div class="pos-domain-hero">
-                <div class="pos-domain-hero-main">
-                  <div class="plan-hero-label">Running</div>
-                  <div class="pos-domain-plan" id="pos-domain-running-plan" data-importance="8">Plan: —</div>
-                  <div class="pos-domain-plan-sub" id="pos-domain-running-plan-sub">Inputs used below</div>
-                </div>
-                <div class="meta">Strava metrics</div>
-              </div>
-              <div class="pos-domain-body">
-                <div id="pos-domain-running-metrics" class="pos-domain-metrics list" data-pos-view="overview training" data-importance="7" data-group="running_metrics" data-related="minutes,distance,form"></div>
-                <div id="pos-running-summary" class="pos-panel" data-pos-view="training" data-importance="8" data-group="running" data-related="fitness,fatigue,form">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Running metrics</div>
-                    <div class="meta" id="pos-running-note">—</div>
-                  </div>
-                  <div id="pos-running-list" class="list"></div>
-                </div>
-              </div>
-            </section>
-
-            <section class="pos-domain" id="pos-domain-swimming" data-pos-view="overview training" data-importance="8" data-group="swimming" data-related="swimming,form,fitness">
-              <div class="pos-domain-hero">
-                <div class="pos-domain-hero-main">
-                  <div class="plan-hero-label">Swimming</div>
-                  <div class="pos-domain-plan" id="pos-domain-swimming-plan" data-importance="8">Plan: —</div>
-                  <div class="pos-domain-plan-sub" id="pos-domain-swimming-plan-sub">Inputs used below</div>
-                </div>
-                <div class="meta">Strava metrics</div>
-              </div>
-              <div class="pos-domain-body">
-                <div id="pos-domain-swimming-metrics" class="pos-domain-metrics list" data-pos-view="overview training" data-importance="7" data-group="swim_metrics" data-related="minutes,distance,form"></div>
-                <div id="pos-swimming-summary" class="pos-panel" data-pos-view="training" data-importance="8" data-group="swimming" data-related="fitness,fatigue,form">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Swimming metrics</div>
-                    <div class="meta" id="pos-swimming-note">—</div>
-                  </div>
-                  <div id="pos-swimming-list" class="list"></div>
-                </div>
-              </div>
-            </section>
-
-            <section class="pos-domain" id="pos-domain-facial" data-pos-view="overview" data-importance="5" data-group="facial" data-related="facial,posture">
-              <div class="pos-domain-hero">
-                <div class="pos-domain-hero-main">
-                  <div class="plan-hero-label">Facial exercises</div>
-                  <div class="pos-domain-plan" id="pos-domain-facial-plan" data-importance="4">Plan: —</div>
-                  <div class="pos-domain-plan-sub" id="pos-domain-facial-plan-sub">Inputs used below</div>
-                </div>
-                <div class="meta">Tracking source</div>
-              </div>
-              <div class="pos-domain-body">
-                <div id="pos-domain-facial-metrics" class="pos-domain-metrics list" data-pos-view="overview" data-importance="4" data-group="facial_metrics" data-related="facial">
-                </div>
-                <div id="pos-facial-summary" class="pos-panel" data-pos-view="overview" data-importance="5" data-group="facial" data-related="facial">
-                  <div class="row-inline">
-                    <div style="font-weight:600;">Facial tracking</div>
-                    <div class="meta" id="pos-facial-note">—</div>
-                  </div>
-                  <div id="pos-facial-list" class="list"></div>
-                </div>
-              </div>
-            </section>
-
-            <section class="pos-domain" id="pos-domain-race" data-pos-view="overview race" data-importance="9" data-group="race" data-related="race_readiness,phase,limiters">
-              <div class="pos-domain-hero">
-                <div class="pos-domain-hero-main">
-                  <div class="plan-hero-label">Race readiness</div>
-                  <div class="pos-domain-plan" id="pos-domain-race-plan" data-importance="9">Plan: —</div>
-                  <div class="pos-domain-plan-sub" id="pos-domain-race-plan-sub">Inputs used below</div>
-                </div>
-                <div class="meta">Escape from Alcatraz 2026</div>
-              </div>
-              <div class="pos-domain-body">
-                <div class="pos-race-grid">
-                  <div class="pos-left">
-                    <div id="pos-race-summary" class="pos-section" data-pos-view="race" data-importance="10" data-group="race_readiness" data-related="sleep,swim,bike,run,confidence">
-                      <div class="row-inline">
-                        <div style="font-weight:600;">Escape from Alcatraz 2026</div>
-                        <div class="meta" id="pos-race-countdown">—</div>
-                      </div>
-                      <div class="meta" id="pos-race-note">Race window: June 6–7, 2026.</div>
-                      <div id="pos-race-pillars" class="pillar-grid"></div>
-                    </div>
-                  </div>
-                  <div class="pos-right">
-                    <div class="pos-right-stack">
-                      <div id="pos-race-limiters" class="pos-panel" data-pos-view="race" data-importance="9" data-group="race_limiters" data-related="limiters,risks">
-                        <div class="row-inline">
-                          <div style="font-weight:600;">Top limiters</div>
-                          <div class="meta" id="pos-race-limiters-note">—</div>
-                        </div>
-                        <div id="pos-race-limiters-list" class="list"></div>
-                      </div>
-                      <div id="pos-race-phase" class="pos-panel" data-pos-view="race" data-importance="8" data-group="race_phase" data-related="phase,countdown">
-                        <div class="row-inline">
-                          <div style="font-weight:600;">Phase & focus</div>
-                          <div class="meta" id="pos-race-phase-note">—</div>
-                        </div>
-                        <div id="pos-race-phase-list" class="list"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
+          <div class="meta" id="report-note">Evidence-first report for training, fuel, and recovery.</div>
         </div>
-        <div class="actions">
-          <button id="logout" class="secondary">Sign out</button>
+
+        <div class="summary-grid" id="report-summary"></div>
+
+        <div id="report-sections"></div>
+
+        <div class="signout">
+          <button class="secondary" id="sign-out">Sign out</button>
         </div>
-      </section>
+      </div>
     </div>
-    <div id="toast" class="toast"></div>
     <script type="module" src="pos.js"></script>
-
   </body>
 </html>

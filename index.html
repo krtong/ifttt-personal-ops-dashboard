@@ -157,6 +157,17 @@
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       }
 
+      .debug-panel {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px dashed rgba(148, 163, 184, 0.4);
+        background: rgba(2, 6, 23, 0.6);
+        font-size: 12px;
+        color: var(--muted);
+        white-space: pre-wrap;
+      }
+
       .summary-card {
         padding: 14px;
         border-radius: 16px;
@@ -346,6 +357,7 @@
             <div class="range-tabs" id="report-range"></div>
           </div>
           <div class="meta" id="report-note">Evidence-first report for training, fuel, and recovery.</div>
+          <div class="debug-panel hidden" id="debug-panel"></div>
         </div>
 
         <div class="summary-grid" id="report-summary"></div>
@@ -357,6 +369,6 @@
         </div>
       </div>
     </div>
-    <script type="module" src="pos.js?v=20260101-5"></script>
+    <script type="module" src="pos.js?v=20260101-7"></script>
   </body>
 </html>

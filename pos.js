@@ -2,7 +2,37 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = "https://tbrnarytcojngpbzzwcn.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_E8-dvNNh5V3VQLAcK-xqiQ_dLEu1Bsh";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true },
+});
+
+const SESSION_CACHE_KEY = "pos_ui_session";
+
+function cacheSession(session) {
+  if (!session) return;
+  const payload = {
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+    expires_at: session.expires_at,
+    user: session.user?.email || null,
+  };
+  try {
+    localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(payload));
+  } catch (_) {}
+}
+
+async function hydrateSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_CACHE_KEY);
+    if (!raw) return;
+    const cached = JSON.parse(raw);
+    if (!cached?.access_token || !cached?.refresh_token) return;
+    await supabase.auth.setSession({
+      access_token: cached.access_token,
+      refresh_token: cached.refresh_token,
+    });
+  } catch (_) {}
+}
 
 const authEl = document.getElementById("auth");
 const reportEl = document.getElementById("report");
@@ -17,6 +47,7 @@ const reportNoteEl = document.getElementById("report-note");
 const reportRangeEl = document.getElementById("report-range");
 const reportSummaryEl = document.getElementById("report-summary");
 const reportSectionsEl = document.getElementById("report-sections");
+const debugPanelEl = document.getElementById("debug-panel");
 
 const RANGE_OPTIONS = [
   { label: "1d", days: 1 },
@@ -24,6 +55,7 @@ const RANGE_OPTIONS = [
   { label: "30d", days: 30 },
 ];
 let currentRange = 7;
+const DEBUG_MODE = new URLSearchParams(window.location.search).has("debug");
 
 function formatNumber(value, decimals = 1) {
   if (value == null || Number.isNaN(value)) return "—";
@@ -228,6 +260,10 @@ async function loadReport() {
   if (!reportSectionsEl) return;
   reportSectionsEl.innerHTML = "";
   reportSummaryEl.innerHTML = "";
+  if (DEBUG_MODE && debugPanelEl) {
+    debugPanelEl.classList.remove("hidden");
+    debugPanelEl.textContent = "Loading report…";
+  }
 
   const { data, error } = await supabase
     .from("pos_report_daily")
@@ -238,6 +274,9 @@ async function loadReport() {
   if (error || !data || !data.length) {
     reportUpdatedEl.textContent = "Updated —";
     reportNoteEl.textContent = "No report data available yet.";
+    if (DEBUG_MODE && debugPanelEl) {
+      debugPanelEl.textContent = `Report query failed.\nError: ${error?.message || "no rows"}\nSupabase URL: ${SUPABASE_URL}\nBuild: 2026-01-01.6`;
+    }
     return;
   }
 
@@ -252,6 +291,19 @@ async function loadReport() {
 
   const seriesBySection = mapSeriesToSections(report.series || [], currentRange);
   (report.sections || []).forEach((section) => renderSection(section, seriesBySection));
+
+  if (DEBUG_MODE && debugPanelEl) {
+    debugPanelEl.textContent = [
+      "Report loaded.",
+      `Rows: ${data.length}`,
+      `Latest date: ${row.date || "—"}`,
+      `Updated: ${row.updated_at || "—"}`,
+      `Sections: ${(report.sections || []).length}`,
+      `Summary keys: ${Object.keys(report || {}).join(", ")}`,
+      `Supabase URL: ${SUPABASE_URL}`,
+      "Build: 2026-01-01.6",
+    ].join("\n");
+  }
 }
 
 async function refreshAuth() {
@@ -345,6 +397,9 @@ async function signIn() {
 
 async function signOut() {
   await supabase.auth.signOut();
+  try {
+    localStorage.removeItem(SESSION_CACHE_KEY);
+  } catch (_) {}
   await refreshAuth();
 }
 
@@ -356,6 +411,7 @@ supabase.auth.onAuthStateChange((_event, session) => {
     authEl.classList.add("hidden");
     reportEl.classList.remove("hidden");
     if (authStatusEl) authStatusEl.textContent = `Signed in as ${session.user.email}.`;
+    cacheSession(session);
     loadReport();
     return;
   }
@@ -364,4 +420,4 @@ supabase.auth.onAuthStateChange((_event, session) => {
   if (authStatusEl) authStatusEl.textContent = "";
 });
 renderRangeTabs();
-refreshAuth();
+hydrateSession().finally(() => refreshAuth());

@@ -132,6 +132,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       const posDataHealthEl = document.getElementById("pos-data-health");
       const posDataHealthListEl = document.getElementById("pos-data-health-list");
       const posDataHealthNoteEl = document.getElementById("pos-data-health-note");
+      const posGoalsEl = document.getElementById("pos-goals");
+      const posGoalsListEl = document.getElementById("pos-goals-list");
+      const posGoalsNoteEl = document.getElementById("pos-goals-note");
+      const posGoalKeyEl = document.getElementById("pos-goal-key");
+      const posGoalTargetEl = document.getElementById("pos-goal-target");
+      const posGoalMinEl = document.getElementById("pos-goal-min");
+      const posGoalMaxEl = document.getElementById("pos-goal-max");
+      const posGoalUnitEl = document.getElementById("pos-goal-unit");
+      const posGoalWindowEl = document.getElementById("pos-goal-window");
+      const posGoalSaveEl = document.getElementById("pos-goal-save");
       const posRaceSummaryEl = document.getElementById("pos-race-summary");
       const posRaceCountdownEl = document.getElementById("pos-race-countdown");
       const posRaceNoteEl = document.getElementById("pos-race-note");
@@ -201,6 +211,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         "sleep last night": "sleep_hours",
         "sleep last": "sleep_hours",
         "sleep delta": "sleep_delta_hours",
+        "form (strava)": "strava_form",
+        "fitness (strava)": "strava_fitness",
+        "fatigue (strava)": "strava_fatigue",
         "weight": "weight_kg",
         "body fat": "body_fat_pct",
         "ffm": "ffm_kg",
@@ -1050,6 +1063,89 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           const updatedAt = training.updated_at ? `Training updated ${formatTimestamp(training.updated_at)}` : "Training update unknown";
           posDataHealthNoteEl.textContent = `${updatedAt} · Coverage last 7 days.`;
         }
+      }
+
+      async function loadPosGoals() {
+        if (!posGoalsListEl || !posGoalsEl) return;
+        posGoalsListEl.innerHTML = "";
+        if (posGoalsNoteEl) posGoalsNoteEl.textContent = "";
+
+        const goals = Array.from(metricGoals.values()).sort((a, b) => {
+          const aKey = a.metric_key || "";
+          const bKey = b.metric_key || "";
+          return aKey.localeCompare(bKey);
+        });
+
+        if (!goals.length) {
+          posGoalsListEl.appendChild(
+            renderStatusItem("Metric goals", "None", "warn", "No goals set yet.", { importance: 7, group: "goals", related: "targets" }),
+          );
+          if (posGoalsNoteEl) posGoalsNoteEl.textContent = "Set goals to make targets visible in each section.";
+          return;
+        }
+
+        goals.forEach((goal) => {
+          const unit = goal.unit ? ` ${goal.unit}` : "";
+          const windowLabel = goal.window_key ? `(${goal.window_key})` : "";
+          let goalValue = "—";
+          if (goal.target_value !== null && goal.target_value !== undefined) {
+            goalValue = `${formatNumber(goal.target_value, 1)}${unit}`;
+          } else if (goal.min_value !== null || goal.max_value !== null) {
+            const minVal = goal.min_value ?? "—";
+            const maxVal = goal.max_value ?? "—";
+            goalValue = `${formatNumber(minVal, 1)}–${formatNumber(maxVal, 1)}${unit}`;
+          }
+          const meta = `Target ${goalValue} ${windowLabel}`.trim();
+          posGoalsListEl.appendChild(
+            renderStatusItem(goal.metric_key, goalValue, "neutral", meta, {
+              importance: 7,
+              group: "goals",
+              related: `goal:${goal.metric_key}`,
+              goalKey: goal.metric_key,
+            }),
+          );
+        });
+      }
+
+      async function saveMetricGoal() {
+        if (!posGoalKeyEl) return;
+        const metricKey = (posGoalKeyEl.value || "").trim();
+        if (!metricKey) {
+          showToast("Metric key required.", "warn");
+          return;
+        }
+        const targetValue = posGoalTargetEl?.value ? Number(posGoalTargetEl.value) : null;
+        const minValue = posGoalMinEl?.value ? Number(posGoalMinEl.value) : null;
+        const maxValue = posGoalMaxEl?.value ? Number(posGoalMaxEl.value) : null;
+        const unit = (posGoalUnitEl?.value || "").trim() || null;
+        const windowKey = (posGoalWindowEl?.value || "").trim() || null;
+        if (targetValue === null && minValue === null && maxValue === null) {
+          showToast("Provide target or min/max.", "warn");
+          return;
+        }
+        const payload = {
+          athlete_id: "global",
+          metric_key: metricKey,
+          unit,
+          window_key: windowKey,
+          target_value: targetValue,
+          min_value: minValue,
+          max_value: maxValue,
+          goal_basis: "manual",
+          set_by: "user",
+          updated_at: new Date().toISOString(),
+        };
+        const { error } = await supabase
+          .schema("health_core")
+          .from("metric_goals")
+          .upsert(payload, { onConflict: "athlete_id,metric_key" });
+        if (error) {
+          showToast(`Save failed: ${error.message}`, "warn");
+          return;
+        }
+        await loadMetricGoals();
+        await loadPosGoals();
+        showToast("Goal saved.", "good");
       }
 
       function loadPosFacial() {
@@ -3007,6 +3103,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
           loadPosRelations(),
           loadPosTrends(),
           loadPosDataHealth(),
+          loadPosGoals(),
           loadPosAppleHealth(),
           loadPosStats(),
           loadPosBaselines(),
@@ -5172,4 +5269,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       }
 
       window.posInit = initPos;
+      if (posGoalSaveEl) {
+        posGoalSaveEl.addEventListener("click", saveMetricGoal);
+      }
       refreshSession();

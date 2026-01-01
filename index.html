@@ -1540,6 +1540,23 @@
                   </div>
                   <div id="pos-data-health-list" class="list"></div>
                 </div>
+                <div id="pos-goals" class="pos-panel" data-pos-view="training data" data-importance="8" data-group="metric_goals" data-related="goals,targets">
+                  <div class="row-inline">
+                    <div style="font-weight:600;">Metric goals</div>
+                    <div class="meta" id="pos-goals-note">—</div>
+                  </div>
+                  <div id="pos-goals-list" class="list"></div>
+                  <div class="goal-editor" style="margin-top:10px;">
+                    <input id="pos-goal-key" type="text" placeholder="metric key (e.g. sleep_hours)"/>
+                    <input id="pos-goal-target" type="number" step="0.1" placeholder="target"/>
+                    <input id="pos-goal-min" type="number" step="0.1" placeholder="min"/>
+                    <input id="pos-goal-max" type="number" step="0.1" placeholder="max"/>
+                    <input id="pos-goal-unit" type="text" placeholder="unit (h, kg, kcal)"/>
+                    <input id="pos-goal-window" type="text" placeholder="window (last, 7d, 28d)"/>
+                    <button id="pos-goal-save" type="button">Save goal</button>
+                  </div>
+                  <div class="goal-meta">Set per-metric targets; AI can also update via CLI.</div>
+                </div>
                 <div id="pos-apple-health" class="pos-panel" data-pos-view="training data" data-importance="6" data-group="activity" data-related="steps,active_calories,resting_calories,exercise_minutes">
                   <div class="row-inline">
                     <div style="font-weight:600;">Apple Health signals</div>

@@ -352,10 +352,16 @@ signInBtn?.addEventListener("click", signIn);
 signOutBtn?.addEventListener("click", signOut);
 
 supabase.auth.onAuthStateChange((_event, session) => {
-  if (!authStatusEl || authEl.classList.contains("hidden")) return;
   if (session?.user?.email) {
-    authStatusEl.textContent = `Signed in as ${session.user.email}.`;
+    authEl.classList.add("hidden");
+    reportEl.classList.remove("hidden");
+    if (authStatusEl) authStatusEl.textContent = `Signed in as ${session.user.email}.`;
+    loadReport();
+    return;
   }
+  authEl.classList.remove("hidden");
+  reportEl.classList.remove("hidden");
+  if (authStatusEl) authStatusEl.textContent = "";
 });
 renderRangeTabs();
 refreshAuth();

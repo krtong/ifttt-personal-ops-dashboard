@@ -7,6 +7,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const authEl = document.getElementById("auth");
 const reportEl = document.getElementById("report");
 const signInBtn = document.getElementById("sign-in");
+const skipSignInBtn = document.getElementById("skip-sign-in");
 const signOutBtn = document.getElementById("sign-out");
 const authStatusEl = document.getElementById("auth-status");
 const emailEl = document.getElementById("email");
@@ -277,13 +278,21 @@ async function signIn() {
     return;
   }
   if (authStatusEl) authStatusEl.textContent = "Signing in…";
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error || !data?.session) {
-    if (authStatusEl) authStatusEl.textContent = error?.message || "Sign in failed";
-    return;
+  try {
+    const timeout = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Sign-in timed out. Check network or try again.")), 15000);
+    });
+    const signInPromise = supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await Promise.race([signInPromise, timeout]);
+    if (error || !data?.session) {
+      if (authStatusEl) authStatusEl.textContent = error?.message || "Sign in failed";
+      return;
+    }
+    if (authStatusEl) authStatusEl.textContent = "Signed in";
+    await refreshAuth();
+  } catch (err) {
+    if (authStatusEl) authStatusEl.textContent = err?.message || "Sign in failed";
   }
-  if (authStatusEl) authStatusEl.textContent = "Signed in";
-  await refreshAuth();
 }
 
 async function signOut() {
@@ -292,6 +301,12 @@ async function signOut() {
 }
 
 signInBtn?.addEventListener("click", signIn);
+skipSignInBtn?.addEventListener("click", () => {
+  authEl.classList.add("hidden");
+  reportEl.classList.remove("hidden");
+  if (authStatusEl) authStatusEl.textContent = "";
+  loadReport();
+});
 signOutBtn?.addEventListener("click", signOut);
 
 supabase.auth.onAuthStateChange(() => refreshAuth());

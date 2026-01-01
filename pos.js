@@ -264,8 +264,63 @@ async function refreshAuth() {
   } else {
     authEl.classList.remove("hidden");
     reportEl.classList.remove("hidden");
-    if (authStatusEl) authStatusEl.textContent = "Signed out (read-only).";
+    if (authStatusEl) authStatusEl.textContent = "";
     await loadReport();
+  }
+}
+
+async function reportAuthState(prefix = "") {
+  if (!authStatusEl) return;
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      authStatusEl.textContent = `${prefix}Session error: ${error.message}`;
+      return;
+    }
+    const session = data?.session;
+    if (!session) {
+      authStatusEl.textContent = `${prefix}No session found after sign-in.`;
+      return;
+    }
+    const email = session.user?.email || "unknown";
+    authStatusEl.textContent = `${prefix}Signed in as ${email}.`;
+  } catch (err) {
+    authStatusEl.textContent = `${prefix}Auth check failed.`;
+  }
+}
+
+async function signInWithFallback(email, password) {
+  const primary = await supabase.auth.signInWithPassword({ email, password });
+  if (!primary.error) {
+    return primary;
+  }
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
+      {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      }
+    );
+    const payload = await resp.json();
+    if (!resp.ok) {
+      return { data: null, error: { message: payload?.error_description || payload?.error || "Auth failed." } };
+    }
+    const { access_token, refresh_token } = payload || {};
+    if (!access_token || !refresh_token) {
+      return { data: null, error: { message: "Auth failed: missing tokens." } };
+    }
+    const sessionSet = await supabase.auth.setSession({ access_token, refresh_token });
+    if (sessionSet.error) {
+      return { data: null, error: { message: sessionSet.error.message || "Auth failed to set session." } };
+    }
+    return { data: sessionSet.data, error: null };
+  } catch (err) {
+    return { data: null, error: { message: "Auth failed: network error." } };
   }
 }
 
@@ -276,20 +331,15 @@ async function signIn() {
     if (authStatusEl) authStatusEl.textContent = "Enter email and password.";
     return;
   }
-  if (authStatusEl) authStatusEl.textContent = "Signing in…";
-  const timeoutId = setTimeout(() => {
-    if (authStatusEl && authStatusEl.textContent === "Signing in…") {
-      authStatusEl.textContent =
-        "Sign-in is taking too long. Check network/firewall and try again.";
-    }
-  }, 12000);
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  clearTimeout(timeoutId);
-  if (error || !data?.session) {
-    if (authStatusEl) authStatusEl.textContent = error?.message || "Sign in failed";
+  if (authStatusEl) authStatusEl.textContent = "";
+  const { data, error } = await signInWithFallback(email, password);
+  if (error) {
+    if (authStatusEl) authStatusEl.textContent = "Sign in failed: " + error.message;
     return;
   }
-  if (authStatusEl) authStatusEl.textContent = "Signed in";
+  if (!data?.session) {
+    await reportAuthState("Sign-in ok. ");
+  }
   await refreshAuth();
 }
 
@@ -301,6 +351,11 @@ async function signOut() {
 signInBtn?.addEventListener("click", signIn);
 signOutBtn?.addEventListener("click", signOut);
 
-supabase.auth.onAuthStateChange(() => refreshAuth());
+supabase.auth.onAuthStateChange((_event, session) => {
+  if (!authStatusEl || authEl.classList.contains("hidden")) return;
+  if (session?.user?.email) {
+    authStatusEl.textContent = `Signed in as ${session.user.email}.`;
+  }
+});
 renderRangeTabs();
 refreshAuth();

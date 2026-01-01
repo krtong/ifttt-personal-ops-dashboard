@@ -283,7 +283,7 @@ async function signIn() {
   if (authStatusEl) authStatusEl.textContent = "Signing in…";
   try {
     const timeout = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Sign-in timed out. Check network or try again.")), 15000);
+      setTimeout(() => reject(new Error("Sign-in timed out. Retrying direct auth…")), 12000);
     });
     const signInPromise = supabase.auth.signInWithPassword({ email, password });
     const { data, error } = await Promise.race([signInPromise, timeout]);
@@ -301,7 +301,8 @@ async function signIn() {
       await signInDirect(email, password);
       await refreshAuth();
     } catch (inner) {
-      if (authStatusEl) authStatusEl.textContent = inner?.message || err?.message || "Sign in failed";
+      const msg = inner?.message || err?.message || "Sign in failed";
+      if (authStatusEl) authStatusEl.textContent = msg;
       await loadReport();
     }
   }
@@ -309,7 +310,7 @@ async function signIn() {
 
 async function signInDirect(email, password) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000);
+  const timer = setTimeout(() => controller.abort(), 8000);
   try {
     const resp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
       method: "POST",
@@ -332,6 +333,14 @@ async function signInDirect(email, password) {
       access_token: payload.access_token,
       refresh_token: payload.refresh_token,
     });
+  } catch (err) {
+    if (err?.name === "AbortError") {
+      throw new Error("Auth endpoint unreachable (network). Disable VPN/content blockers or try cellular.");
+    }
+    if (String(err?.message || "").includes("Failed to fetch")) {
+      throw new Error("Auth endpoint unreachable (network). Disable VPN/content blockers or try cellular.");
+    }
+    throw err;
   } finally {
     clearTimeout(timer);
   }

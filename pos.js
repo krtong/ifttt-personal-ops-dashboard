@@ -1745,7 +1745,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         if (posLoadSleepChartEl) posLoadSleepChartEl.innerHTML = "";
         if (posFuelLoadChartEl) posFuelLoadChartEl.innerHTML = "";
 
-        const resolution = currentRangeDays === 1 ? "hour" : "day";
+        const resolution = currentRangeDays <= 7 ? "hour" : "day";
         const dayCount = Math.max(1, currentRangeDays);
         const start = rangeStartDate(dayCount);
         const startIso = start.toISOString();

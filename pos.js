@@ -50,7 +50,7 @@ const reportSectionsEl = document.getElementById("report-sections");
 const debugPanelEl = document.getElementById("debug-panel");
 const buildStampEl = document.getElementById("build-stamp");
 
-const BUILD_STAMP = "2026-01-01.8";
+const BUILD_STAMP = "2026-01-02.0";
 
 const RANGE_OPTIONS = [
   { label: "1d", days: 1 },
@@ -260,7 +260,10 @@ function renderRangeTabs() {
 }
 
 async function loadReport() {
-  if (!reportSectionsEl) return;
+  if (!reportSectionsEl || !reportSummaryEl) {
+    if (reportNoteEl) reportNoteEl.textContent = "Report container missing in DOM.";
+    return;
+  }
   reportSectionsEl.innerHTML = "";
   reportSummaryEl.innerHTML = "";
   if (DEBUG_MODE && debugPanelEl) {
@@ -268,18 +271,26 @@ async function loadReport() {
     debugPanelEl.textContent = "Loading report…";
   }
 
-  const { data, error } = await supabase
-    .from("pos_report_daily")
-    .select("date,report_json,updated_at")
-    .order("date", { ascending: false })
-    .limit(1);
+  let data;
+  let error;
+  try {
+    const resp = await supabase
+      .from("pos_report_daily")
+      .select("date,report_json,updated_at")
+      .order("date", { ascending: false })
+      .limit(1);
+    data = resp.data;
+    error = resp.error;
+  } catch (err) {
+    error = err;
+  }
 
   if (error || !data || !data.length) {
     reportUpdatedEl.textContent = "Updated —";
-    reportNoteEl.textContent = "No report data available yet.";
+    reportNoteEl.textContent = "Report unavailable. Run pos-scheduler to generate data.";
     renderEmptySection("No report rows found. Run pos-scheduler to generate a report.");
     if (DEBUG_MODE && debugPanelEl) {
-      debugPanelEl.textContent = `Report query failed.\nError: ${error?.message || "no rows"}\nSupabase URL: ${SUPABASE_URL}\nBuild: 2026-01-01.6`;
+      debugPanelEl.textContent = `Report query failed.\nError: ${error?.message || "no rows"}\nSupabase URL: ${SUPABASE_URL}\nBuild: ${BUILD_STAMP}`;
     }
     return;
   }
@@ -298,7 +309,15 @@ async function loadReport() {
   if (!sections.length) {
     renderEmptySection("Report loaded but contains no sections. Check pos-scheduler output.");
   } else {
-    sections.forEach((section) => renderSection(section, seriesBySection));
+    try {
+      sections.forEach((section) => renderSection(section, seriesBySection));
+    } catch (err) {
+      reportNoteEl.textContent = "Report failed to render. Reload or check report schema.";
+      renderEmptySection("Report render error. Check pos-scheduler output for schema issues.");
+      if (DEBUG_MODE && debugPanelEl) {
+        debugPanelEl.textContent = `Render error: ${err?.message || err}`;
+      }
+    }
   }
 
   if (DEBUG_MODE && debugPanelEl) {
@@ -310,7 +329,7 @@ async function loadReport() {
       `Sections: ${(report.sections || []).length}`,
       `Summary keys: ${Object.keys(report || {}).join(", ")}`,
       `Supabase URL: ${SUPABASE_URL}`,
-      "Build: 2026-01-01.6",
+      `Build: ${BUILD_STAMP}`,
     ].join("\n");
   }
 }
@@ -328,18 +347,25 @@ function renderEmptySection(message) {
   reportSectionsEl.appendChild(wrapper);
 }
 
+function showAuth() {
+  authEl?.classList.remove("hidden");
+  reportEl?.classList.add("hidden");
+}
+
+function showReport() {
+  authEl?.classList.add("hidden");
+  reportEl?.classList.remove("hidden");
+}
+
 async function refreshAuth() {
   const { data } = await supabase.auth.getSession();
   if (data.session) {
-    authEl.classList.add("hidden");
-    reportEl.classList.remove("hidden");
+    showReport();
     if (authStatusEl) authStatusEl.textContent = "";
     await loadReport();
   } else {
-    authEl.classList.remove("hidden");
-    reportEl.classList.remove("hidden");
+    showAuth();
     if (authStatusEl) authStatusEl.textContent = "";
-    await loadReport();
   }
 }
 
@@ -414,6 +440,7 @@ async function signIn() {
   if (!data?.session) {
     await reportAuthState("Sign-in ok. ");
   }
+  showReport();
   await refreshAuth();
 }
 
@@ -422,7 +449,7 @@ async function signOut() {
   try {
     localStorage.removeItem(SESSION_CACHE_KEY);
   } catch (_) {}
-  await refreshAuth();
+  showAuth();
 }
 
 signInBtn?.addEventListener("click", signIn);
@@ -430,17 +457,16 @@ signOutBtn?.addEventListener("click", signOut);
 
 supabase.auth.onAuthStateChange((_event, session) => {
   if (session?.user?.email) {
-    authEl.classList.add("hidden");
-    reportEl.classList.remove("hidden");
+    showReport();
     if (authStatusEl) authStatusEl.textContent = `Signed in as ${session.user.email}.`;
     cacheSession(session);
     loadReport();
     return;
   }
-  authEl.classList.remove("hidden");
-  reportEl.classList.remove("hidden");
+  showAuth();
   if (authStatusEl) authStatusEl.textContent = "";
 });
+
 renderRangeTabs();
 hydrateSession().finally(() => refreshAuth());
 if (buildStampEl) {

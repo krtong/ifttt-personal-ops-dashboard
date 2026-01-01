@@ -277,7 +277,14 @@ async function signIn() {
     return;
   }
   if (authStatusEl) authStatusEl.textContent = "Signing in…";
+  const timeoutId = setTimeout(() => {
+    if (authStatusEl && authStatusEl.textContent === "Signing in…") {
+      authStatusEl.textContent =
+        "Sign-in is taking too long. Check network/firewall and try again.";
+    }
+  }, 12000);
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  clearTimeout(timeoutId);
   if (error || !data?.session) {
     if (authStatusEl) authStatusEl.textContent = error?.message || "Sign in failed";
     return;

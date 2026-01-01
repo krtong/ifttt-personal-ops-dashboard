@@ -186,8 +186,16 @@ function mapSeriesToSections(series, rangeDays) {
   const map = new Map();
   if (!Array.isArray(series)) return map;
   const preferInterval = rangeDays === 1 ? "hourly" : "daily";
-  const pick = (labelMatch) => series.find((s) => s.interval === preferInterval && s.label.includes(labelMatch)) ||
-    series.find((s) => s.label.includes(labelMatch));
+
+  const pick = (labelMatch) => {
+    const matches = series.filter((s) => s.label.includes(labelMatch));
+    if (!matches.length) return null;
+    const intervalMatches = matches.filter((s) => s.interval === preferInterval);
+    const rangeMatches = intervalMatches.filter((s) => (s.range_days || 0) >= rangeDays);
+    if (rangeMatches.length) return rangeMatches[0];
+    if (intervalMatches.length) return intervalMatches[0];
+    return matches[0];
+  };
 
   const trainingSeries = pick("Training minutes");
   if (trainingSeries) map.set("training", trainingSeries);

@@ -263,8 +263,9 @@ async function refreshAuth() {
     await loadReport();
   } else {
     authEl.classList.remove("hidden");
-    reportEl.classList.add("hidden");
+    reportEl.classList.remove("hidden");
     if (authStatusEl) authStatusEl.textContent = "Signed out (read-only).";
+    await loadReport();
   }
 }
 
@@ -275,6 +276,7 @@ async function signIn() {
     if (authStatusEl) authStatusEl.textContent = "Enter email and password.";
     return;
   }
+  if (authStatusEl) authStatusEl.textContent = "Signing in…";
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error || !data?.session) {
     if (authStatusEl) authStatusEl.textContent = error?.message || "Sign in failed";

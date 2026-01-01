@@ -7,7 +7,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const authEl = document.getElementById("auth");
 const reportEl = document.getElementById("report");
 const signInBtn = document.getElementById("sign-in");
-const skipSignInBtn = document.getElementById("skip-sign-in");
 const signOutBtn = document.getElementById("sign-out");
 const authStatusEl = document.getElementById("auth-status");
 const emailEl = document.getElementById("email");
@@ -301,12 +300,6 @@ async function signOut() {
 }
 
 signInBtn?.addEventListener("click", signIn);
-skipSignInBtn?.addEventListener("click", () => {
-  authEl.classList.add("hidden");
-  reportEl.classList.remove("hidden");
-  if (authStatusEl) authStatusEl.textContent = "";
-  loadReport();
-});
 signOutBtn?.addEventListener("click", signOut);
 
 supabase.auth.onAuthStateChange(() => refreshAuth());

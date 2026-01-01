@@ -3,7 +3,7 @@
 Single-page dashboard for Personal Ops (triathlon training + posture/PT + nutrition + recovery).
 
 - Hosted via GitHub Pages.
-- Uses Supabase auth + tables from the IFTTT repo.
+- Uses Supabase auth + tables from the Personal Ops private repo.
 - No garage controller UI in this repo.
 
 ## Setup
@@ -14,9 +14,4 @@ Single-page dashboard for Personal Ops (triathlon training + posture/PT + nutrit
 
 ## Views
 
-- Overview
-- Training
-- Strength/PT
-- Nutrition
-- Recovery
-
+- Single-page report (evidence-first)

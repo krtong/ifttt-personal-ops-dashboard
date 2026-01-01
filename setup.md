@@ -6,4 +6,4 @@
 
 Notes:
 - This repo is Personal Ops only (no garage controller views).
-- All data is read from Supabase tables created in the IFTTT repo.
+- All data is read from Supabase tables created in the Personal Ops private repo.

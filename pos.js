@@ -17,6 +17,7 @@ const reportNoteEl = document.getElementById("report-note");
 const reportRangeEl = document.getElementById("report-range");
 const reportSummaryEl = document.getElementById("report-summary");
 const reportSectionsEl = document.getElementById("report-sections");
+const reportStatusEl = document.getElementById("report-status");
 
 const RANGE_OPTIONS = [
   { label: "1d", days: 1 },
@@ -228,6 +229,7 @@ async function loadReport() {
   if (!reportSectionsEl) return;
   reportSectionsEl.innerHTML = "";
   reportSummaryEl.innerHTML = "";
+  if (reportStatusEl) reportStatusEl.textContent = "Loading report…";
 
   const { data, error } = await supabase
     .from("pos_report_daily")
@@ -238,6 +240,7 @@ async function loadReport() {
   if (error || !data || !data.length) {
     reportUpdatedEl.textContent = "Updated —";
     reportNoteEl.textContent = "No report data available yet.";
+    if (reportStatusEl) reportStatusEl.textContent = error?.message || "No report rows returned.";
     return;
   }
 
@@ -247,6 +250,7 @@ async function loadReport() {
   reportNoteEl.textContent = report.plan_summary
     ? `Summary: ${report.plan_summary}`
     : "Evidence-first report for training, fuel, and recovery.";
+  if (reportStatusEl) reportStatusEl.textContent = "Report loaded.";
 
   buildSummaryCards(report);
 
@@ -298,6 +302,7 @@ async function signIn() {
       await refreshAuth();
     } catch (inner) {
       if (authStatusEl) authStatusEl.textContent = inner?.message || err?.message || "Sign in failed";
+      await loadReport();
     }
   }
 }
@@ -332,6 +337,27 @@ async function signInDirect(email, password) {
   }
 }
 
+async function checkConnectivity() {
+  if (!reportStatusEl) return;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/pos_report_daily?select=date&limit=1`, {
+      headers: { apikey: SUPABASE_ANON_KEY },
+      signal: controller.signal,
+    });
+    if (!resp.ok) {
+      reportStatusEl.textContent = `Supabase unreachable (${resp.status})`;
+      return;
+    }
+    reportStatusEl.textContent = "Supabase reachable.";
+  } catch (err) {
+    reportStatusEl.textContent = "Supabase unreachable (network).";
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function signOut() {
   await supabase.auth.signOut();
   await refreshAuth();
@@ -343,3 +369,4 @@ signOutBtn?.addEventListener("click", signOut);
 supabase.auth.onAuthStateChange(() => refreshAuth());
 renderRangeTabs();
 refreshAuth();
+checkConnectivity();

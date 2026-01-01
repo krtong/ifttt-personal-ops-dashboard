@@ -11,15 +11,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
       const emailEl = document.getElementById("email");
       const passwordEl = document.getElementById("password");
-      const processTabsEl = document.getElementById("process-tabs");
-      const enabledEl = document.getElementById("enabled");
-      const closeDelayEl = document.getElementById("close_delay_min");
-      const retryDelayEl = document.getElementById("retry_delay_min");
-      const saveStatusEl = document.getElementById("save-status");
       const authStatusEl = document.getElementById("auth-status");
-      const dataListEl = document.getElementById("data-list");
-      const dataStatusEl = document.getElementById("data-status");
-      const garageDataCardEl = document.getElementById("garage-data-card");
       const posSummaryEl = document.getElementById("pos-summary");
       const posSummaryMetricsEl = document.getElementById("pos-summary-metrics");
       const posSummaryUpdatedEl = document.getElementById("pos-summary-updated");
@@ -177,76 +169,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       const posSleepPlanListEl = document.getElementById("pos-sleep-plan-list");
       const posSleepPlanNoteEl = document.getElementById("pos-sleep-plan-note");
       const posRunStatusEl = document.getElementById("pos-run-status");
-      const garageSettingsEl = document.getElementById("garage-settings");
-      const processCardEl = document.getElementById("process-card");
-      const viewEventsEl = document.getElementById("view-events");
-      const viewStateEl = document.getElementById("view-state");
-      const loadMoreEventsEl = document.getElementById("load-more-events");
       const toastEl = document.getElementById("toast");
       const POS_PROCESS_ID = "personal_ops";
-      // Add future process views by extending VIEW_DEFS with visible/hidden sections.
-      const VIEW_DEFS = {
-        garage: {
-          label: "Garage Controller",
-          visibleIds: [
-            "garage-settings",
-            "garage-data-card",
-            "data-list",
-            "data-status",
-            "load-more-events",
-          ],
-          hiddenIds: [
-            "pos-summary",
-            "pos-dashboard",
-            "pos-recovery",
-            "pos-strava-fitness",
-            "pos-trends",
-            "pos-heatmap",
-            "pos-stats",
-            "pos-apple-health",
-            "pos-nutrition",
-            "pos-baselines",
-            "pos-quality",
-            "pos-last-session",
-            "pos-strength-scatter",
-            "pos-quality-trends",
-            "pos-weakness",
-            "pos-sleep-plan",
-          ],
-        },
-        pos: {
-          label: "Personal Ops",
-          visibleIds: [
-            "pos-dashboard",
-            "pos-summary",
-            "pos-recovery",
-            "pos-strava-fitness",
-            "pos-trends",
-            "pos-heatmap",
-            "pos-stats",
-            "pos-apple-health",
-            "pos-nutrition",
-            "pos-baselines",
-            "pos-quality",
-            "pos-last-session",
-            "pos-strength-scatter",
-            "pos-quality-trends",
-            "pos-weakness",
-            "pos-sleep-plan",
-          ],
-          hiddenIds: [
-            "garage-settings",
-            "garage-data-card",
-            "data-list",
-            "data-status",
-            "load-more-events",
-          ],
-        },
-      };
-
-      let currentProcessId = "global";
-      let currentDataView = "events";
-      let currentView = "garage";
       let currentPosView = "all";
       let currentRangeDays = 7;
       let currentWeekSport = "swim";
@@ -258,125 +182,21 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       ];
       const POS_VIEW_OPTIONS = [];
       const DOORS = ["Left", "Middle", "Right"];
-      const EVENTS_PAGE_SIZE = 200;
-      let eventsLimit = EVENTS_PAGE_SIZE;
-      let internalGarageSettings = {
-        check_delay_min: 1,
-        close_cooldown_sec: 60,
-        lock_ttl_sec: 55,
-      };
-
-      async function loadSettings() {
-        const { data, error } = await supabase
-          .from("garage_settings")
-          .select("*")
-          .eq("id", currentProcessId)
-          .single();
-        if (error) {
-          if (saveStatusEl) saveStatusEl.textContent = "Failed to load settings: " + error.message;
-          return;
-        }
-        enabledEl.checked = data.enabled ?? true;
-        closeDelayEl.value = data.close_delay_min ?? 10;
-        retryDelayEl.value = data.retry_delay_min ?? 4;
-        internalGarageSettings = {
-          check_delay_min: data.check_delay_min ?? 1,
-          close_cooldown_sec: data.close_cooldown_sec ?? 60,
-          lock_ttl_sec: data.lock_ttl_sec ?? 55,
-        };
-      }
-
-      function renderProcessTabs(processes) {
-        processTabsEl.innerHTML = "";
-        processes.forEach((process) => {
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "process-tab";
-          button.textContent = process.label ?? process.id;
-          button.dataset.processId = process.id;
-          button.dataset.view = "garage";
-          if (currentView === "garage" && process.id === currentProcessId) {
-            button.classList.add("active");
-          }
-          button.addEventListener("click", async () => {
-            currentView = "garage";
-            currentProcessId = process.id;
-            renderProcessTabs(processes);
-            await loadSettings();
-            setActiveViewState(currentView);
-            await loadData();
-          });
-          processTabsEl.appendChild(button);
-        });
-
-        Object.entries(VIEW_DEFS).forEach(([viewId, viewDef]) => {
-          if (viewId === "garage") return;
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "process-tab";
-          button.textContent = viewDef.label ?? viewId;
-          button.dataset.view = viewId;
-          if (currentView === viewId) {
-            button.classList.add("active");
-          }
-          button.addEventListener("click", async () => {
-            currentView = viewId;
-            renderProcessTabs(processes);
-            setActiveViewState(currentView);
-            await loadData();
-          });
-          processTabsEl.appendChild(button);
-        });
-
-        if (processCardEl) {
-          const hasTabs = processTabsEl.children.length > 0;
-          processCardEl.classList.toggle("hidden", !hasTabs);
-        }
-
-        if (processes.length && !processes.find((p) => p.id === currentProcessId)) {
-          currentProcessId = processes[0].id;
-          renderProcessTabs(processes);
-        }
-      }
-
-      async function loadProcesses() {
-        const { data, error } = await supabase
-          .from("garage_settings")
-          .select("*")
-          .order("label", { ascending: true });
-        let processes = data ?? [];
-        if (error) {
-          if (saveStatusEl) saveStatusEl.textContent = "Failed to load processes: " + error.message;
-          processes = [];
-        }
-        if (!processes.length) {
-          processes = [{ id: "global", label: "Garage Controller" }];
-        }
-        renderProcessTabs(processes);
-        setActiveViewState(currentView);
-        if (processes.length) {
-          if (currentView === "garage") {
-            await loadSettings();
-          }
-        }
-      }
 
       async function refreshSession() {
         const { data } = await supabase.auth.getSession();
         const session = data?.session;
         if (session) {
           authEl.classList.add("hidden");
-          settingsEl.classList.remove("hidden");
-          dataEl.classList.remove("hidden");
-          if (saveStatusEl) saveStatusEl.textContent = "";
+          if (settingsEl) settingsEl.classList.add("hidden");
+          if (dataEl) dataEl.classList.remove("hidden");
           if (authStatusEl) authStatusEl.textContent = "";
-          await loadProcesses();
-          await loadData();
+          if (posDashboardEl) posDashboardEl.classList.remove("hidden");
+          await initPos();
         } else {
           authEl.classList.remove("hidden");
-          settingsEl.classList.add("hidden");
-          dataEl.classList.add("hidden");
-          if (saveStatusEl) saveStatusEl.textContent = "Please sign in";
+          if (settingsEl) settingsEl.classList.add("hidden");
+          if (dataEl) dataEl.classList.add("hidden");
           if (authStatusEl) authStatusEl.textContent = "";
         }
       }
@@ -437,7 +257,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       }
 
       const loginBtn = document.getElementById("login");
-      if (loginBtn && window.__posUseStandaloneAuth) {
+      if (loginBtn) {
         loginBtn.addEventListener("click", async () => {
           const email = emailEl.value.trim();
           const password = passwordEl.value;
@@ -465,60 +285,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         }
       });
 
-      const saveBtn = document.getElementById("save");
-      if (saveBtn) {
-        saveBtn.addEventListener("click", async () => {
-          await saveSettings({ announce: false, signal: false });
-        });
-      }
-
-      if (enabledEl) {
-        enabledEl.addEventListener("change", async () => {
-          enabledEl.classList.add("pulse");
-          setTimeout(() => enabledEl.classList.remove("pulse"), 600);
-          await saveSettings({ announce: true, signal: true });
-        });
-      }
-
-      async function saveSettings({ announce, signal }) {
-        const payload = {
-          id: currentProcessId,
-          enabled: enabledEl.checked,
-          close_delay_min: Number(closeDelayEl.value || 10),
-          retry_delay_min: Number(retryDelayEl.value || 4),
-          check_delay_min: Number(internalGarageSettings.check_delay_min || 1),
-          close_cooldown_sec: Number(internalGarageSettings.close_cooldown_sec || 60),
-          lock_ttl_sec: Number(internalGarageSettings.lock_ttl_sec || 55),
-        };
-        const { error } = await supabase
-          .from("garage_settings")
-          .upsert(payload, { onConflict: "id" });
-        if (error) {
-          if (saveStatusEl) saveStatusEl.textContent = "Save failed: " + error.message;
-          if (announce) showToast("Failed to save settings.", "error");
-          return;
-        }
-        if (saveStatusEl) saveStatusEl.textContent = "Saved.";
-        setTimeout(() => {
-          if (saveStatusEl) saveStatusEl.textContent = "";
-        }, 1500);
-
-        if (signal) {
-          const { error: fnError } = await supabase.functions.invoke("garage-scheduler", {
-            body: {},
-          });
-          if (fnError) {
-            if (announce) {
-              showToast("Saved, but scheduler ping failed.", "error");
-            }
-          } else if (announce) {
-            showToast(enabledEl.checked ? "Scheduler resumed." : "Scheduler paused.", "success");
-          }
-        } else if (announce) {
-          showToast("Settings saved.", "success");
-        }
-      }
-
       function showToast(message, type) {
         if (!toastEl) return;
         toastEl.textContent = message;
@@ -538,35 +304,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         if (days > 0) return `${days}d ${hours % 24}h`;
         if (hours > 0) return `${hours}h ${minutes % 60}m`;
         return `${minutes}m`;
-      }
-
-      function formatAction(action) {
-        if (!action) return "—";
-        return String(action)
-          .replace(/_/g, " ")
-          .replace(/\\b\\w/g, (c) => c.toUpperCase());
-      }
-
-      function classifyCountdown(ms) {
-        if (ms == null) return { label: "No schedule", cls: "unknown" };
-        if (ms < 0) return { label: `Overdue by ${formatDuration(-ms)}`, cls: "overdue" };
-        if (ms < 5 * 60 * 1000) return { label: `Next in ${formatDuration(ms)}`, cls: "soon" };
-        return { label: `Next in ${formatDuration(ms)}`, cls: "ontrack" };
-      }
-
-      async function loadLatestEventsByDoor() {
-        const { data, error } = await supabase
-          .from("garage_events")
-          .select("id,created_at,event_type,door,source")
-          .order("created_at", { ascending: false })
-          .limit(200);
-        if (error || !data) return {};
-        const latest = {};
-        data.forEach((row) => {
-          if (!row.door || latest[row.door]) return;
-          latest[row.door] = row;
-        });
-        return latest;
       }
 
       function formatTimestamp(value) {
@@ -2969,248 +2706,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         }
       }
 
-      function setActiveView(view) {
-        currentDataView = view;
-        viewEventsEl.classList.toggle("active", view === "events");
-        viewStateEl.classList.toggle("active", view === "state");
-      }
-
-      function setActiveViewState(viewId) {
-        const viewDef = VIEW_DEFS[viewId] ?? VIEW_DEFS.garage;
-        currentView = viewId;
-        viewDef.visibleIds.forEach((id) => {
-          const el = document.getElementById(id);
-          if (el) el.classList.remove("hidden");
-        });
-        viewDef.hiddenIds.forEach((id) => {
-          const el = document.getElementById(id);
-          if (el) el.classList.add("hidden");
-        });
-      }
-
-      async function loadEvents() {
-        dataListEl.innerHTML = "";
-        dataListEl.className = "list";
-        if (dataStatusEl) dataStatusEl.textContent = "Loading…";
-        const { data, error } = await supabase
-          .from("garage_events")
-          .select("id,created_at,event_type,door")
-          .order("created_at", { ascending: false })
-          .limit(eventsLimit);
-        if (error) {
-          if (dataStatusEl) dataStatusEl.textContent = "Failed to load events: " + error.message;
-          return;
-        }
-        if (!data || !data.length) {
-          if (dataStatusEl) dataStatusEl.textContent = "No events yet.";
-          return;
-        }
-        if (dataStatusEl) dataStatusEl.textContent = `Showing ${data.length} most recent events.`;
-        data.forEach((row) => {
-          const item = document.createElement("div");
-          item.className = "list-item";
-          const title = document.createElement("div");
-          title.className = "list-title";
-          title.textContent = row.event_type ?? "EVENT";
-          const meta = document.createElement("div");
-          meta.className = "list-meta";
-          const rowLine = document.createElement("div");
-          rowLine.className = "list-row";
-          rowLine.innerHTML = `
-            <div><strong>${row.door ?? "?"}</strong>Door</div>
-            <div><strong>${formatTimestamp(row.created_at)}</strong>Time</div>
-            <div><strong>${row.id ?? "—"}</strong>Row</div>
-          `;
-          item.appendChild(title);
-          item.appendChild(meta);
-          item.appendChild(rowLine);
-          dataListEl.appendChild(item);
-        });
-      }
-
-      async function loadState() {
-        dataListEl.innerHTML = "";
-        dataListEl.className = "list state-grid";
-        if (dataStatusEl) dataStatusEl.textContent = "Loading…";
-        const latestEvents = await loadLatestEventsByDoor();
-        const { data, error } = await supabase
-          .from("garage_state")
-          .select("door,is_open,session_start,last_open,last_close,next_action,next_action_at,last_close_attempt_at,updated_at")
-          .order("door", { ascending: true });
-        if (error) {
-          if (dataStatusEl) dataStatusEl.textContent = "Failed to load state: " + error.message;
-          return;
-        }
-        if (!data || !data.length) {
-          if (dataStatusEl) dataStatusEl.textContent = "No state rows yet.";
-          return;
-        }
-        if (dataStatusEl) dataStatusEl.textContent = "";
-        const byDoor = {};
-        data.forEach((row) => {
-          if (row.door) {
-            byDoor[row.door] = row;
-          }
-        });
-        const now = new Date();
-        DOORS.forEach((door) => {
-          const row = byDoor[door] || {};
-          const hasData = Boolean(row.door);
-          const isOpen = row.is_open === true;
-          const sessionStart = row.session_start ? new Date(row.session_start) : null;
-          const lastClose = row.last_close ? new Date(row.last_close) : null;
-          const latestEvent = latestEvents[door] || null;
-          const nextAt = row.next_action_at ? new Date(row.next_action_at) : null;
-          const nextDelta = nextAt && !Number.isNaN(nextAt.getTime())
-            ? nextAt.getTime() - now.getTime()
-            : null;
-          const countdown = classifyCountdown(nextDelta);
-          const warnings = [];
-
-          let ageLabel = "Open for";
-          let ageValue = "—";
-          if (hasData && isOpen && sessionStart && !Number.isNaN(sessionStart.getTime())) {
-            ageValue = formatDuration(now.getTime() - sessionStart.getTime());
-          } else if (hasData && !isOpen && lastClose && !Number.isNaN(lastClose.getTime())) {
-            ageLabel = "Closed for";
-            ageValue = formatDuration(now.getTime() - lastClose.getTime());
-          }
-
-          if (hasData && !isOpen && row.next_action_at) {
-            warnings.push("Pending action while closed");
-          }
-          if (hasData && isOpen && !row.session_start) {
-            warnings.push("Missing session start");
-          }
-          if (hasData && isOpen && !row.next_action_at) {
-            warnings.push("No close scheduled");
-          }
-
-          const statusText = hasData ? (isOpen ? "OPEN" : "CLOSED") : "NO DATA";
-          const statusClass = hasData ? (isOpen ? "open" : "closed") : "unknown";
-          const lastEventLabel = hasData ? (isOpen ? "Opened" : "Closed") : "Last event";
-          const lastEventTime = isOpen ? row.last_open || row.session_start : row.last_close;
-
-          const forceDisabled = !hasData || !isOpen;
-          const card = document.createElement("div");
-          card.className = "state-card";
-          card.innerHTML = `
-            <div class="state-header">
-              <div class="state-door">${door}</div>
-              <div class="state-badge ${statusClass}">${statusText}</div>
-            </div>
-            <div class="state-header">
-              <div class="pill ${countdown.cls}">
-                ${countdown.label}
-              </div>
-              ${warnings.length ? `<div class="warning">${warnings[0]}</div>` : ""}
-            </div>
-            <div class="state-metrics">
-              <div class="state-metric">
-                <span>Latest event</span>
-                <strong>${latestEvent ? `${latestEvent.event_type ?? "EVENT"} • ${formatTimestamp(latestEvent.created_at)}` : "—"}</strong>
-              </div>
-              <div class="state-metric">
-                <span>${lastEventLabel}</span>
-                <strong>${formatTimestamp(lastEventTime)}</strong>
-              </div>
-              <div class="state-metric">
-                <span>${ageLabel}</span>
-                <strong>${ageValue}</strong>
-              </div>
-              <div class="state-metric">
-                <span>Next action</span>
-                <strong>${formatAction(row.next_action)}</strong>
-              </div>
-              <div class="state-metric">
-                <span>Next at</span>
-                <strong>${formatTimestamp(row.next_action_at)}</strong>
-              </div>
-              <div class="state-metric">
-                <span>Last attempt</span>
-                <strong>${formatTimestamp(row.last_close_attempt_at)}</strong>
-              </div>
-            </div>
-            <div class="state-actions">
-              <button class="secondary" data-action="force-close" data-door="${door}" ${forceDisabled ? "disabled" : ""}>
-                ${forceDisabled ? "Close unavailable" : "Force close now"}
-              </button>
-            </div>
-          `;
-          dataListEl.appendChild(card);
-        });
-
-        dataListEl.querySelectorAll("[data-action='force-close']").forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            const door = btn.dataset.door;
-            if (!door) return;
-            const nowIso = new Date().toISOString();
-            btn.disabled = true;
-            const { error: updateError } = await supabase
-              .from("garage_state")
-              .update({
-                next_action: "close_attempt",
-                next_action_at: nowIso,
-                next_close_at: nowIso,
-                updated_at: nowIso,
-              })
-              .eq("door", door);
-            if (updateError) {
-              showToast("Failed to schedule close.", "error");
-              btn.disabled = false;
-              return;
-            }
-            const { error: fnError } = await supabase.functions.invoke("garage-scheduler", {
-              body: {},
-            });
-            if (fnError) {
-              showToast("Scheduled, but scheduler ping failed.", "error");
-            } else {
-              showToast(`Close requested for ${door}.`, "success");
-            }
-            btn.disabled = false;
-            await loadState();
-          });
-        });
-      }
-
       async function loadData() {
         renderRangeTabs();
         renderPosNav();
         setPosSubview(currentPosView);
         await loadPosViewData(currentPosView);
-      }
-
-      if (viewEventsEl) {
-        viewEventsEl.addEventListener("click", async () => {
-          setActiveView("events");
-          if (loadMoreEventsEl) loadMoreEventsEl.disabled = false;
-          await loadData();
-        });
-      }
-
-      if (viewStateEl) {
-        viewStateEl.addEventListener("click", async () => {
-          setActiveView("state");
-          if (loadMoreEventsEl) loadMoreEventsEl.disabled = true;
-          await loadData();
-        });
-      }
-
-      const refreshBtn = document.getElementById("refresh-data");
-      if (refreshBtn) {
-        refreshBtn.addEventListener("click", async () => {
-          eventsLimit = EVENTS_PAGE_SIZE;
-          await loadData();
-        });
-      }
-
-      if (loadMoreEventsEl) {
-        loadMoreEventsEl.addEventListener("click", async () => {
-          if (currentDataView !== "events") return;
-          eventsLimit += EVENTS_PAGE_SIZE;
-          await loadEvents();
-        });
       }
 
       function localDateKey() {
@@ -5339,3 +4839,4 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       }
 
       window.posInit = initPos;
+      refreshSession();

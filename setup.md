@@ -1,9 +1,25 @@
-# Personal Ops Dashboard Setup
+# Personal Ops UI Setup
 
-1. Verify Supabase URL + anon key in `index.html`.
-2. Enable GitHub Pages on this repo (Settings → Pages → Deploy from `main` root).
-3. Visit the Pages URL and sign in with your Supabase auth user.
+## Cloudflare Pages
 
-Notes:
-- This repo is Personal Ops only (no garage controller views).
-- All data is read from Supabase tables created in the Personal Ops private repo.
+This UI is deployed on Cloudflare Pages.
+
+- Project: `personal-ops-ui`
+- Production URL: https://personal-ops-ui.pages.dev
+
+Deploy from the repo root:
+
+```bash
+npm install
+npm run build
+wrangler pages deploy dist --project-name personal-ops-ui
+```
+
+## Supabase
+
+Supabase credentials are configured in `src/lib/supabase.js`.
+
+## Legacy UI
+
+- `legacy/` holds the previous static dashboard and report files.
+- `archive/` holds older variants pulled from history.

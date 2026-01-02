@@ -1,17 +1,35 @@
-# Personal Ops Dashboard
+# Personal Ops UI
 
-Single-page dashboard for Personal Ops (triathlon training + posture/PT + nutrition + recovery).
+React-based Personal Ops dashboard (training + nutrition + recovery) backed by Supabase.
 
-- Hosted via GitHub Pages.
-- Uses Supabase auth + tables from the Personal Ops private repo.
-- No garage controller UI in this repo.
+- Hosted on Cloudflare Pages.
+- Uses Supabase Auth + Personal Ops tables.
+- Legacy static UIs are preserved under `legacy/` and `archive/`.
 
-## Setup
+## Stack
 
-1. Ensure Supabase URL and anon key are correct in `index.html`.
-2. Enable GitHub Pages on the repo (root / main).
-3. Sign in with your Supabase auth user.
+- React + Vite
+- Supabase JS (auth + data)
+- Cloudflare Pages for hosting
 
-## Views
+## Local development
 
-- Single-page report (evidence-first)
+```bash
+npm install
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+## Data source
+
+This UI reads the latest `pos_report_daily` row from Supabase.
+
+## Legacy UI snapshots
+
+- `legacy/` contains the last static HTML/JS dashboard and report.
+- `archive/` contains historical variants recovered from git history.

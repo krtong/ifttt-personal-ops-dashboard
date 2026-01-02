@@ -173,6 +173,7 @@
       const viewStateEl = document.getElementById("view-state");
       const loadMoreEventsEl = document.getElementById("load-more-events");
       const refreshDataEl = document.getElementById("refresh-data");
+      const saveBtnEl = document.getElementById("save");
       const logoutEl = document.getElementById("logout");
       const toastEl = document.getElementById("toast");
       const POS_PROCESS_ID = "personal_ops";
@@ -352,6 +353,7 @@
         if (session) {
           authEl.classList.add("hidden");
           posRootEl?.classList.remove("hidden");
+          posDashboardEl?.classList.remove("hidden");
           if (authStatusEl) authStatusEl.textContent = "";
           renderRangeTabs();
           renderPosNav();
@@ -360,6 +362,7 @@
         } else {
           authEl.classList.remove("hidden");
           posRootEl?.classList.add("hidden");
+          posDashboardEl?.classList.add("hidden");
           if (authStatusEl) authStatusEl.textContent = "";
         }
       }
@@ -419,7 +422,7 @@
         }
       }
 
-      document.getElementById("login").addEventListener("click", async () => {
+      document.getElementById("login")?.addEventListener("click", async () => {
         const email = emailEl.value.trim();
         const password = passwordEl.value;
         if (authStatusEl) authStatusEl.textContent = "";
@@ -445,17 +448,20 @@
         }
       });
 
-      document.getElementById("save").addEventListener("click", async () => {
+      saveBtnEl?.addEventListener("click", async () => {
         await saveSettings({ announce: false, signal: false });
       });
 
-      enabledEl.addEventListener("change", async () => {
+      enabledEl?.addEventListener("change", async () => {
         enabledEl.classList.add("pulse");
         setTimeout(() => enabledEl.classList.remove("pulse"), 600);
         await saveSettings({ announce: true, signal: true });
       });
 
       async function saveSettings({ announce, signal }) {
+        if (!enabledEl || !closeDelayEl || !checkDelayEl || !retryDelayEl || !closeCooldownEl || !lockTtlEl) {
+          return;
+        }
         const payload = {
           id: currentProcessId,
           enabled: enabledEl.checked,
